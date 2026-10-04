@@ -1,0 +1,68 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-background: #FFFFFF;
+  --color-foreground: #0A0F1E;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0A0F1E;
+  --color-primary: #1D4ED8;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #DCFCE7;
+  --color-secondary-foreground: #14532D;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-accent: #16A34A;
+  --color-accent-foreground: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-ring: #2563EB;
+  --radius: 10px;
+  --font-display: 'Pretendard', sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #FFFFFF;
+  color: #0A0F1E;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+*::-webkit-scrollbar { width: 4px; height: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 2px; }
+
+/* Selection */
+::selection {
+  background: #DBEAFE;
+  color: #1D4ED8;
+}
+
+/* Utility: marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes float-up {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float-up 3s ease-in-out infinite; }
+.animate-float-delay { animation: float-up 3s ease-in-out 1.5s infinite; }
