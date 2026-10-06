@@ -17,8 +17,13 @@ Create a production build with pnpm build.
 - src/components contains shared branding, navigation, and policy status UI.
 - src/data contains policy records.
 - src/features contains the home, policy, diagnosis, and dashboard screens.
-- src/types contains shared route and policy types.
+- src/services contains the backend API client.
+- src/types contains shared route, policy, and API types.
+
+## Static assets
+
+There are currently no image or other public static assets in use, so `public/` and `src/assets/` are not present. Put assets imported by TypeScript components in `src/assets/`; put files that need a fixed URL and should be copied as-is in `public/`.
 
 ## Licensing
 
-The repository includes an MIT license. See docs/THIRD_PARTY_NOTICES.md for third party notices and assets whose source license still needs confirmation.
+The repository includes an MIT license. Third party notices are listed in docs/THIRD_PARTY_NOTICES.md.
