@@ -1,14 +1,42 @@
 import { useState } from 'react'
 import type { Page } from '../../types/page'
+import type { EmploymentStatus, UserProfileInput } from '../../types/welfareApi'
 
 const STEPS = ['기본정보', '거주정보', '소득정보', '주거정보', '재산/취업']
+const EMPLOYMENT_STATUS: Record<string, EmploymentStatus> = {
+  '대기업 재직': 'EMPLOYED', '중소기업 재직': 'EMPLOYED_SME', '공공기관 재직': 'EMPLOYED',
+  '자영업': 'SELF_EMPLOYED', '프리랜서': 'FREELANCER', '구직 중': 'UNEMPLOYED',
+  '학생': 'STUDENT', '기타': 'OTHER',
+}
 
-export default function DiagnosisPage({ setPage }: { setPage: (p: Page) => void }) {
+export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Page) => void; onComplete: (profile: UserProfileInput) => Promise<void> }) {
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState({ age: '', gender: '', region: '', income: '', incomeType: '', housing: '', householdSize: '', asset: '', employment: '' })
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const [form, setForm] = useState({ age: '', gender: '', region: '', district: '', income: '', incomeType: '', housing: '', householdSize: '', asset: '', employment: '' })
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const canNext = [form.age !== '', form.region !== '', form.income !== '', form.housing !== '', form.employment !== ''][step]
+  const canNext = [Number(form.age) >= 15 && Number(form.age) <= 120, form.region !== '' && form.district.trim() !== '', Number(form.income) >= 0 && form.income !== '', form.housing !== '', form.employment !== ''][step]
+  const continueDiagnosis = async () => {
+    if (step < STEPS.length - 1) {
+      setStep(current => current + 1)
+      return
+    }
+    if (!canNext || submitting) return
+    setSubmitting(true)
+    setError('')
+    try {
+      await onComplete({
+        age: Number(form.age),
+        region: `${form.region} ${form.district.trim()}`,
+        income_level: Math.round(Number(form.income) * 10_000),
+        employment_status: EMPLOYMENT_STATUS[form.employment],
+      })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '진단을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.')
+      setSubmitting(false)
+    }
+  }
 
   const stepContent = [
     <div key="0" className="space-y-6">
@@ -45,6 +73,9 @@ export default function DiagnosisPage({ setPage }: { setPage: (p: Page) => void 
           <option value="">시/도 선택</option>
           {['서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도','강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도'].map(r => <option key={r} value={r}>{r}</option>)}
         </select>
+        <label className="mt-4 block text-sm font-black text-slate-900 mb-2">시/군/구 <span className="text-blue-600">*</span></label>
+        <input value={form.district} onChange={e => update('district', e.target.value)} placeholder="예: 관악구"
+          className="w-full border-2 border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none transition-colors" />
         {form.region && <div className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-700">✓ {form.region} 입력 완료</div>}
       </div>
     </div>,
@@ -176,6 +207,9 @@ export default function DiagnosisPage({ setPage }: { setPage: (p: Page) => void 
           {stepContent[step]}
         </div>
 
+        <p className="text-xs text-slate-500 mb-4">입력한 프로필은 맞춤 정책을 조회하기 위해 백엔드로 전송됩니다.</p>
+        {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{error}</div>}
+
         {/* Nav buttons */}
         <div className="flex gap-3">
           {step > 0 && (
@@ -185,15 +219,15 @@ export default function DiagnosisPage({ setPage }: { setPage: (p: Page) => void 
             </button>
           )}
           <button
-            onClick={() => { if (step < STEPS.length - 1) setStep(s => s + 1); else setPage('result') }}
-            disabled={!canNext}
+            onClick={continueDiagnosis}
+            disabled={!canNext || submitting}
             className={`flex-1 py-4 rounded-xl font-black text-base transition-all border-2 ${
-              canNext
+              canNext && !submitting
                 ? 'bg-blue-600 text-white border-slate-900 shadow-[3px_3px_0px_#0A0F1E] hover:bg-blue-700'
                 : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
             }`}
           >
-            {step < STEPS.length - 1 ? '다음 단계 →' : '진단 결과 보기 →'}
+            {submitting ? '정책을 분석하고 있어요…' : step < STEPS.length - 1 ? '다음 단계 →' : '맞춤 복지 분석하기 →'}
           </button>
         </div>
       </div>
