@@ -11,7 +11,3 @@ The installed lockfile dependency tree contains 43 distinct package name/version
 Each package remains subject to its own upstream license and copyright notices. Preserve these notices when redistributing package files or bundled output; the repository's MIT license does not replace third party licenses.
 
 Pretendard is loaded remotely from jsDelivr by src/index.css; no font binaries are stored in this repository. The upstream project states that Pretendard is distributed under the SIL Open Font License 1.1. See the [Pretendard license information](https://github.com/orioncactus/pretendard/blob/main/packages/pretendard/docs/en/README.md) and [upstream license file](https://github.com/orioncactus/pretendard/blob/main/LICENSE).
-
-## Assets requiring provenance confirmation
-
-The supplied project includes public/logo.png, src/imports/image.png, and public/jagyek-for-youth.zip without adjacent source, author, or license records. Their licensing cannot be established from the supplied files. Confirm their source and terms before representing those assets as MIT licensed or distributing them under a license that requires rights the project owner may not hold.

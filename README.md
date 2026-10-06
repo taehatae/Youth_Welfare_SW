@@ -16,7 +16,7 @@ Create a production build with pnpm build.
 - src/app contains the application shell and page selection.
 - src/components contains shared branding, navigation, and policy status UI.
 - src/data contains policy records.
-- src/features contains the home, policy, diagnosis, dashboard, and source download screens.
+- src/features contains the home, policy, diagnosis, and dashboard screens.
 - src/types contains shared route and policy types.
 
 ## Licensing
