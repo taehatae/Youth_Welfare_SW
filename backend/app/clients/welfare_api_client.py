@@ -37,6 +37,7 @@ class WelfareApiClient:
             "callTp": "L",
             "pageNo": page_no,
             "numOfRows": num_of_rows,
+            "srchKeyCode": "001",
         }
 
         async with httpx.AsyncClient(timeout=30.0) as client:
