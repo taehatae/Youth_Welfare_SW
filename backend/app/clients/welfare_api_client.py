@@ -1,3 +1,6 @@
+
+import xml.etree.ElementTree as ET
+
 import httpx
 
 from app.core.config import settings
@@ -44,6 +47,44 @@ class WelfareApiClient:
             response = await client.get(url, params=params)
             response.raise_for_status()
             return response.text
+
+    def parse_welfare_services(self, xml_text: str) -> list[dict]:
+        """
+        복지서비스 목록 XML을 파싱하여 딕셔너리 리스트로 변환한다.
+        """
+        try:
+            root = ET.fromstring(xml_text)
+        except ET.ParseError as exc:
+            raise ValueError("복지서비스 API 응답이 올바른 XML 형식이 아닙니다.") from exc
+
+        result_code = root.findtext(".//resultCode")
+        result_message = root.findtext(".//resultMessage", default="")
+
+        if result_code not in (None, "0"):
+            raise ValueError(
+                f"복지서비스 API 오류: {result_code} - {result_message}"
+            )
+
+        services = []
+
+        for item in root.findall(".//servList"):
+            service = {
+                "serv_id": item.findtext("servId", default=""),
+                "serv_name": item.findtext("servNm", default=""),
+                "department": item.findtext("jurMnofNm", default=""),
+                "organization": item.findtext("jurOrgNm", default=""),
+                "summary": item.findtext("servDgst", default=""),
+                "detail_url": item.findtext("servDtlLink", default=""),
+                "support_cycle": item.findtext("sprtCycNm", default=""),
+                "support_type": item.findtext("srvPvsnNm", default=""),
+                "online_application": item.findtext(
+                    "onapPsbltYn", default=""
+                ),
+            }
+
+            services.append(service)
+
+        return services
 
     async def get_welfare_service_detail(
         self,
