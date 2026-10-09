@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import type { Page } from '../../types/page'
-import type { EmploymentStatus, UserProfileInput } from '../../types/welfareApi'
+import type { EmploymentStatus, UserProfileInput, YesNoUnknown } from '../../types/welfareApi'
 
-const STEPS = ['기본정보', '거주정보', '소득정보', '주거정보', '재산/취업']
+const STEPS = ['기본정보', '거주정보', '소득정보', '주거정보', '재산/취업', '추가 자격']
 const EMPLOYMENT_STATUS: Record<string, EmploymentStatus> = {
   '대기업 재직': 'EMPLOYED', '중소기업 재직': 'EMPLOYED_SME', '공공기관 재직': 'EMPLOYED',
   '자영업': 'SELF_EMPLOYED', '프리랜서': 'FREELANCER', '구직 중': 'UNEMPLOYED',
@@ -13,10 +13,10 @@ export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Pa
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ age: '', gender: '', region: '', district: '', income: '', incomeType: '', housing: '', householdSize: '', asset: '', employment: '' })
+  const [form, setForm] = useState({ age: '', gender: '', region: '', district: '', income: '', incomeType: '', housing: '', ownsHome: '', householdSize: '', asset: '', employment: '', disability: '', student: '', maritalStatus: '', childrenCount: '', qualifications: '' })
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const canNext = [Number(form.age) >= 15 && Number(form.age) <= 120, form.region !== '' && form.district.trim() !== '', Number(form.income) >= 0 && form.income !== '', form.housing !== '', form.employment !== ''][step]
+  const canNext = [Number(form.age) >= 15 && Number(form.age) <= 120, form.region !== '' && form.district.trim() !== '', Number(form.income) >= 0 && form.income !== '', form.housing !== '', form.employment !== '', true][step] ?? false
   const continueDiagnosis = async () => {
     if (step < STEPS.length - 1) {
       setStep(current => current + 1)
@@ -31,6 +31,20 @@ export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Pa
         region: `${form.region} ${form.district.trim()}`,
         income_level: Math.round(Number(form.income) * 10_000),
         employment_status: EMPLOYMENT_STATUS[form.employment],
+        eligibility_conditions: {
+          gender: form.gender === '남성' ? 'MALE' : form.gender === '여성' ? 'FEMALE' : 'UNKNOWN',
+          household_size: form.householdSize ? Number(form.householdSize) : null,
+          income_type: ({ '근로소득': 'LABOR', '사업소득': 'BUSINESS', '프리랜서': 'FREELANCE', '무소득': 'NONE' } as Record<string, 'LABOR' | 'BUSINESS' | 'FREELANCE' | 'NONE'>)[form.incomeType] ?? 'UNKNOWN',
+          asset_range: form.asset || null,
+          housing_type: form.housing || null,
+          owns_home: form.ownsHome === 'yes' ? true : form.ownsHome === 'no' ? false : null,
+          disability_status: (form.disability || 'UNKNOWN') as YesNoUnknown,
+          student_status: (form.student || 'UNKNOWN') as YesNoUnknown,
+          marital_status: (form.maritalStatus || 'UNKNOWN') as 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED' | 'UNKNOWN',
+          children_count: form.childrenCount === '' ? null : Number(form.childrenCount),
+          qualifications: form.qualifications.split(',').map(value => value.trim()).filter(Boolean),
+          additional_conditions: {},
+        },
       })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '진단을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.')
@@ -132,15 +146,24 @@ export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Pa
         )}
       </div>
       <div>
-        <label className="block text-sm font-black text-slate-900 mb-3">가구원 수</label>
-        <div className="flex gap-2">
-          {['1인', '2인', '3인', '4인', '5인+'].map(v => (
-            <button key={v} onClick={() => update('householdSize', v)}
-              className={`flex-1 py-3.5 rounded-xl border-2 text-sm font-black transition-all ${form.householdSize === v ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
-              {v}
+        <label className="block text-sm font-black text-slate-900 mb-3">주택 보유 여부</label>
+        <div className="grid grid-cols-3 gap-2">
+          {[['yes', '보유'], ['no', '미보유'], ['', '미확인']].map(([value, label]) => (
+            <button key={label} type="button" onClick={() => update('ownsHome', value)} aria-pressed={form.ownsHome === value}
+              className={`py-3 rounded-xl border-2 text-sm font-black transition-all ${form.ownsHome === value ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
+              {label}
             </button>
           ))}
         </div>
+        <p className="mt-2 text-xs text-slate-500">주거 형태와 주택 소유 여부는 정책에 따라 별도로 판단될 수 있어요.</p>
+      </div>
+      <div>
+        <label className="block text-sm font-black text-slate-900 mb-3">가구원 수</label>
+        <select value={form.householdSize} onChange={e => update('householdSize', e.target.value)}
+          className="w-full border-2 border-slate-200 focus:border-blue-500 rounded-xl px-4 py-3.5 text-sm font-bold focus:outline-none bg-white">
+          <option value="">선택 안 함</option>
+          {Array.from({ length: 10 }, (_, index) => index + 1).map(value => <option key={value} value={value}>{value}인 가구</option>)}
+        </select>
       </div>
     </div>,
 
@@ -164,6 +187,40 @@ export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Pa
             </button>
           ))}
         </div>
+      </div>
+    </div>,
+
+    <div key="5" className="space-y-6">
+      <p className="rounded-xl bg-blue-50 p-4 text-sm leading-relaxed text-blue-900">아래 항목은 선택 입력이에요. 모르는 항목은 미확인으로 두어도 됩니다. 입력한 값은 자격 조건 비교를 위해 백엔드로 전송됩니다.</p>
+      {([
+        ['disability', '장애 여부'],
+        ['student', '학생 여부'],
+      ] as const).map(([key, label]) => (
+        <div key={key}>
+          <label className="mb-2 block text-sm font-black text-slate-900">{label}</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([['YES', '해당'], ['NO', '해당 없음'], ['', '미확인']] as const).map(([value, text]) => (
+              <button key={text} type="button" onClick={() => update(key, value)} aria-pressed={form[key] === value}
+                className={`rounded-xl border-2 py-3 text-sm font-black ${form[key] === value ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-600'}`}>
+                {text}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      <div>
+        <label htmlFor="marital-status" className="mb-2 block text-sm font-black text-slate-900">혼인 상태</label>
+        <select id="marital-status" value={form.maritalStatus} onChange={e => update('maritalStatus', e.target.value)} className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 text-sm font-bold">
+          <option value="">미확인</option><option value="SINGLE">미혼</option><option value="MARRIED">기혼</option><option value="DIVORCED">이혼</option><option value="WIDOWED">사별</option>
+        </select>
+      </div>
+      <div>
+        <label htmlFor="children-count" className="mb-2 block text-sm font-black text-slate-900">자녀 수</label>
+        <input id="children-count" type="number" min="0" max="20" value={form.childrenCount} onChange={e => update('childrenCount', e.target.value)} placeholder="모르면 비워두세요" className="w-full rounded-xl border-2 border-slate-200 px-4 py-3.5 text-sm font-bold" />
+      </div>
+      <div>
+        <label htmlFor="qualifications" className="mb-2 block text-sm font-black text-slate-900">보유 자격·면허</label>
+        <input id="qualifications" value={form.qualifications} onChange={e => update('qualifications', e.target.value)} placeholder="예: 사회복지사 2급, 운전면허 (쉼표로 구분)" className="w-full rounded-xl border-2 border-slate-200 px-4 py-3.5 text-sm font-bold" />
       </div>
     </div>,
   ]

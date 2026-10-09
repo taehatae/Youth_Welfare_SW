@@ -12,6 +12,24 @@ export interface UserProfileInput {
   region: string
   income_level: number
   employment_status: EmploymentStatus
+  eligibility_conditions: EligibilityConditions
+}
+
+export type YesNoUnknown = 'YES' | 'NO' | 'UNKNOWN'
+
+export interface EligibilityConditions {
+  gender: 'MALE' | 'FEMALE' | 'UNKNOWN'
+  household_size: number | null
+  income_type: 'LABOR' | 'BUSINESS' | 'FREELANCE' | 'NONE' | 'UNKNOWN'
+  asset_range: string | null
+  housing_type: string | null
+  owns_home: boolean | null
+  disability_status: YesNoUnknown
+  student_status: YesNoUnknown
+  marital_status: 'SINGLE' | 'MARRIED' | 'DIVORCED' | 'WIDOWED' | 'UNKNOWN'
+  children_count: number | null
+  qualifications: string[]
+  additional_conditions: Record<string, string | number | boolean | null>
 }
 
 export interface SaveProfileResponse {
