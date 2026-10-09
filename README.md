@@ -1,29 +1,19 @@
 # Youth Welfare SW
 
-A youth welfare policy discovery and eligibility diagnosis frontend built with React, TypeScript, Vite, and Tailwind CSS.
+청년 복지 정책 조회와 자격 진단을 위한 프로젝트입니다.
 
-## Development
+## 폴더 구성
 
-~~~sh
+- `frontend/`: React, TypeScript, Vite 기반 웹 프런트엔드와 API 연동 문서
+- `backend/`: 백엔드 작업 위치. 백엔드 담당자가 별도로 구성할 예정
+- `LICENSE`: 저장소 라이선스
+
+## 프런트엔드 실행
+
+```sh
+cd frontend
 pnpm install
 pnpm dev
-~~~
+```
 
-Create a production build with pnpm build.
-
-## Source layout
-
-- src/app contains the application shell and page selection.
-- src/components contains shared branding, navigation, and policy status UI.
-- src/data contains policy records.
-- src/features contains the home, policy, diagnosis, and dashboard screens.
-- src/services contains the backend API client.
-- src/types contains shared route, policy, and API types.
-
-## Static assets
-
-There are currently no image or other public static assets in use, so `public/` and `src/assets/` are not present. Put assets imported by TypeScript components in `src/assets/`; put files that need a fixed URL and should be copied as-is in `public/`.
-
-## Licensing
-
-The repository includes an MIT license. Third party notices are listed in docs/THIRD_PARTY_NOTICES.md.
+백엔드 주소는 `frontend/.env.example`을 `frontend/.env.local`로 복사한 뒤 `VITE_API_BASE_URL`에 설정합니다. API 요청·응답 규격은 `frontend/docs/FRONTEND_API.md`를 참고하세요.
