@@ -1,9 +1,11 @@
-
 import xml.etree.ElementTree as ET
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.services.eligibility_condition_service import (
+    EligibilityConditionService,
+)
 from app.clients.welfare_api_client import WelfareApiClient
 from app.models.welfare_service import WelfareService
 
@@ -142,6 +144,14 @@ class WelfareSyncService:
                 for field in fields:
                     if field in data:
                         setattr(service, field, data[field])
+
+                # 상세정보의 자격 요건을 구조화해 저장한다.
+                EligibilityConditionService.replace_conditions(
+                    db=db,
+                    serv_id=serv_id,
+                    target_details=service.target_details,
+                    selection_criteria=service.selection_criteria,
+                )
 
                 service.synced_at = datetime.utcnow()
 
