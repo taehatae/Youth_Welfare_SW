@@ -15,6 +15,9 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
 
   const policies = analysis.matched.policies ?? []
   const recommendations = analysis.reverse.recommendations ?? []
+  const conditionAnalyses = (analysis.matched.analysis_results ?? []).filter(
+    policy => policy.gap_conditions.length > 0 || policy.review_conditions.length > 0,
+  )
 
   return (
     <div className="pb-20 md:pb-0">
@@ -22,10 +25,10 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
         <div className="mx-auto max-w-5xl">
           <div className="mb-2 text-xs font-black tracking-widest text-emerald-400">맞춤 복지 분석 완료</div>
           <h1 className="text-3xl font-black">내 프로필로 찾은 결과</h1>
-          <p className="mt-2 text-sm text-slate-400">신청 가능한 정책과 조건을 바꾸면 가능해지는 정책을 확인해보세요.</p>
+          <p className="mt-2 text-sm text-slate-400">프로필과 비교한 조건 및 추가 확인 항목을 살펴보세요.</p>
           <div className="mt-7 grid max-w-lg grid-cols-2 gap-3">
             <div className="rounded-xl bg-emerald-500 p-4"><div className="text-xs font-bold text-white/80">맞춤 정책</div><div className="mt-1 text-3xl font-black">{analysis.matched.matched_count ?? policies.length}<span className="ml-1 text-base">개</span></div></div>
-            <div className="rounded-xl bg-orange-500 p-4"><div className="text-xs font-bold text-white/80">자격 개선 가이드</div><div className="mt-1 text-3xl font-black">{recommendations.length}<span className="ml-1 text-base">개</span></div></div>
+            <div className="rounded-xl bg-orange-500 p-4"><div className="text-xs font-bold text-white/80">역설계 추천</div><div className="mt-1 text-2xl font-black">{recommendations.length > 0 ? `${recommendations.length}개` : '미구현'}</div></div>
           </div>
         </div>
       </header>
@@ -53,10 +56,43 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
           )}
         </section>
 
+        <section aria-labelledby="conditions-heading">
+          <div className="mb-4">
+            <p className="text-xs font-black tracking-widest text-orange-600">ELIGIBILITY REVIEW</p>
+            <h2 id="conditions-heading" className="mt-1 text-xl font-black text-slate-900">미충족 또는 추가 확인이 필요한 조건</h2>
+            <p className="mt-1 text-sm text-slate-500">자동 비교 결과는 사전 안내이며, 최종 자격은 담당 기관에 확인하세요.</p>
+          </div>
+          {conditionAnalyses.length === 0 ? (
+            <div className="rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">표시할 미충족 또는 추가 확인 조건이 없습니다.</div>
+          ) : (
+            <ul className="space-y-4">
+              {conditionAnalyses.map(policy => (
+                <li key={policy.policy_id} className="rounded-2xl border-2 border-slate-200 bg-white p-5">
+                  <h3 className="mb-4 font-black text-slate-900">{policy.title}</h3>
+                  <div className="space-y-3">
+                    {[...policy.gap_conditions, ...policy.review_conditions].map((condition, index) => (
+                      <div key={`${condition.condition_type}-${index}`} className="rounded-xl bg-slate-50 p-4">
+                        <div className="text-xs font-black text-slate-500">{condition.condition_type}{condition.status === 'needs_review' ? ' · 추가 확인' : ' · 미충족'}</div>
+                        <p className="mt-2 text-sm font-bold text-slate-800">{condition.message}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                          <span className="rounded-lg bg-white px-3 py-2 font-bold text-slate-600">현재: {condition.current_value}</span>
+                          <span aria-hidden="true" className="font-black text-orange-500">→</span>
+                          <span className="rounded-lg bg-orange-100 px-3 py-2 font-black text-orange-800">기준: {condition.required_value}</span>
+                        </div>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-700"><span className="font-black">확인 안내</span> · {condition.action_guide}</p>
+                      </div>
+                    ))}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
         <section aria-labelledby="reverse-heading">
-          <div className="mb-4"><p className="text-xs font-black tracking-widest text-orange-600">QUALIFICATION PATH</p><h2 id="reverse-heading" className="mt-1 text-xl font-black text-slate-900">조건을 바꾸면 가능해지는 정책</h2><p className="mt-1 text-sm text-slate-500">정책별로 현재 조건과 필요한 조건, 다음 행동을 정리했어요.</p></div>
+          <div className="mb-4"><p className="text-xs font-black tracking-widest text-orange-600">QUALIFICATION PATH</p><h2 id="reverse-heading" className="mt-1 text-xl font-black text-slate-900">역설계 자격 개선 추천</h2><p className="mt-1 text-sm text-slate-500">추천 계산 기능은 현재 준비 중입니다.</p></div>
           {recommendations.length === 0 ? (
-            <div className="rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">현재 프로필에서 조건을 개선해 추천할 정책이 없습니다.</div>
+            <div className="rounded-2xl border-2 border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">역설계 추천 로직은 아직 구현되지 않았습니다. 현재는 조건 개선 추천을 제공하지 않습니다.</div>
           ) : (
             <ul className="space-y-4">
               {recommendations.map((recommendation, index) => (

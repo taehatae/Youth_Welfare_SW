@@ -49,6 +49,34 @@ export interface MatchedPolicy {
 export interface MatchedPoliciesResponse {
   matched_count: number
   policies: MatchedPolicy[]
+  evaluated_count?: number
+  needs_review_count?: number
+  ineligible_count?: number
+  analysis_results?: PolicyAnalysis[]
+}
+
+export interface ConditionAnalysis {
+  condition_type: string
+  status: string
+  current_value: string
+  required_value: string
+  message: string
+  action_guide: string
+  source_field: string
+  source_text: string
+}
+
+export interface PolicyAnalysis {
+  policy_id: string
+  title: string
+  status: 'eligible' | 'ineligible' | 'needs_review'
+  match_score: number
+  evaluated_conditions: number
+  passed_conditions: number
+  gap_conditions: ConditionAnalysis[]
+  review_conditions: ConditionAnalysis[]
+  notes: string[]
+  detail_url: string
 }
 
 export interface MissingCondition {
