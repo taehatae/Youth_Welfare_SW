@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -10,7 +9,6 @@ from app.database.connection import Base, engine
 # 모델을 import해야 SQLAlchemy가 테이블을 인식한다.
 from app.models.user import User  # noqa: F401
 from app.models.welfare_service import WelfareService  # noqa: F401
-
 
 # 데이터베이스 테이블 생성
 Base.metadata.create_all(bind=engine)
