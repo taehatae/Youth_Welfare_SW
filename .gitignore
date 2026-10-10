@@ -1,1 +1,29 @@
-/youth_welfare.db
+# Local database files
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend dependencies and build outputs
+node_modules/
+dist/
+build/
+.cache/
+.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+
+# Logs and temporary files
+*-debug.log*
+logs/
+*.log
+.claude-replay.*
+.tmp-*
+
+# Platform-managed agent state
+/.plugins/
+/.opencode-skills/
