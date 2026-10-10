@@ -67,12 +67,15 @@ class WelfareApiClient:
         self,
         page_no: int = 1,
         num_of_rows: int = 10,
+        life_array: str | None = None,
     ) -> str:
+
         """중앙부처복지서비스 목록조회. callTp=L."""
         self._validate_settings()
 
         url = f"{self.base_url}/{self.LIST_ENDPOINT}"
 
+        
         params = {
             "serviceKey": self.service_key,
             "callTp": "L",
@@ -80,6 +83,9 @@ class WelfareApiClient:
             "numOfRows": num_of_rows,
             "srchKeyCode": "001",
         }
+
+        if life_array:
+            params["lifeArray"] = life_array
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, params=params)
@@ -121,6 +127,9 @@ class WelfareApiClient:
                 ),
                 "summary": self.clean_text(
                     item.findtext("servDgst", default="")
+                ),
+                "life_stages": self.clean_text(
+                    item.findtext("lifeArray", default="")
                 ),
                 "detail_url": self.clean_text(
                     item.findtext("servDtlLink", default="")
