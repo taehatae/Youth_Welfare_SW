@@ -9,7 +9,9 @@ from app.schemas.welfare import (
     ReverseRecommendationsResponse,
 )
 from app.services.welfare_sync_service import WelfareSyncService
-
+from app.services.eligibility_matching_service import (
+    EligibilityMatchingService,
+)
 
 router = APIRouter(
     prefix="/welfare",
@@ -18,7 +20,7 @@ router = APIRouter(
 
 user_repository = UserRepository()
 welfare_sync_service = WelfareSyncService()
-
+eligibility_matching_service = EligibilityMatchingService()
 
 @router.post("/sync")
 async def sync_welfare_services(
@@ -68,11 +70,12 @@ def get_matched_welfare(
             detail="사용자를 찾을 수 없습니다.",
         )
 
-    # 실제 자격 매칭 로직은 다음 단계에서 구현한다.
-    return MatchedPoliciesResponse(
-        matched_count=0,
-        policies=[],
+    result = eligibility_matching_service.analyze_user(
+        db=db,
+        user=user,
     )
+
+    return MatchedPoliciesResponse(**result)
 
 
 @router.get(
