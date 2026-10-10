@@ -16,7 +16,7 @@ export default function DiagnosisPage({ setPage, onComplete }: { setPage: (p: Pa
   const [form, setForm] = useState({ age: '', gender: '', region: '', district: '', income: '', incomeType: '', housing: '', ownsHome: '', householdSize: '', asset: '', employment: '', disability: '', student: '', maritalStatus: '', childrenCount: '', qualifications: '' })
   const update = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
 
-  const canNext = [Number(form.age) >= 15 && Number(form.age) <= 120, form.region !== '' && form.district.trim() !== '', Number(form.income) >= 0 && form.income !== '', form.housing !== '', form.employment !== '', true][step] ?? false
+  const canNext = [Number(form.age) >= 19 && Number(form.age) <= 34, form.region !== '' && form.district.trim() !== '', Number(form.income) >= 0 && form.income !== '', form.housing !== '', form.employment !== '', true][step] ?? false
   const continueDiagnosis = async () => {
     if (step < STEPS.length - 1) {
       setStep(current => current + 1)
