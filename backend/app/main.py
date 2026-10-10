@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.database.connection import Base, engine
 
 # 모델을 import해야 SQLAlchemy가 테이블을 인식한다.
-from app.models.user import User  # noqa: F401
+from app.models.user import User, UserEligibilityConditions  # noqa: F401
 from app.models.welfare_service import WelfareService  # noqa: F401
 from app.models.welfare_eligibility_condition import (
     WelfareEligibilityCondition,  # noqa: F401

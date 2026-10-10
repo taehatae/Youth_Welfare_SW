@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.models.user import User
+from app.models.user import User, UserEligibilityConditions
 from app.schemas.user import UserProfileCreate
 
 
@@ -19,8 +19,21 @@ class UserRepository:
             employment_status=profile.employment_status.value,
         )
 
-        db.add(user)
-        db.commit()
+        try:
+            db.add(user)
+            db.flush()
+
+            db.add(
+                UserEligibilityConditions(
+                    user_id=user.user_id,
+                    conditions=profile.eligibility_conditions,
+                )
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
         db.refresh(user)
 
         return user
@@ -36,3 +49,10 @@ class UserRepository:
             .filter(User.user_id == user_id)
             .first()
         )
+
+    def get_eligibility_conditions(
+        self,
+        db: Session,
+        user_id: str,
+    ) -> UserEligibilityConditions | None:
+        return db.get(UserEligibilityConditions, user_id)

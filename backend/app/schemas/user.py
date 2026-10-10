@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -35,6 +36,8 @@ class UserProfileCreate(BaseModel):
     )
 
     employment_status: EmploymentStatus
+
+    eligibility_conditions: dict[str, Any] | None = None
 
 
 class SaveProfileResponse(BaseModel):
