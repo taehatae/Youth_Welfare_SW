@@ -1,21 +1,29 @@
+# Local database files
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Frontend dependencies and build outputs
 node_modules/
 dist/
 build/
 .cache/
-.env*
-!.env.example
 .vite/
 vite.config.*.timestamp-*
 *.tsbuildinfo
+
+# Logs and temporary files
 *-debug.log*
 logs/
 *.log
 .claude-replay.*
 .tmp-*
 
-# Platform-managed agentplat state, not project source. In the
-# client-initiated single-repo workspace layout (make's `Path: "."` spec) the
-# repo root IS the workspace root, so these land inside this repo rather than
-# beside it.
+# Platform-managed agent state
 /.plugins/
 /.opencode-skills/
