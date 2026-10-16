@@ -1,5 +1,6 @@
 
 from collections import defaultdict
+import re
 
 from sqlalchemy.orm import Session
 
@@ -21,6 +22,64 @@ class EligibilityMatchingService:
         "target_group",
         "other",
     }
+    OR_CONNECTOR_PATTERN = re.compile(r"또는|혹은|거나|아니면")
+
+    @classmethod
+    def _age_conditions_needing_review(
+        cls,
+        conditions: list[WelfareEligibilityCondition],
+    ) -> set[int]:
+        age_conditions_by_source = defaultdict(list)
+        age_conditions_by_field = defaultdict(list)
+
+        for condition in conditions:
+            if condition.condition_type == "age" and condition.source_text:
+                age_conditions_by_field[condition.source_field].append(condition)
+                age_conditions_by_source[
+                    (condition.source_field, condition.source_text)
+                ].append(condition)
+
+        review_condition_ids = set()
+
+        # 파서가 줄이나 문장 단위로 나누면 관계 연결어가 source_text 밖으로
+        # 분리될 수 있다. 같은 원문 필드의 복수 연령 조건은 독립 필수조건으로
+        # 단정하지 않고 검토 대상으로 보낸다.
+        for age_conditions in age_conditions_by_field.values():
+            source_texts = {condition.source_text for condition in age_conditions}
+            if len(source_texts) > 1:
+                review_condition_ids.update(
+                    id(condition) for condition in age_conditions
+                )
+
+        for (_, source_text), age_conditions in age_conditions_by_source.items():
+            if len(age_conditions) < 2:
+                continue
+
+            spans = []
+            for condition in age_conditions:
+                value_text = condition.value_text or ""
+                start = source_text.find(value_text) if value_text else -1
+                if start >= 0:
+                    spans.append((start, start + len(value_text), condition))
+
+            spans.sort(key=lambda span: (span[0], span[1]))
+            has_or_between_age_conditions = any(
+                left_end <= right_start
+                and cls.OR_CONNECTOR_PATTERN.search(
+                    source_text[left_end:right_start]
+                )
+                for (_, left_end, _), (right_start, _, _) in zip(
+                    spans,
+                    spans[1:],
+                )
+            )
+
+            if has_or_between_age_conditions:
+                review_condition_ids.update(
+                    id(condition) for condition in age_conditions
+                )
+
+        return review_condition_ids
 
     @staticmethod
     def _compare_age(
@@ -82,6 +141,9 @@ class EligibilityMatchingService:
         gaps = []
         review = []
         notes = []
+        age_condition_ids_needing_review = self._age_conditions_needing_review(
+            conditions
+        )
 
         for condition in conditions:
             if condition.condition_type == "informational":
@@ -102,6 +164,25 @@ class EligibilityMatchingService:
                         ),
                         action_guide=(
                             "해당 기관에 세부 심사 기준을 확인하세요."
+                        ),
+                    )
+                )
+                continue
+
+            if id(condition) in age_condition_ids_needing_review:
+                review.append(
+                    self._condition_result(
+                        condition=condition,
+                        status="needs_review",
+                        current_value=f"{user.age}세",
+                        required_value=condition.value_text,
+                        message=(
+                            "연령 조건 사이의 논리 관계가 불확실해 "
+                            "각 조건을 독립 기준으로 판정하지 않습니다."
+                        ),
+                        action_guide=(
+                            "연령 조건의 적용 관계를 서비스 담당 기관에 "
+                            "확인하세요."
                         ),
                     )
                 )
