@@ -16,7 +16,9 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
   const policies = analysis.matched.policies ?? []
   const recommendations = analysis.reverse.recommendations ?? []
   const conditionAnalyses = (analysis.matched.analysis_results ?? []).filter(
-    policy => policy.gap_conditions.length > 0 || policy.review_conditions.length > 0,
+    policy => policy.status === 'needs_review'
+      || policy.gap_conditions.length > 0
+      || policy.review_conditions.length > 0,
   )
 
   return (
@@ -49,6 +51,7 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
                     <div><span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black text-blue-700">{policy.category}</span><h3 className="mt-3 text-lg font-black text-slate-900">{policy.title}</h3></div>
                     <div className="shrink-0 rounded-xl bg-emerald-50 px-3 py-2 text-center"><div className="text-xl font-black text-emerald-700">{policy.match_score}<span className="text-xs">점</span></div><div className="text-[10px] font-bold text-emerald-700">매칭</div></div>
                   </div>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-500">자동 비교 가능한 조건을 충족한 사전 안내입니다. 최종 수급 여부는 담당 기관에 확인해 주세요.</p>
                   <p className="mt-4 border-t border-slate-100 pt-3 text-sm font-bold text-slate-600">지원 내용 <span className="ml-2 text-slate-900">{policy.support_amount}</span></p>
                 </li>
               ))}
@@ -69,6 +72,13 @@ export default function ResultPage({ analysis, setPage }: { analysis: WelfareAna
               {conditionAnalyses.map(policy => (
                 <li key={policy.policy_id} className="rounded-2xl border-2 border-slate-200 bg-white p-5">
                   <h3 className="mb-4 font-black text-slate-900">{policy.title}</h3>
+                  <div role="status" className={`mb-4 rounded-xl px-4 py-3 text-sm font-bold ${policy.status === 'needs_review' ? 'bg-amber-50 text-amber-900' : 'bg-orange-50 text-orange-900'}`}>
+                    {policy.status === 'needs_review'
+                      ? policy.gap_conditions.length > 0
+                        ? '자동 비교에서 미충족 항목이 확인됐지만 추가 확인 조건도 있어 현재 자격을 확정할 수 없습니다.'
+                        : '추가 확인이 필요한 조건이 있어 현재 자격을 확정할 수 없습니다.'
+                      : '자동 비교된 조건 중 미충족 항목이 있습니다. 이 결과는 사전 분석이며 최종 수급 판정은 담당 기관에 확인해 주세요.'}
+                  </div>
                   <div className="space-y-3">
                     {[...policy.gap_conditions, ...policy.review_conditions].map((condition, index) => (
                       <div key={`${condition.condition_type}-${index}`} className="rounded-xl bg-slate-50 p-4">

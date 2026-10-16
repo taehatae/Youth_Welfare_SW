@@ -311,7 +311,9 @@ class EligibilityMatchingService:
             else 0.0
         )
 
-        if gaps:
+        if gaps and review:
+            status = "needs_review"
+        elif gaps:
             status = "ineligible"
         elif review or evaluated_count == 0:
             status = "needs_review"
