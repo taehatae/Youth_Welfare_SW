@@ -1,157 +1,138 @@
-import type { Page } from '../../types/page'
-import type { Policy } from '../../types/policy'
-import { POLICIES } from '../../data/policies'
-import { LogoMark } from '../../components/brand/LogoMark'
-import { StatusPill } from '../../components/policy/PolicyStatus'
+import "./dashboard.css"
+import PageHeading from "../../components/layout/PageHeading"
+import { useState } from "react"
+import type { Page } from "../../types/page"
+import type {
+  AnalysisSession,
+  ApplicationState,
+} from "../../services/analysisSession"
+import {
+  applicationLabels,
+  applicationState,
+  formatTime,
+  koreaDate,
+} from "../../services/analysisSession"
+import { EMPLOYMENT } from "../../data/profileOptions"
+import MatchedPolicyCard from "../../components/policy/MatchedPolicyCard"
 
-export default function DashboardPage({ setPage, setSelectedPolicy }: { setPage: (p: Page) => void; setSelectedPolicy: (p: Policy) => void }) {
-  const eligible = POLICIES.filter(p => p.status === 'eligible')
-  const potential = POLICIES.filter(p => p.status === 'potential')
-  const ineligible = POLICIES.filter(p => p.status === 'ineligible')
-
-  return (
-    <div className="pb-20 md:pb-0">
-      {/* Header */}
-      <div className="bg-slate-900 border-b-2 border-slate-800 py-8 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="text-emerald-400 text-xs font-black tracking-widest mb-1">MY DASHBOARD</div>
-            <h1 className="text-2xl font-black text-white">나의 복지 현황</h1>
-            <p className="text-slate-400 text-xs mt-1">2026.09.23 기준 진단 결과</p>
-          </div>
-          <button onClick={() => setPage('diagnosis')}
-            className="bg-blue-600 text-white font-black px-5 py-2.5 rounded-xl border border-blue-500 hover:bg-blue-500 transition-colors text-sm">
-            재진단하기 →
-          </button>
-        </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        {/* Overview bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: '분석 정책', val: POLICIES.length, unit: '개', bg: 'bg-slate-100 border-slate-200', num: 'text-slate-900' },
-            { label: '신청 가능', val: eligible.length, unit: '개', bg: 'bg-emerald-50 border-emerald-300', num: 'text-emerald-700' },
-            { label: '추가 확인', val: potential.length, unit: '개', bg: 'bg-blue-50 border-blue-300', num: 'text-blue-700' },
-            { label: '조건 미충족', val: ineligible.length, unit: '개', bg: 'bg-orange-50 border-orange-300', num: 'text-orange-700' },
-          ].map((s, i) => (
-            <div key={i} className={`${s.bg} border-2 rounded-2xl p-5`}>
-              <div className={`text-4xl font-black ${s.num} mb-1`}>{s.val}<span className="text-lg font-black ml-1">{s.unit}</span></div>
-              <div className="text-slate-500 text-xs font-bold">{s.label}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
-            {/* Eligible */}
-            <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 bg-emerald-50 border-b border-emerald-200">
-                <div className="font-black text-emerald-900">지금 신청 가능한 정책</div>
-                <span className="bg-emerald-500 text-white text-xs font-black px-2.5 py-1 rounded-full">{eligible.length}개</span>
-              </div>
-              <div className="p-4 space-y-2">
-                {eligible.map(p => (
-                  <div key={p.id} onClick={() => { setSelectedPolicy(p); setPage('detail') }}
-                    className="flex items-center gap-4 p-3.5 border border-slate-100 rounded-xl hover:border-emerald-300 hover:bg-emerald-50/50 transition-all cursor-pointer group">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{p.emoji}</div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-black text-slate-800 text-sm group-hover:text-emerald-700 transition-colors">{p.name}</div>
-                      <div className="text-slate-500 text-xs mt-0.5">{p.benefit}</div>
-                    </div>
-                    <span className="text-emerald-500 font-black text-lg flex-shrink-0">✓</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Potential */}
-            <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 bg-blue-50 border-b border-blue-200">
-                <div className="font-black text-blue-900">추가 확인이 필요한 정책</div>
-                <span className="bg-blue-500 text-white text-xs font-black px-2.5 py-1 rounded-full">{potential.length}개</span>
-              </div>
-              <div className="p-4 space-y-2">
-                {potential.map(p => {
-                  const met = p.conditions.filter(c => c.result === 'eligible').length
-                  const total = p.conditions.length
-                  return (
-                    <div key={p.id} onClick={() => { setSelectedPolicy(p); setPage('detail') }}
-                      className="flex items-center gap-4 p-3.5 border border-slate-100 rounded-xl hover:border-blue-300 hover:bg-blue-50/50 transition-all cursor-pointer group">
-                      <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{p.emoji}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-black text-slate-800 text-sm group-hover:text-blue-700 transition-colors">{p.name}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden max-w-20">
-                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(met / total) * 100}%` }} />
-                          </div>
-                          <span className="text-xs text-slate-400 font-bold">{met}/{total}</span>
-                        </div>
-                      </div>
-                      <button onClick={e => { e.stopPropagation(); setPage('diagnosis') }}
-                        className="text-xs font-black border border-blue-200 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors whitespace-nowrap flex-shrink-0">
-                        확인 →
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-5">
-            {/* Deadline */}
-            <div className="bg-white border-2 border-slate-200 rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 bg-orange-50 border-b border-orange-200">
-                <span className="text-orange-500 text-base">⏰</span>
-                <div className="font-black text-orange-900 text-sm">신청기간 임박</div>
-              </div>
-              <div className="p-4 space-y-3">
-                {POLICIES.filter(p => p.period !== '상시 모집' && p.period !== '상시 신청').slice(0, 2).map(p => (
-                  <div key={p.id} className="p-3 bg-orange-50 border border-orange-200 rounded-xl cursor-pointer hover:bg-orange-100 transition-colors" onClick={() => { setSelectedPolicy(p); setPage('detail') }}>
-                    <div className="font-black text-slate-900 text-sm mb-1">{p.emoji} {p.name}</div>
-                    <div className="text-orange-600 text-xs font-bold">마감: {p.period.split('~')[1]?.trim() || p.period}</div>
-                    <div className="mt-2"><StatusPill status={p.status} /></div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick links */}
-            <div className="bg-white border-2 border-slate-200 rounded-2xl p-5">
-              <div className="font-black text-slate-900 text-sm mb-4">빠른 메뉴</div>
-              <div className="space-y-1">
-                {[
-                  { label: '정책 더 찾아보기', icon: '🔍', action: () => setPage('explorer') },
-                  { label: '진단 다시 하기', icon: '📋', action: () => setPage('diagnosis') },
-                  { label: 'Delta 분석 보기', icon: '△', action: () => setPage('result') },
-                ].map((a, i) => (
-                  <button key={i} onClick={a.action}
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left hover:bg-slate-50 transition-colors group border border-transparent hover:border-slate-200">
-                    <span className="text-base w-6 text-center">{a.icon}</span>
-                    <span className="text-sm font-black text-slate-700 group-hover:text-blue-600 transition-colors flex-1">{a.label}</span>
-                    <span className="text-slate-300 group-hover:text-blue-400 transition-colors font-black">→</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Logo card */}
-            <div className="bg-slate-900 rounded-2xl border-2 border-slate-800 p-5 text-center">
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <LogoMark size={28} />
-                <div className="text-left">
-                  <div className="text-white font-black text-base leading-none">자격있청</div>
-                  <div className="text-blue-400 text-[8px] font-black tracking-widest">FOR YOUTH</div>
-                </div>
-              </div>
-              <p className="text-slate-400 text-xs leading-relaxed">데이터로 더 정확하게<br/>청년의 내일을 더 가깝게</p>
-              <div className="mt-3 text-[10px] text-slate-600">데이터 기준: 2026.09.23</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+export default function DashboardPage({
+  session,
+  setPage,
+  refresh,
+  busy,
+  error,
+  clear,
+}: {
+  session: AnalysisSession
+  setPage: (page: Page) => void
+  refresh: () => Promise<void>
+  busy: boolean
+  error: string
+  clear: () => void
+}) {
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [filter, setFilter] = useState<ApplicationState | "all">("all")
+  const current = session.current
+  if (!current)
+    return (
+      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <PageHeading eyebrow="저장한 조건으로 이어가는 확인" title="나의 현황" description="내 정보는 저장하고, 정책의 변화는 다시 조회하세요. 진단 당시 결과와 최신 현황을 각각 확인할 수 있어요." />
+        <div className="interface-empty"><span className="interface-empty-icon" aria-hidden="true">↻</span><h2>내 정보가 있으면, 다음 기회도 찾을 수 있어요</h2><p>먼저 자격 진단을 완료해주세요. 이후 현황 새로고침으로 추가된 정책과 신청 기간 변화를 살펴볼 수 있어요.</p><button onClick={() => setPage("diagnosis")} className="interface-primary">내 정보 입력하기 →</button></div>
+      </section>
+    )
+  const date = koreaDate(new Date(current.checkedAt))
+  const currentIds = new Set(
+    current.analysis.matched.policies.map((p) => p.policy_id),
   )
+  const previousIds = new Set(
+    session.previous?.analysis.matched.policies.map((p) => p.policy_id),
+  )
+  const added = session.previous
+    ? current.analysis.matched.policies.filter(
+        (p) => !previousIds.has(p.policy_id),
+      )
+    : []
+  const oldPolicies = session.knownPolicies
+  const disappeared = [
+    ...new Map(
+      oldPolicies
+        .filter((p) => !currentIds.has(p.policy_id))
+        .map((p) => [p.policy_id, p]),
+    ).values(),
+  ]
+  const ended = disappeared.filter(
+    (p) => applicationState(p, date) === "expired",
+  )
+  const unavailable = disappeared.filter(
+    (p) => applicationState(p, date) !== "expired",
+  )
+  const policies = [...current.analysis.matched.policies, ...ended]
+  const states: ApplicationState[] = ["open", "upcoming", "unknown", "expired"]
+  const profile = current.profile
+  const counts = Object.fromEntries(states.map(state => [state, policies.filter(p => applicationState(p, date) === state).length])) as Record<ApplicationState, number>
+  const descriptions: Record<ApplicationState, string> = {
+    open: '공식 공고에서 세부 자격과 마감 시간을 확인해주세요.',
+    upcoming: '접수 시작일을 확인하고 필요한 서류를 준비하세요.',
+    unknown: '날짜가 제공되지 않아 공식 공고 확인이 필요해요.',
+    expired: '조회 기준일에 신청 기한이 지난 정책이에요.',
+  }
+  const renderCards = (state: ApplicationState) => {
+    const list = policies.filter(policy => applicationState(policy, date) === state)
+    return list.length ? <div className={list.length > 1 ? 'dashboard-policy-grid' : 'dashboard-policy-single'}>
+      {list.map(policy => <MatchedPolicyCard key={policy.policy_id} policy={policy} date={date} isNew={added.some(item => item.policy_id === policy.policy_id)} />)}
+    </div> : <p className="dashboard-no-policies">이 상태에 해당하는 정책이 없어요.</p>
+  }
+  return <section className="dashboard-page">
+    <PageHeading eyebrow="내 조건은 저장하고, 기회는 다시 찾고" title="나의 현황" description="마지막 조회 결과를 한눈에 확인하세요. 새로고침하면 저장된 프로필로 정책을 다시 찾아요."
+      action={<button onClick={() => void refresh()} disabled={busy} className="interface-primary">{busy ? '조회 중…' : '↻ 현황 새로고침'}</button>} />
+
+    <section className="dashboard-summary" aria-labelledby="dashboard-summary-title">
+      <div className="dashboard-section-heading"><div><p className="dashboard-eyebrow">01 / 한눈에 보기</p><h2 id="dashboard-summary-title">내 정책 현황</h2></div><p className="dashboard-date">조회 기준 {date} · 한국시간</p></div>
+      <div className="dashboard-stat-grid">
+        {states.map(state => <button key={state} type="button" data-status={state} aria-pressed={filter === state} className="dashboard-stat" onClick={() => setFilter(filter === state ? 'all' : state)}>
+          <span className="dashboard-stat-label">{applicationLabels[state]}<span aria-hidden="true">{state === 'open' ? '↗' : state === 'upcoming' ? '◷' : state === 'unknown' ? '?' : '✓'}</span></span>
+          <strong>{counts[state]}<small>개</small></strong><span className="dashboard-stat-hint">{filter === state ? '전체 목록으로 돌아가기' : '해당 정책 모아보기 →'}</span>
+        </button>)}
+      </div>
+      <div className="dashboard-update" aria-live="polite"><div><span className="dashboard-update-icon" aria-hidden="true">↻</span><div><strong>{session.previous ? `직전 조회보다 ${added.length}개 정책이 추가됐어요` : '첫 조회 결과를 저장했어요'}</strong><p>{session.previous ? '추가 표시는 이번에 새로 조회된 정책을 뜻하며, 새 공고 발표와는 다릅니다.' : '다음 새로고침부터 직전 조회와 비교해 추가된 정책을 알려드려요.'}</p></div></div><time dateTime={current.checkedAt}>마지막 조회<br />{formatTime(current.checkedAt)}</time></div>
+      {error && <p role="alert" className="dashboard-error">{error} 마지막으로 조회한 결과를 유지하고 있어요.</p>}
+    </section>
+
+    <div className="dashboard-body">
+      <aside className="dashboard-sidebar" aria-labelledby="saved-profile-title">
+        <section className="dashboard-profile-card">
+          <p className="dashboard-eyebrow">02 / 저장된 내 정보</p><h2 id="saved-profile-title">조회에 사용하는 프로필</h2>
+          <div className="dashboard-profile-badge"><span aria-hidden="true">✓</span><div><strong>진단 완료 프로필</strong><p>재진단을 완료하면 갱신돼요</p></div></div>
+          <dl className="dashboard-profile-facts"><div><dt>나이</dt><dd>만 {profile.age}세</dd></div><div><dt>거주지</dt><dd>{profile.region}</dd></div><div><dt>고용 상태</dt><dd>{EMPLOYMENT.find(([id]) => id === profile.employment_status)?.[1] ?? profile.employment_status}</dd></div></dl>
+          <details className="dashboard-income"><summary>저장된 소득 확인</summary><p>월 {profile.income_level.toLocaleString('ko-KR')}원</p></details>
+          <button disabled={busy} onClick={() => setPage('diagnosis')} className="dashboard-edit">내 정보 수정 후 재진단 →</button>
+          <p className="dashboard-small">수정 중인 정보는 재진단을 완료한 뒤 현황에 반영됩니다.</p>
+        </section>
+        <section className="dashboard-record-card"><span className="dashboard-eyebrow">진단 당시의 기록</span><h2>이전 진단도 그대로</h2><p>현황을 새로 조회해도 진단 시점의 결과는 유지돼요.</p><button onClick={() => setPage('result')}>진단 결과 보기 →</button></section>
+      </aside>
+
+      <section className="dashboard-policy-section" aria-labelledby="dashboard-policies-title">
+        <div className="dashboard-section-heading"><div><p className="dashboard-eyebrow">03 / 정책 살펴보기</p><h2 id="dashboard-policies-title">상태별 정책 목록</h2></div><span className="dashboard-total">총 {policies.length}개</span></div>
+        <div className="dashboard-filters" aria-label="정책 상태 필터">
+          {(['all', ...states] as const).map(state => <button key={state} aria-pressed={filter === state} onClick={() => setFilter(state)}>{state === 'all' ? '전체' : applicationLabels[state]} <span>{state === 'all' ? policies.length : counts[state]}</span></button>)}
+        </div>
+        <p className="dashboard-small dashboard-policy-note">접수 기간 내 정책도 추가 자격 확인이 필요할 수 있어요.</p>
+        {states.filter(state => filter === 'all' || filter === state).map(state => {
+          if (filter === 'all' && counts[state] === 0) return null
+          return state === 'expired' ? <details key={state} className="dashboard-policy-group dashboard-ended" open={filter === 'expired'}>
+            <summary><span>신청 종료 <b>{counts[state]}</b></span><span className="dashboard-small">목록 펼치기 / 접기</span></summary><p className="dashboard-group-description">{descriptions[state]}</p>{renderCards(state)}
+          </details> : <section key={state} className="dashboard-policy-group" data-status={state} aria-labelledby={'dashboard-' + state}>
+            <h3 id={'dashboard-' + state}>{applicationLabels[state]} <b>{counts[state]}</b></h3><p className="dashboard-group-description">{descriptions[state]}</p>{renderCards(state)}
+          </section>
+        })}
+        {policies.length === 0 && filter === 'all' && <p className="dashboard-no-policies">현재 조회된 맞춤 정책이 없어요. 내 정보를 수정하거나 나중에 다시 조회해주세요.</p>}
+        {unavailable.length > 0 && <details className="dashboard-policy-group dashboard-ended"><summary>이번 조회에서 제외된 정책 <b>{unavailable.length}</b></summary><p className="dashboard-group-description">종료일이 확인되지 않아 신청 종료로 단정하지 않았어요.</p><ul className="list-inside list-disc text-sm">{unavailable.map(policy => <li key={policy.policy_id}>{policy.title}</li>)}</ul></details>}
+      </section>
+    </div>
+    <footer className="dashboard-footer">
+      <details><summary>조회 기준 및 저장 정보 관리</summary><p>새로고침은 서버에 등록된 정책을 재조회합니다. 공공데이터 자체의 수집 시각과는 다를 수 있어요.</p><p>입력 정보와 기록은 이 브라우저에 저장되며, 다른 기기와 자동으로 공유되지 않아요.</p>
+        {!confirmClear ? <button onClick={() => setConfirmClear(true)} className="dashboard-delete">이 브라우저의 저장 정보 삭제</button> : <div className="dashboard-delete-confirm"><span>입력 정보와 조회 기록을 삭제할까요? 서버 기록은 유지됩니다.</span><button disabled={busy} onClick={clear}>삭제</button><button onClick={() => setConfirmClear(false)}>취소</button></div>}
+      </details>
+    </footer>
+  </section>
 }
