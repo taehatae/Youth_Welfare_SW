@@ -1,0 +1,70 @@
+:root {
+  --youth-ink: #14213b;
+  --youth-blue: #2456d8;
+  --youth-teal: #087f69;
+  --youth-line: #d4deeb;
+  --youth-surface: #f6f8fc;
+}
+.interface-workspace { min-height: calc(100vh - 108px); background: var(--youth-surface); color: var(--youth-ink); padding-block: 1px 36px; }
+.interface-heading { padding: 26px 28px; border: 1px solid #c7d6f0; border-radius: 18px; background: #eef3ff; background-image: radial-gradient(#c8d5f0 1px, transparent 1px); background-size: 22px 22px; }
+.interface-heading-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.interface-eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 5px 10px; border: 1px solid #c4d3ee; border-radius: 6px; background: white; color: #294c91; font-size: 11px; font-weight: 650; margin-bottom: 13px; }
+.interface-eyebrow span { color: var(--youth-blue); }
+.interface-heading h1 { font-size: clamp(26px, 3.5vw, 34px); font-weight: 750; letter-spacing: -.045em; line-height: 1.3; }
+.interface-description { max-width: 680px; font-size: 14px; line-height: 1.8; color: #50617c; margin-top: 10px; }
+.interface-heading-action { flex-shrink: 0; }
+.interface-heading-content { margin-top: 22px; }
+.interface-primary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--youth-ink); border-radius: 10px; background: var(--youth-blue); color: white; padding: 12px 19px; font-size: 14px; font-weight: 650; box-shadow: 2px 2px 0 var(--youth-ink); transition: background .15s; }
+.interface-primary:hover { background: #1d46b1; }
+.interface-primary:disabled { opacity: .5; cursor: wait; box-shadow: none; }
+.interface-workspace button:not(:disabled), .interface-login-button, .interface-login-dialog button { cursor: pointer; }
+.interface-workspace :is(button, a, input, select):focus-visible, .interface-login-button:focus-visible, .interface-login-dialog button:focus-visible { outline: 3px solid #2456d8; outline-offset: 3px; }
+.interface-panel { border: 1px solid var(--youth-line); border-radius: 14px; background: #fff; box-shadow: 0 3px 0 #e8eef8; }
+.interface-form { border: 1px solid #bcccE8; border-radius: 16px; box-shadow: 4px 4px 0 #e0e8f7; }
+.interface-form h2 { padding-bottom: 18px; border-bottom: 1px solid #e3eaf4; letter-spacing: -.025em; }
+.interface-form select { border-color: #c9d5e5; background-color: #fcfdff; }
+.interface-form select:disabled { background-color: #f0f3f8; }
+.interface-steps { padding: 10px; border: 1px solid #d4deeb; border-radius: 12px; background: #fff; }
+.interface-profile { background: #fff; border-left: 4px solid var(--youth-blue); }
+.interface-metrics > div { background: #fff; border: 1px solid #d4deeb; border-top: 3px solid #2456d8; border-radius: 12px; color: #14213b; }
+.interface-metrics > div:first-child { border-top-color: #08977b; background: #edf8f4; }
+.interface-metrics > div:nth-child(2) { background: #eef3ff; }
+.interface-metrics > div:nth-child(3) { border-top-color: #b87b25; background: #fff8e9; }
+.interface-metrics > div:nth-child(4) { border-top-color: #8290a5; background: #f0f3f7; }
+.interface-result-block { padding: 24px; border: 1px solid #d4deeb; border-radius: 16px; background: white; }
+.interface-result-block > div:first-child h2 { letter-spacing: -.03em; }
+.interface-policy-card { border: 1px solid #d4deeb; border-top: 3px solid #2456d8; border-radius: 14px; box-shadow: 0 3px 0 #e8eef8; }
+.interface-policy-card[data-status="open"] { border-top-color: #08977b; }
+.interface-policy-card[data-status="expired"] { border-top-color: #8290a5; }
+.interface-empty { max-width: 700px; padding: 38px 26px; margin: 28px auto 0; border: 1px solid #cbd8ec; border-radius: 18px; background: #fff; text-align: center; box-shadow: 5px 5px 0 #e3eaf7; }
+.interface-empty-icon { display: grid; place-items: center; margin: 0 auto 20px; width: 58px; height: 58px; border: 1px solid #bfd0eb; border-radius: 16px; background: #eef3ff; color: var(--youth-blue); font-size: 26px; }
+.interface-empty h2 { font-size: 22px; font-weight: 700; letter-spacing: -.035em; }
+.interface-empty p { max-width: 470px; margin: 12px auto 22px; color: #586a83; font-size: 14px; line-height: 1.8; }
+.interface-search { background: #fff; color: var(--youth-ink); border: 1px solid #aebfdd; box-shadow: 3px 3px 0 #dbe5f6; }
+.interface-login-button { border: 1px solid #cad5e5; border-radius: 8px; padding: 8px 12px; color: #344866; background: #fff; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.interface-login-button:hover { background: #eef3ff; border-color: #a9bce0; }
+.interface-login-dialog { margin: auto; padding: 0; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; border: 1px solid #bccde9; border-radius: 20px; color: var(--youth-ink); background: white; box-shadow: 0 24px 80px #0f21443b; }
+.interface-login-dialog::backdrop { background: #14213b85; backdrop-filter: blur(3px); }
+.interface-login-content { position: relative; padding: 30px; }
+.interface-login-content > img { margin-bottom: 24px; }
+.interface-dialog-close { position: absolute; right: 14px; top: 12px; }
+.interface-dialog-close button { width: 36px; height: 36px; border-radius: 8px; color: #52637d; font-size: 26px; }
+.interface-login-status { display: inline-block; padding: 5px 9px; border-radius: 5px; background: #eef3ff; color: #2456d8; font-size: 12px; font-weight: 650; }
+.interface-login-dialog h2 { margin-top: 14px; font-size: 23px; line-height: 1.4; font-weight: 700; letter-spacing: -.04em; }
+.interface-login-dialog p { margin-top: 12px; font-size: 14px; line-height: 1.8; color: #52637d; }
+.interface-login-note { margin-block: 20px; padding: 14px; border: 1px solid #cce8dd; border-radius: 10px; background: #eff8f4; color: #256452; font-size: 13px; line-height: 1.7; }
+@media (max-width: 1023px) {
+  .interface-workspace { padding-bottom: 100px; }
+  .youth-home { padding-bottom: 80px; }
+}
+@media (max-width: 639px) {
+  .interface-nav-brand img { width: 112px; height: 56px; }
+  .interface-login-button { padding-inline: 10px; }
+  .interface-heading { padding: 21px 18px; border-radius: 14px; }
+  .interface-heading-top { flex-direction: column; align-items: stretch; gap: 16px; }
+  .interface-heading-action button { width: 100%; }
+  .interface-result-block { padding: 18px; }
+  .interface-login-content { padding: 26px 22px; }
+  .interface-empty { padding: 30px 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .interface-primary { transition: none; } }
