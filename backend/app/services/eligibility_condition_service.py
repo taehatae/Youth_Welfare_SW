@@ -76,6 +76,69 @@ class EligibilityConditionService:
         "자세한 내용은 문의",
     )
 
+    RESIDUAL_CONNECTORS = (
+        "이며",
+        "이고",
+        "또는",
+        "그리고",
+        "및",
+        "와",
+        "과",
+        "인",
+    )
+
+    @staticmethod
+    def _term_spans(text: str, terms: tuple[str, ...]) -> list[tuple[int, int]]:
+        spans = []
+        for term in terms:
+            spans.extend(
+                (match.start(), match.end())
+                for match in re.finditer(re.escape(term), text)
+            )
+        return spans
+
+    @classmethod
+    def _unrecognized_residual(
+        cls,
+        line: str,
+        recognized_spans: list[tuple[int, int]],
+    ) -> str:
+        covered = [False] * len(line)
+        for start, end in recognized_spans:
+            for index in range(start, end):
+                covered[index] = True
+
+        residual = "".join(
+            " " if covered[index] else character
+            for index, character in enumerate(line)
+        )
+        residual = re.sub(r"[\s,，;；:：·•]+", " ", residual).strip()
+
+        connector_pattern = "|".join(
+            re.escape(connector)
+            for connector in sorted(
+                cls.RESIDUAL_CONNECTORS,
+                key=len,
+                reverse=True,
+            )
+        )
+        residual = re.sub(
+            rf"^(?:(?:{connector_pattern})\s*)+",
+            "",
+            residual,
+        )
+        residual = re.sub(
+            rf"(?:\s*(?:{connector_pattern}))+\s*$",
+            "",
+            residual,
+        ).strip()
+
+        # 연령 조건 뒤에 붙은 일반적인 대상 명칭만 남은 경우는 새 조건으로 보지 않는다.
+        if residual in {"청년", "청년층", "대상", "대상자", "자"}:
+            return ""
+
+        return residual
+
     @classmethod
     def parse_text(
         cls,
@@ -105,6 +168,7 @@ class EligibilityConditionService:
 
         for line in lines:
             extracted = []
+            recognized_spans = []
 
             # 1. 연령 범위: 예) 19~34세
             age_ranges = list(cls.AGE_RANGE_PATTERN.finditer(line))
@@ -114,6 +178,7 @@ class EligibilityConditionService:
                 upper = int(match.group(2))
 
                 if lower <= upper:
+                    recognized_spans.append(match.span())
                     extracted.append({
                         "condition_type": "age",
                         "operator": "between",
@@ -136,6 +201,7 @@ class EligibilityConditionService:
                 ):
                     continue
 
+                recognized_spans.append(match.span())
                 age = int(match.group(1))
 
                 extracted.append({
@@ -154,6 +220,7 @@ class EligibilityConditionService:
             # 예) 기준 중위소득 120% 이하
             # 예) 중위소득 50%이하
             for match in cls.INCOME_RATIO_PATTERN.finditer(line):
+                recognized_spans.append(match.span())
                 percentage = float(match.group(1))
 
                 extracted.append({
@@ -171,6 +238,7 @@ class EligibilityConditionService:
 
             # 4. 명시적인 월 소득 금액
             for match in cls.MONTHLY_INCOME_PATTERN.finditer(line):
+                recognized_spans.append(match.span())
                 amount = int(match.group(1).replace(",", ""))
 
                 if "만" in match.group(2):
@@ -197,13 +265,14 @@ class EligibilityConditionService:
                 })
 
             # 5. 수급 자격 및 대상 집단
-            matched_target_terms = [
-                term
-                for term in cls.TARGET_GROUP_TERMS
-                if term in line
-            ]
+            target_group_spans = cls._term_spans(
+                line,
+                cls.TARGET_GROUP_TERMS,
+            )
+            matched_target_terms = bool(target_group_spans)
 
             if matched_target_terms:
+                recognized_spans.extend(target_group_spans)
                 extracted.append({
                     "condition_type": "target_group",
                     "operator": "contains",
@@ -218,7 +287,12 @@ class EligibilityConditionService:
                 })
 
             # 6. 금융기관 등 외부 기관의 심사 조건
-            if any(term in line for term in cls.EXTERNAL_REVIEW_TERMS):
+            external_review_spans = cls._term_spans(
+                line,
+                cls.EXTERNAL_REVIEW_TERMS,
+            )
+            if external_review_spans:
+                recognized_spans.extend(external_review_spans)
                 extracted.append({
                     "condition_type": "external_review",
                     "operator": "unknown",
@@ -232,7 +306,12 @@ class EligibilityConditionService:
                 })
 
             # 7. 단순 안내 문구
-            if any(term in line for term in cls.INFORMATIONAL_TERMS):
+            informational_spans = cls._term_spans(
+                line,
+                cls.INFORMATIONAL_TERMS,
+            )
+            if informational_spans:
+                recognized_spans.extend(informational_spans)
                 extracted.append({
                     "condition_type": "informational",
                     "operator": "unknown",
@@ -256,7 +335,9 @@ class EligibilityConditionService:
                 "구직",
             )
 
-            if any(term in line for term in employment_terms):
+            employment_spans = cls._term_spans(line, employment_terms)
+            if employment_spans:
+                recognized_spans.extend(employment_spans)
                 extracted.append({
                     "condition_type": "employment",
                     "operator": "contains",
@@ -279,7 +360,9 @@ class EligibilityConditionService:
                 "지역 내",
             )
 
-            if any(term in line for term in region_terms):
+            region_spans = cls._term_spans(line, region_terms)
+            if region_spans:
+                recognized_spans.extend(region_spans)
                 extracted.append({
                     "condition_type": "region",
                     "operator": "contains",
@@ -292,12 +375,13 @@ class EligibilityConditionService:
                     "confidence": 0.5,
                 })
 
-            # 10. 위 규칙으로 분류하지 못한 원문도 보존
-            if not extracted:
+            # 10. 인식된 조건 바깥의 잔여 문구도 별도 검토 조건으로 보존한다.
+            residual = cls._unrecognized_residual(line, recognized_spans)
+            if residual:
                 extracted.append({
                     "condition_type": "other",
                     "operator": "unknown",
-                    "value_text": line,
+                    "value_text": residual,
                     "value_number": None,
                     "upper_value_number": None,
                     "unit": "",

@@ -33,6 +33,7 @@ export default function ResultPage({
 
   const conditionAnalyses = (analysis.matched.analysis_results ?? []).filter(
     (policy) =>
+      policy.status === "needs_review" ||
       policy.gap_conditions.length > 0 || policy.review_conditions.length > 0,
   )
 
@@ -121,6 +122,13 @@ export default function ResultPage({
                   <h3 className="mb-4 font-semibold text-slate-900">
                     {policy.title}
                   </h3>
+                  <div role="status" className={`mb-4 rounded-xl px-4 py-3 text-sm font-semibold ${policy.status === "needs_review" ? "bg-amber-50 text-amber-900" : "bg-orange-50 text-orange-900"}`}>
+                    {policy.status === "needs_review"
+                      ? policy.gap_conditions.length > 0
+                        ? "자동 비교에서 미충족 항목이 확인됐지만 추가 확인 조건도 있어 현재 자격을 확정할 수 없습니다."
+                        : "추가 확인이 필요한 조건이 있어 현재 자격을 확정할 수 없습니다."
+                      : "자동 비교된 조건 중 미충족 항목이 있습니다. 이 결과는 사전 분석이며 최종 수급 판정은 담당 기관에 확인해 주세요."}
+                  </div>
                   <div className="space-y-3">
                     {[
                       ...policy.gap_conditions,

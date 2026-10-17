@@ -37,6 +37,9 @@ export default function MatchedPolicyCard({
       <h3 className="mt-3 text-lg font-semibold text-slate-900">
         {policy.title}
       </h3>
+      <p className="mt-3 text-xs leading-relaxed text-slate-500">
+        자동 비교 가능한 조건을 충족한 사전 안내입니다. 최종 수급 여부는 담당 기관에 확인해 주세요.
+      </p>
       <p className="mt-3 text-sm text-slate-700">
         {policy.support_amount || "지원 내용 확인 필요"}
       </p>
