@@ -1,0 +1,120 @@
+.youth-home { color: #14213b; background: #fff; padding-bottom: 16px; }
+.youth-home button { cursor: pointer; }
+.youth-home button:focus-visible { outline: 3px solid #2563eb; outline-offset: 5px; }
+.youth-home-width { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
+.youth-ticker { display: flex; align-items: center; min-height: 43px; background: #14213b; color: #fff; overflow: hidden; font-size: 12px; font-weight: 600; }
+.youth-ticker-label { align-self: stretch; display: flex; align-items: center; gap: 16px; padding: 10px 22px; background: #c8f46c; color: #172a19; flex-shrink: 0; }
+.youth-ticker-window { flex: 1; min-width: 0; overflow: hidden; }
+.youth-ticker-track { display: flex; width: max-content; animation: youth-marquee 42s linear infinite; }
+.youth-ticker-group { display: flex; align-items: center; flex-shrink: 0; gap: 34px; padding: 0 17px; margin: 0; list-style: none; }
+.youth-ticker-group li { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.youth-ticker-group li > span { color: #c8f46c; }
+.youth-ticker-toggle { align-self: stretch; flex-shrink: 0; padding: 10px 18px; border-left: 1px solid #ffffff30; font-size: 11px; }
+@keyframes youth-marquee { to { transform: translateX(-50%); } }
+.youth-hero { background: #eef3ff; background-image: radial-gradient(#c8d5f0 1px, transparent 1px); background-size: 22px 22px; border-bottom: 1px solid #dce5f6; overflow: hidden; }
+.youth-hero-grid { display: grid; grid-template-columns: 1.08fr 1fr; align-items: center; gap: 70px; padding-block: 45px 40px; }
+.youth-eyebrow { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; padding: 6px 11px; border: 1px solid #bdccec; border-radius: 6px; background: #fff; color: #294c91; font-size: 12px; font-weight: 700; }
+.youth-eyebrow > span { color: #1d4ed8; font-size: 16px; }
+.youth-hero h1 { margin: 0; font-size: clamp(36px, 4.3vw, 57px); letter-spacing: -.055em; line-height: 1.2; font-weight: 850; }
+.youth-hero h1 > span { color: #2154d4; }
+.youth-hero-description { margin-top: 22px; color: #4a5b75; font-size: 16px; line-height: 1.8; }
+.youth-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 25px; }
+.youth-primary, .youth-secondary { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 15px 20px; border: 1.5px solid #162a50; border-radius: 10px; font-size: 14px; font-weight: 750; transition: transform .16s, box-shadow .16s; }
+.youth-primary { background: #2456d8; color: #fff; box-shadow: 3px 3px 0 #14213b; }
+.youth-secondary { background: #fff; color: #14213b; }
+.youth-primary:hover, .youth-secondary:hover { transform: translateY(-2px); box-shadow: 3px 5px 0 #14213b; }
+.youth-hero-note { margin-top: 16px; font-size: 12px; color: #55657f; line-height: 1.7; }
+.youth-value-tags { display: flex; flex-wrap: wrap; gap: 8px 17px; margin-top: 24px; color: #384b6b; font-size: 12px; font-weight: 600; }
+.youth-preview { position: relative; padding: 21px; border: 1.5px solid #14213b; border-radius: 20px; background: #dfe8fc; box-shadow: 7px 7px 0 #c4d4f3; }
+.youth-preview-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-weight: 750; font-size: 13px; margin-bottom: 17px; }
+.youth-example-label { padding: 4px 9px; border: 1px solid #b8c9ec; background: #f5f8ff; border-radius: 5px; font-size: 10px; color: #4b6085; font-weight: 500; }
+.youth-profile-strip { display: flex; align-items: center; gap: 11px; padding: 2px 0 17px; }
+.youth-profile-icon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; background: #2456d8; border: 1px solid #172c52; color: #c8f46c; border-radius: 12px; font-size: 22px; font-weight: 800; transform: rotate(-6deg); }
+.youth-profile-strip strong { font-size: 14px; }
+.youth-profile-strip p { font-size: 11px; margin-top: 4px; color: #576a8a; }
+.youth-spark { margin-left: auto; font-size: 35px; color: #2456d8; line-height: 1; }
+.youth-preview-card { background: #fff; border: 1px solid #14213b; border-radius: 12px; padding: 18px; box-shadow: 3px 3px 0 #b5c7e9; }
+.youth-card-kicker { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; font-size: 10px; color: #63708b; font-weight: 700; }
+.youth-status-dot { background: #edf6dd; padding: 4px 7px; color: #43671a; border-radius: 4px; }
+.youth-preview-card h2 { font-size: 19px; margin-top: 11px; font-weight: 750; letter-spacing: -.04em; }
+.youth-condition-list { display: grid; gap: 6px; margin-top: 15px; }
+.youth-condition-list > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 11px; background: #f6f8fc; font-size: 12px; border-radius: 5px; }
+.youth-condition-pass { color: #397025; font-weight: 650; }
+.youth-condition-review { color: #ab5415; font-weight: 650; }
+.youth-preview-card > p { margin-top: 12px; font-size: 11px; line-height: 1.7; color: #64728a; }
+.youth-next-card { display: flex; gap: 12px; align-items: center; position: relative; margin-top: 14px; background: #14213b; color: #fff; padding: 15px; border-radius: 11px; }
+.youth-refresh-icon { font-size: 32px; line-height: 1; color: #c8f46c; }
+.youth-next-card p { font-size: 10px; color: #c8f46c; font-weight: 650; }
+.youth-next-card h2 { margin-top: 4px; font-size: 14px; font-weight: 650; }
+.youth-next-card div > span { display: block; margin-top: 5px; color: #c0cce0; font-size: 11px; }
+.youth-preview-caption { margin-top: 13px; text-align: center; font-size: 10px; color: #506488; }
+.youth-topics { padding-block: 33px 28px; }
+.youth-section-heading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.youth-section-label { font-size: 11px; font-weight: 700; color: #2354ce; margin-bottom: 6px; }
+.youth-section-heading h2 { font-size: 25px; letter-spacing: -.04em; font-weight: 750; }
+.youth-text-link { display: flex; align-items: center; gap: 15px; font-weight: 650; font-size: 13px; padding-block: 8px; border-bottom: 1px solid #8290a8; }
+.youth-category-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.youth-category { padding: 19px; border: 1px solid #d4deeb; border-radius: 12px; }
+.youth-category-blue { background: #eaf0ff; }
+.youth-category-green { background: #edf5e5; }
+.youth-category-yellow { background: #fff4da; }
+.youth-category-purple { background: #f0ecfb; }
+.youth-category-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.youth-category-icon { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #14213b; border-radius: 9px; background: #ffffff90; font-size: 25px; font-weight: 500; }
+.youth-category-name { font-size: 11px; padding: 3px 9px; border-radius: 20px; border: 1px solid #14213b30; }
+.youth-category h3 { font-size: 15px; font-weight: 750; letter-spacing: -.025em; }
+.youth-category p { margin-top: 7px; font-size: 12px; color: #526078; }
+.youth-section-note { font-size: 11px; color: #64728a; line-height: 1.8; margin-top: 13px; }
+.youth-journey { background: #14213b; color: #fff; padding-block: 32px; }
+.youth-journey-inner { display: grid; grid-template-columns: 1fr 2.3fr; gap: 38px; }
+.youth-journey-heading > p { font-size: 11px; color: #c8f46c; margin-bottom: 10px; font-weight: 600; }
+.youth-journey-heading h2 { font-size: 23px; line-height: 1.4; font-weight: 700; letter-spacing: -.03em; }
+.youth-journey-heading > span { display: block; font-size: 11px; color: #a9bad4; margin-top: 12px; }
+.youth-journey-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.youth-journey-steps li { border-left: 1px solid #ffffff25; padding-left: 20px; }
+.youth-step-number { display: block; color: #c8f46c; font-size: 25px; font-weight: 500; margin-bottom: 16px; }
+.youth-journey-steps h3 { font-size: 14px; font-weight: 700; }
+.youth-journey-steps p { color: #b8c6dc; font-size: 12px; line-height: 1.8; margin-top: 9px; }
+.youth-home-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; padding-block: 23px; }
+.youth-home-footer strong { font-size: 16px; letter-spacing: -.04em; }
+.youth-home-footer strong > span { color: #2456d8; font-size: 9px; letter-spacing: .06em; margin-left: 4px; }
+.youth-home-footer p { font-size: 11px; color: #64728a; }
+.youth-home-footer button { margin-left: auto; font-size: 12px; font-weight: 650; color: #2456d8; padding-block: 8px; }
+@media (max-width: 900px) {
+  .youth-hero-grid { gap: 30px; }
+  .youth-hero h1 { font-size: 42px; }
+  .youth-primary, .youth-secondary { padding: 13px 15px; gap: 10px; }
+  .youth-category { padding: 15px; }
+  .youth-category h3 { font-size: 13px; }
+  .youth-journey-inner { grid-template-columns: 1fr; gap: 24px; }
+  .youth-journey-heading h2 br { display: none; }
+}
+@media (max-width: 767px) {
+  .youth-home { padding-bottom: 80px; }
+  .youth-home-width { width: calc(100% - 36px); }
+  .youth-ticker-label { padding-inline: 12px; gap: 7px; font-size: 11px; }
+  .youth-ticker-toggle { padding-inline: 12px; }
+  .youth-hero-grid { grid-template-columns: 1fr; padding-block: 30px; gap: 28px; }
+  .youth-hero h1 { font-size: clamp(35px, 8vw, 48px); }
+  .youth-hero-description { font-size: 15px; margin-top: 16px; }
+  .youth-eyebrow { margin-bottom: 16px; }
+  .youth-value-tags { margin-top: 18px; font-size: 11px; }
+  .youth-preview { width: min(100%, 460px); justify-self: center; padding: 17px; box-shadow: 4px 4px 0 #c4d4f3; }
+  .youth-topics { padding-block: 28px; }
+  .youth-section-heading h2 { font-size: 23px; }
+  .youth-category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .youth-category-top { margin-bottom: 14px; }
+  .youth-category p { font-size: 11px; }
+  .youth-journey-steps { grid-template-columns: 1fr; gap: 18px; }
+  .youth-journey-steps li { position: relative; padding-left: 49px; min-height: 55px; border-left: 0; }
+  .youth-step-number { position: absolute; left: 0; top: -5px; }
+  .youth-journey-steps p { margin-top: 4px; }
+  .youth-home-footer { gap: 7px 20px; }
+  .youth-home-footer p { flex-basis: 100%; order: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* 목록 이동 요청에 따라 재생하되, 움직임 감소 환경에서는 더 느리게 표시한다.
+     일시정지 버튼은 모든 환경에서 제공한다. */
+  .youth-ticker-track { animation-duration: 80s; }
+  .youth-primary, .youth-secondary { transition: none; }
+}

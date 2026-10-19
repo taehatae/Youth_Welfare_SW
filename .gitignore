@@ -13,6 +13,7 @@ node_modules/
 dist/
 build/
 .cache/
+!frontend/.env.demo
 .vite/
 vite.config.*.timestamp-*
 *.tsbuildinfo

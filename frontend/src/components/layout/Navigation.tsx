@@ -1,36 +1,51 @@
-import { useState } from 'react'
-import type { Page } from '../../types/page'
-import { LogoMark } from '../brand/LogoMark'
+import type { Page } from "../../types/page"
 
-export default function Navigation({ page, setPage }: { page: Page; setPage: (p: Page) => void }) {
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const links: { id: Page; label: string }[] = [
-    { id: 'home', label: '홈' },
-    { id: 'explorer', label: '정책 찾기' },
-    { id: 'diagnosis', label: '자격 진단' },
-    { id: 'result', label: '진단 결과' },
-    { id: 'dashboard', label: '나의 현황' },
+import { BrandLogo } from "../brand/BrandLogo"
+import LoginDialog from "./LoginDialog"
+
+export default function Navigation({
+  page,
+  setPage,
+}: {
+  page: Page
+  setPage: (p: Page) => void
+}) {
+  const links: Array<{ id: Page; label: string }> = [
+    { id: "home", label: "홈" },
+
+    { id: "explorer", label: "정책 찾기" },
+
+    { id: "diagnosis", label: "자격 진단" },
+
+    { id: "result", label: "진단 결과" },
+
+    { id: "dashboard", label: "나의 현황" },
   ]
+
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white border-b-2 border-slate-900">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <button onClick={() => setPage('home')} className="flex items-center gap-2.5">
-              <LogoMark size={32} />
-              <div className="flex flex-col leading-none -mt-0.5">
-                <span className="text-slate-900 font-black text-lg tracking-tighter">자격있청</span>
-                <span className="text-blue-600 text-[8px] font-black tracking-[0.15em] uppercase">For Youth</span>
-              </div>
-            </button>
+          <div className="flex items-center justify-between min-h-[72px] gap-3">
+            <a
+              href="#home"
+              onClick={() => setPage("home")}
+              className="interface-nav-brand flex shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              aria-label="자격있청 홈으로"
+            >
+              <BrandLogo />
+            </a>
 
-            <div className="hidden md:flex items-center">
-              {links.map(l => (
+            <div className="hidden lg:flex items-center">
+              {links.map((l) => (
                 <button
                   key={l.id}
+                  aria-current={page === l.id ? "page" : undefined}
                   onClick={() => setPage(l.id)}
                   className={`relative px-4 py-4 text-sm font-bold transition-colors ${
-                    page === l.id ? 'text-blue-600' : 'text-slate-500 hover:text-slate-900'
+                    page === l.id
+                      ? "text-blue-600"
+                      : "text-slate-500 hover:text-slate-900"
                   }`}
                 >
                   {l.label}
@@ -42,12 +57,12 @@ export default function Navigation({ page, setPage }: { page: Page; setPage: (p:
             </div>
 
             <div className="flex items-center gap-2">
-              <button className="hidden sm:block text-sm font-bold text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg transition-colors">로그인</button>
+              <LoginDialog />
               <button
-                onClick={() => setPage('diagnosis')}
-                className="bg-slate-900 text-white text-sm font-black px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                onClick={() => setPage("diagnosis")}
+                className="bg-slate-900 text-white text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
               >
-                진단 시작 →
+                진단 시작 <span className="hidden sm:inline" aria-hidden="true">→</span>
               </button>
             </div>
           </div>
@@ -55,18 +70,24 @@ export default function Navigation({ page, setPage }: { page: Page; setPage: (p:
       </nav>
 
       {/* Mobile bottom nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-slate-900 flex z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-300 flex z-50">
         {[
-          { id: 'home' as Page, icon: '🏠', label: '홈' },
-          { id: 'explorer' as Page, icon: '🔍', label: '정책' },
-          { id: 'diagnosis' as Page, icon: '📋', label: '진단' },
-          { id: 'dashboard' as Page, icon: '👤', label: '현황' },
-        ].map(l => (
+          { id: "home" as Page, icon: "🏠", label: "홈" },
+
+          { id: "explorer" as Page, icon: "🔍", label: "정책" },
+
+          { id: "diagnosis" as Page, icon: "📋", label: "진단" },
+
+          { id: "result" as Page, icon: "📊", label: "결과" },
+
+          { id: "dashboard" as Page, icon: "👤", label: "현황" },
+        ].map((l) => (
           <button
             key={l.id}
+            aria-current={page === l.id ? "page" : undefined}
             onClick={() => setPage(l.id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-[10px] font-black transition-colors ${
-              page === l.id ? 'text-blue-600' : 'text-slate-400'
+              page === l.id ? "text-blue-600" : "text-slate-400"
             }`}
           >
             <span className="text-xl leading-none">{l.icon}</span>
