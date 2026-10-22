@@ -14,6 +14,9 @@ import {
 } from "../../services/analysisSession"
 import { EMPLOYMENT } from "../../data/profileOptions"
 import MatchedPolicyCard from "../../components/policy/MatchedPolicyCard"
+import SavedPoliciesPanel from "../../components/policy/SavedPoliciesPanel"
+import type { PolicyRow, SavedPolicy } from "../../services/policyResults"
+import type { UserProfileInput } from "../../types/welfareApi"
 
 export default function DashboardPage({
   session,
@@ -22,6 +25,8 @@ export default function DashboardPage({
   busy,
   error,
   clear,
+  savedPolicies,
+  toggleSaved,
 }: {
   session: AnalysisSession
   setPage: (page: Page) => void
@@ -29,6 +34,8 @@ export default function DashboardPage({
   busy: boolean
   error: string
   clear: () => void
+  savedPolicies: SavedPolicy[]
+  toggleSaved: (policy: PolicyRow, profile: UserProfileInput) => void
 }) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [filter, setFilter] = useState<ApplicationState | "all">("all")
@@ -83,6 +90,7 @@ export default function DashboardPage({
     </div> : <p className="dashboard-no-policies">이 상태에 해당하는 정책이 없어요.</p>
   }
   return <section className="dashboard-page">
+    <SavedPoliciesPanel profile={profile} savedPolicies={savedPolicies} toggleSaved={toggleSaved} />
     <PageHeading eyebrow="내 조건은 저장하고, 기회는 다시 찾고" title="나의 현황" description="마지막 조회 결과를 한눈에 확인하세요. 새로고침하면 저장된 프로필로 정책을 다시 찾아요."
       action={<button onClick={() => void refresh()} disabled={busy} className="interface-primary">{busy ? '조회 중…' : '↻ 현황 새로고침'}</button>} />
 
@@ -131,7 +139,7 @@ export default function DashboardPage({
     </div>
     <footer className="dashboard-footer">
       <details><summary>조회 기준 및 저장 정보 관리</summary><p>새로고침은 서버에 등록된 정책을 재조회합니다. 공공데이터 자체의 수집 시각과는 다를 수 있어요.</p><p>입력 정보와 기록은 이 브라우저에 저장되며, 다른 기기와 자동으로 공유되지 않아요.</p>
-        {!confirmClear ? <button onClick={() => setConfirmClear(true)} className="dashboard-delete">이 브라우저의 저장 정보 삭제</button> : <div className="dashboard-delete-confirm"><span>입력 정보와 조회 기록을 삭제할까요? 서버 기록은 유지됩니다.</span><button disabled={busy} onClick={clear}>삭제</button><button onClick={() => setConfirmClear(false)}>취소</button></div>}
+        {!confirmClear ? <button onClick={() => setConfirmClear(true)} className="dashboard-delete">이 브라우저의 저장 정보 삭제</button> : <div className="dashboard-delete-confirm"><span>입력 정보와 조회 기록, 모든 프로필의 관심 정책을 삭제할까요? 서버 기록은 유지됩니다.</span><button disabled={busy} onClick={clear}>삭제</button><button onClick={() => setConfirmClear(false)}>취소</button></div>}
       </details>
     </footer>
   </section>

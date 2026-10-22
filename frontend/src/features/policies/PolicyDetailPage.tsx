@@ -151,7 +151,7 @@ export default function PolicyDetailPage({
               rel="noopener noreferrer"
               className="rounded-xl border border-slate-300 px-6 py-4 text-center font-semibold text-blue-700"
             >
-              공식 공고 확인 ↗ (새 탭)
+              정책 확인하러 가기 ↗ (새 탭)
             </a>
           ) : (
             <p className="rounded-xl bg-slate-50 px-5 py-4 text-sm text-slate-600">

@@ -57,7 +57,7 @@ export default function MatchedPolicyCard({
           rel="noopener noreferrer"
           className="mt-4 inline-block text-sm font-semibold text-blue-700 underline underline-offset-4"
         >
-          공식 공고 확인 ↗<span className="sr-only"> (새 탭)</span>
+          정책 확인하러 가기 ↗<span className="sr-only"> (새 탭)</span>
         </a>
       ) : (
         <p className="mt-4 text-sm text-slate-500">

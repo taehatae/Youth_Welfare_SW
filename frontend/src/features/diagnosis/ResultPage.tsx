@@ -1,286 +1,48 @@
+import { useState } from "react"
 import PageHeading from "../../components/layout/PageHeading"
+import AnalysisPolicyCard, { statusLabels } from "../../components/policy/AnalysisPolicyCard"
 import type { Page } from "../../types/page"
+import type { UserProfileInput } from "../../types/welfareApi"
+import { formatTime, type Snapshot } from "../../services/analysisSession"
+import { policyResults, profileKey, type PolicyRow, type PolicyStatus, type SavedPolicy } from "../../services/policyResults"
+import { EMPLOYMENT } from "../../data/profileOptions"
+import "./reverse.css"
 
-import {
-  formatTime,
-  koreaDate,
-  type Snapshot,
-} from "../../services/analysisSession"
-
-import MatchedPolicyCard from "../../components/policy/MatchedPolicyCard"
-
-export default function ResultPage({
-  snapshot,
-  setPage,
-}: {
+type Filter = "all" | PolicyStatus | "saved"
+export default function ResultPage({ snapshot, setPage, refresh, busy = false, error = "", savedPolicies, toggleSaved }: {
   snapshot: Snapshot | null
   setPage: (page: Page) => void
+  refresh?: () => Promise<void>
+  busy?: boolean
+  error?: string
+  savedPolicies: SavedPolicy[]
+  toggleSaved: (policy: PolicyRow, profile: UserProfileInput) => void
 }) {
-  const analysis = snapshot?.analysis
-
-  if (!analysis) {
-    return (
-      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <PageHeading eyebrow="진단 시점의 가능성을 기록해요" title="진단 결과" description="내 조건에 맞는 정책과 아직 부족한 조건을 함께 확인하는 공간이에요." />
-        <div className="interface-empty"><span className="interface-empty-icon" aria-hidden="true">✓</span><h2>아직 진단 결과가 없어요</h2><p>나이와 거주지부터 차근차근 선택해주세요. 진단을 마치면 맞춤 정책과 추가 확인이 필요한 조건을 보여드릴게요.</p><button onClick={() => setPage("diagnosis")} className="interface-primary">내 자격 진단하기 →</button></div>
-      </section>
-    )
-  }
-
-  const policies = analysis.matched.policies ?? []
-
-  const recommendations = analysis.reverse.recommendations ?? []
-
-  const conditionAnalyses = (analysis.matched.analysis_results ?? []).filter(
-    (policy) =>
-      policy.status === "needs_review" ||
-      policy.gap_conditions.length > 0 || policy.review_conditions.length > 0,
-  )
-
-  return (
-    <div className="pb-20 md:pb-0">
-      <div className="mx-auto max-w-5xl px-4 pt-8 sm:px-6">
-        <PageHeading eyebrow="진단 시점의 가능성을 기록해요" title="내 프로필로 찾은 결과" description={(snapshot ? formatTime(snapshot.checkedAt) : '') + ' 진단 기록입니다. 이후 신청 기간과 정책 변화는 나의 현황에서 확인해주세요.'}>
-          <div className="interface-metrics grid max-w-lg grid-cols-2 gap-3">
-            <div className="p-4"><p className="text-sm text-teal-800">맞춤 정책</p><p className="mt-1 text-3xl font-bold">{policies.length}<span className="ml-1 text-sm font-normal">개</span></p></div>
-            <div className="p-4"><p className="text-sm text-blue-800">역설계 추천</p><p className="mt-1 text-3xl font-bold">{recommendations.length}<span className="ml-1 text-sm font-normal">개</span></p></div>
-          </div>
-        </PageHeading>
-      </div>
-
-      <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 sm:px-6">
-        <button
-          onClick={() => setPage("dashboard")}
-          className="interface-primary"
-        >
-          나의 현황에서 최신 정책 조회 →
-        </button>
-        <section className="interface-result-block" aria-labelledby="matched-heading">
-          <div className="mb-4 flex items-end justify-between gap-3">
-            <div>
-              <h2
-                id="matched-heading"
-                className="mt-1 text-xl font-bold text-slate-900"
-              >
-                진단 당시 조건에 맞는 정책
-              </h2>
-            </div>
-          </div>
-          {policies.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              조건에 맞는 정책이 아직 없어요. 아래 자격 개선 가이드도
-              확인해보세요.
-            </div>
-          ) : (
-            <ul className="grid gap-4 md:grid-cols-2">
-              {policies.map((policy) => (
-                <li key={policy.policy_id}>
-                  <MatchedPolicyCard
-                    policy={{
-                      ...policy,
-                      detail_url:
-                        policy.detail_url ||
-                        analysis.matched.analysis_results?.find(
-                          (p) => p.policy_id === policy.policy_id,
-                        )?.detail_url,
-                    }}
-                    date={koreaDate(new Date(snapshot!.checkedAt))}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="interface-result-block" aria-labelledby="conditions-heading">
-          <div className="mb-4">
-            <p className="text-xs font-semibold tracking-widest text-orange-600">
-              조건별 확인
-            </p>
-            <h2
-              id="conditions-heading"
-              className="mt-1 text-xl font-semibold text-slate-900"
-            >
-              미충족 또는 추가 확인이 필요한 조건
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              자동 비교 결과는 사전 안내이며, 최종 자격은 담당 기관에
-              확인하세요.
-            </p>
-          </div>
-          {conditionAnalyses.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              표시할 미충족 또는 추가 확인 조건이 없습니다.
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {conditionAnalyses.map((policy) => (
-                <li
-                  key={policy.policy_id}
-                  className="rounded-2xl border border-slate-200 bg-white p-5"
-                >
-                  <h3 className="mb-4 font-semibold text-slate-900">
-                    {policy.title}
-                  </h3>
-                  <div role="status" className={`mb-4 rounded-xl px-4 py-3 text-sm font-semibold ${policy.status === "needs_review" ? "bg-amber-50 text-amber-900" : "bg-orange-50 text-orange-900"}`}>
-                    {policy.status === "needs_review"
-                      ? policy.gap_conditions.length > 0
-                        ? "자동 비교에서 미충족 항목이 확인됐지만 추가 확인 조건도 있어 현재 자격을 확정할 수 없습니다."
-                        : "추가 확인이 필요한 조건이 있어 현재 자격을 확정할 수 없습니다."
-                      : "자동 비교된 조건 중 미충족 항목이 있습니다. 이 결과는 사전 분석이며 최종 수급 판정은 담당 기관에 확인해 주세요."}
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      ...policy.gap_conditions,
-                      ...policy.review_conditions,
-                    ].map((condition, index) => (
-                      <div
-                        key={`${condition.condition_type}-${index}`}
-                        className="rounded-xl bg-slate-50 p-4"
-                      >
-                        <div className="text-xs font-semibold text-slate-500">
-                          {condition.condition_type}
-                          {condition.status === "needs_review"
-                            ? " · 추가 확인"
-                            : " · 미충족"}
-                        </div>
-                        <p className="mt-2 text-sm font-bold text-slate-800">
-                          {condition.message}
-                        </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                          <span className="rounded-lg bg-white px-3 py-2 font-bold text-slate-600">
-                            현재: {condition.current_value}
-                          </span>
-                          <span
-                            aria-hidden="true"
-                            className="font-semibold text-orange-500"
-                          >
-                            →
-                          </span>
-                          <span className="rounded-lg bg-orange-100 px-3 py-2 font-semibold text-orange-800">
-                            기준: {condition.required_value}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                          <span className="font-semibold">확인 안내</span> ·{" "}
-                          {condition.action_guide}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="interface-result-block" aria-labelledby="reverse-heading">
-          <div className="mb-4">
-            <p className="text-xs font-semibold tracking-widest text-orange-600">
-              조건을 바꾸면 생기는 기회
-            </p>
-            <h2
-              id="reverse-heading"
-              className="mt-1 text-xl font-semibold text-slate-900"
-            >
-              역설계 자격 개선 추천
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              조건을 바꾸었을 때 검토할 수 있는 정책과 필요한 행동입니다.
-            </p>
-          </div>
-          {recommendations.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
-              서버에서 제공된 역설계 추천이 없습니다. 추천 기능 제공 여부와 정책
-              조건에 따라 달라질 수 있어요.
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {recommendations.map((recommendation, index) => (
-                <li
-                  key={`${recommendation.target_policy}-${index}`}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-orange-100 bg-orange-50 px-5 py-4">
-                    <h3 className="font-semibold text-slate-900">
-                      {recommendation.target_policy}
-                    </h3>
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        recommendation.current_eligibility
-                          ? "bg-emerald-100 text-teal-800"
-                          : "bg-orange-100 text-orange-700"
-                      }`}
-                    >
-                      {recommendation.current_eligibility
-                        ? "현재 조건 충족"
-                        : "조건 개선 필요"}
-                    </span>
-                  </div>
-                  <div className="space-y-3 p-5">
-                    {(recommendation.missing_conditions ?? []).map(
-                      (condition, conditionIndex) => (
-                        <div
-                          key={`${({ employment_status: "고용 상태", income_level: "소득", region: "거주 지역", age: "나이" } as Record<string, string>)[condition.field] ?? condition.field}-${conditionIndex}`}
-                          className="rounded-xl bg-slate-50 p-4"
-                        >
-                          <div className="text-xs font-semibold text-slate-500">
-                            {({
-                              employment_status: "고용 상태",
-                              income_level: "소득",
-                              region: "거주 지역",
-                              age: "나이",
-                            } as Record<string, string>)[condition.field] ??
-                              condition.field}
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                            <span className="rounded-lg bg-white px-3 py-2 font-bold text-slate-600">
-                              현재: {condition.current_value}
-                            </span>
-                            <span
-                              aria-hidden="true"
-                              className="font-semibold text-orange-500"
-                            >
-                              →
-                            </span>
-                            <span className="rounded-lg bg-orange-100 px-3 py-2 font-semibold text-orange-800">
-                              필요: {condition.required_value}
-                            </span>
-                          </div>
-                          <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                            <span className="font-semibold">다음 행동</span> ·{" "}
-                            {condition.action_guide}
-                          </p>
-                        </div>
-                      ),
-                    )}
-                    {recommendation.missing_conditions.length === 0 && (
-                      <p className="text-sm text-slate-500">
-                        추가로 충족해야 할 조건이 없습니다.
-                      </p>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
-          <button
-            onClick={() => setPage("diagnosis")}
-            className="rounded-xl border-2 border-slate-900 px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50"
-          >
-            내 정보 수정 후 재진단
-          </button>
-          <button
-            onClick={() => setPage("explorer")}
-            className="rounded-xl border-2 border-slate-900 bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-[2px_2px_0px_#14213b]"
-          >
-            정책 더 찾아보기 →
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  const [filter, setFilter] = useState<Filter>("all")
+  const [search, setSearch] = useState("")
+  const [query, setQuery] = useState("")
+  if (!snapshot) return <section className="reverse-page"><PageHeading eyebrow="내 조건에서 시작하는 복지 역설계" title="내 조건으로 정책 조회" description="내 정보를 입력하면 정책별 부족한 조건과 확인할 행동을 살펴볼 수 있어요." /><div className="interface-empty"><h2>먼저 내 조건을 알려주세요</h2><p>자격 진단을 완료하면 분석 결과와 정책 링크가 표시됩니다.</p><button className="interface-primary" onClick={() => setPage("diagnosis")}>내 조건 입력하기 →</button></div></section>
+  const { profile, analysis } = snapshot
+  const rows = policyResults(snapshot)
+  const key = profileKey(profile)
+  const savedIds = new Set(savedPolicies.filter(p => p.profileKey === key).map(p => p.policy.id))
+  const counts = { eligible: rows.filter(p => p.status === "eligible").length, ineligible: rows.filter(p => p.status === "ineligible").length, needs_review: rows.filter(p => p.status === "needs_review").length }
+  const filtered = rows.filter(p => (filter === "all" || (filter === "saved" ? savedIds.has(p.id) : p.status === filter)) && p.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const filters: { id: Filter; label: string; count: number }[] = [ { id: "all", label: "전체", count: rows.length }, { id: "eligible", label: "신청 가능", count: counts.eligible }, { id: "ineligible", label: "신청 불가", count: counts.ineligible }, { id: "needs_review", label: "추가 확인 필요", count: counts.needs_review }, { id: "saved", label: "관심 정책", count: rows.filter(p => savedIds.has(p.id)).length } ]
+  return <section className="reverse-page" aria-busy={busy}>
+    <PageHeading eyebrow="WELFARE REVERSE DESIGN / 복지 역설계" title="내 조건으로 정책 조회" description="신청 가능한 정책을 찾고, 부족한 조건과 확인할 행동을 살펴보세요. 분류는 서버의 자동 비교 기준입니다." action={refresh && <button className="interface-primary" disabled={busy} onClick={() => void refresh()}>{busy ? "정책 조회 중…" : "↻ 최신 결과 조회"}</button>}>
+      <div className="analysis-summary" aria-label="전체 분석 요약"><strong>총 {analysis.matched.evaluated_count ?? rows.length}건 분석</strong><span>신청 가능 {counts.eligible}건</span><span>신청 불가 {counts.ineligible}건</span><span>추가 확인 {counts.needs_review}건</span></div>
+    </PageHeading>
+    {busy && <p className="analysis-notice" role="status">저장된 프로필로 최신 분석을 조회하고 있어요. 완료 전까지 이전 결과를 표시합니다.</p>}
+    {error && <p className="reverse-alert" role="alert">{error} 마지막 조회 결과를 유지합니다. ‘최신 결과 조회’로 다시 시도해주세요.</p>}
+    <div className="reverse-layout"><aside className="reverse-sidebar"><section className="reverse-profile"><p className="reverse-kicker">분석에 사용한 프로필</p><h2>이번 진단의 내 조건</h2><dl><div><dt>나이</dt><dd>만 {profile.age}세</dd></div><div><dt>거주지</dt><dd>{profile.region}</dd></div><div><dt>고용 상태</dt><dd>{EMPLOYMENT.find(([id]) => id === profile.employment_status)?.[1] ?? profile.employment_status}</dd></div><div><dt>월 소득</dt><dd>{profile.income_level.toLocaleString("ko-KR")}원</dd></div></dl>
+      <p className="reverse-small">마지막 조회<br /><time dateTime={snapshot.checkedAt}>{formatTime(snapshot.checkedAt)}</time><br />정책 데이터 수집 시각과 다를 수 있어요.</p><button className="reverse-edit" disabled={busy} onClick={() => setPage("diagnosis")}>내 정보 수정 후 재진단 →</button><button className="reverse-edit" onClick={() => setPage("dashboard")}>이 프로필의 관심 정책 보기 →</button>
+    </section><section className="reverse-note"><h2>추가 확인은 무슨 뜻인가요?</h2><p>자동으로 비교하지 못한 조건이 남은 정책입니다. 신청 불가를 의미하지 않아요.</p><p>조건 비교표를 읽고 ‘정책 확인하러 가기’로 공식 안내를 확인해주세요.</p></section></aside>
+    <div className="reverse-content"><form className="reverse-search" onSubmit={event => { event.preventDefault(); setQuery(search) }}><label htmlFor="reverse-policy-search">정책명 조회</label><div><input id="reverse-policy-search" value={search} onChange={event => setSearch(event.target.value)} placeholder="조회할 정책명을 입력하세요" /><button className="interface-primary" type="submit">조회</button><button className="search-reset" type="button" onClick={() => { setSearch(""); setQuery(""); setFilter("all") }}>초기화</button></div><p>현재 분석 결과 안에서 검색합니다. 관심 정책 전체 목록은 ‘나의 현황’에서 확인할 수 있어요.</p></form>
+      <div className="analysis-filters" aria-label="분석 결과 필터">{filters.map(item => <button key={item.id} aria-pressed={filter === item.id} onClick={() => setFilter(item.id)}>{item.label} <strong>{item.count}</strong></button>)}</div>
+      <header className="reverse-section-title"><p className="reverse-kicker">나의 분석 결과</p><h2>{filter === "all" ? "전체 정책" : filter === "saved" ? "이번 조회의 관심 정책" : statusLabels[filter]} <small>{filtered.length}개</small></h2><p role="status">{query ? `‘${query}’ 검색 결과입니다.` : "정책별 비교 결과와 확인 안내를 살펴보세요."}</p></header>
+      {filtered.length > 0 ? <div className="reverse-list">{filtered.map(policy => <AnalysisPolicyCard key={policy.id} policy={policy} saved={savedIds.has(policy.id)} toggle={() => toggleSaved(policy, profile)} />)}</div> : <div className="reverse-empty"><h3>{rows.length === 0 ? "서버에서 제공된 정책 결과가 없어요" : "조건에 맞는 정책이 없어요"}</h3><p>{rows.length === 0 ? "정책 데이터가 없거나 분석 결과가 제공되지 않았을 수 있습니다. 결과가 없다고 자격이 없다는 뜻은 아닙니다." : filter === "saved" ? "관심 있는 정책의 ‘관심 저장’을 눌러보세요. 이전에 저장한 정책은 나의 현황에서 확인할 수 있어요." : "검색어 또는 분류를 바꾸어 확인해주세요."}</p>{rows.length > 0 && <button className="interface-primary" onClick={() => { setSearch(""); setQuery(""); setFilter("all") }}>전체 결과 보기</button>}</div>}
+      <p className="reverse-footnote">이 결과는 입력 정보와 서버의 정책 조건을 바탕으로 한 사전 안내입니다. 최종 수급 자격과 신청 가능 여부는 담당 기관에서 확인해주세요.</p>
+    </div></div>
+  </section>
 }
