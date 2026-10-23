@@ -325,3 +325,140 @@ def test_welfare_routes_keep_existing_response_contracts(client):
     assert isinstance(matched.json()["policies"], list)
     assert reverse.status_code == 200
     assert reverse.json() == {"recommendations": []}
+
+
+def test_matched_route_uses_saved_profile_values_for_review_display(client, test_database):
+    profile = {
+        "household_size": 0,
+        "owns_home": False,
+        "additional_conditions": {"employment_detail": "PART_TIME"},
+    }
+    saved = client.post(
+        "/api/v1/users/profile",
+        json=valid_profile(eligibility_conditions=profile),
+    )
+    user_id = saved.json()["user_id"]
+
+    service = WelfareService(
+        serv_id="profile-display-service",
+        serv_name="프로필 표시 검증 서비스",
+        detail_url="",
+    )
+    test_database.add(service)
+    test_database.flush()
+    for condition_type, source_text in [
+        ("region", "거주 지역 조건"),
+        ("employment", "취업 상태 조건"),
+        ("other", "가구원 수 조건"),
+        ("other", "주택 보유 조건"),
+    ]:
+        test_database.add(
+            WelfareEligibilityCondition(
+                serv_id=service.serv_id,
+                condition_type=condition_type,
+                operator="contains",
+                value_text=source_text,
+                value_number=None,
+                upper_value_number=None,
+                unit="",
+                source_field="selection_criteria",
+                source_text=source_text,
+                comparison_ready=False,
+                parse_status="manual_review",
+                confidence=0.0,
+            )
+        )
+    test_database.add(
+        WelfareEligibilityCondition(
+            serv_id=service.serv_id,
+            condition_type="age",
+            operator="gte",
+            value_text="만 30세 이상",
+            value_number=30,
+            upper_value_number=None,
+            unit="세",
+            source_field="selection_criteria",
+            source_text="만 30세 이상",
+            comparison_ready=True,
+            parse_status="parsed",
+            confidence=1.0,
+        )
+    )
+    test_database.commit()
+
+    matched = client.get(
+        "/api/v1/welfare/matched",
+        params={"user_id": user_id},
+    )
+
+    assert matched.status_code == 200
+    body = matched.json()
+    assert set(body) == {
+        "matched_count",
+        "policies",
+        "evaluated_count",
+        "needs_review_count",
+        "ineligible_count",
+        "analysis_results",
+    }
+    analysis = body["analysis_results"][0]
+    assert analysis["status"] == "needs_review"
+    assert len(analysis["gap_conditions"]) == 1
+    assert analysis["gap_conditions"][0]["condition_type"] == "age"
+    assert analysis["match_score"] == 0.0
+    current_values = {
+        condition["source_text"]: condition["current_value"]
+        for condition in analysis["review_conditions"]
+    }
+    assert current_values == {
+        "거주 지역 조건": "서울특별시 관악구",
+        "취업 상태 조건": "시간제 근로",
+        "가구원 수 조건": "0명",
+        "주택 보유 조건": "아니요",
+    }
+
+
+def test_matched_route_accepts_missing_saved_conditions_row(client, test_database):
+    saved = client.post("/api/v1/users/profile", json=valid_profile())
+    user_id = saved.json()["user_id"]
+    stored = UserRepository().get_eligibility_conditions(test_database, user_id)
+    assert stored is not None
+    test_database.delete(stored)
+    test_database.commit()
+
+    service = WelfareService(
+        serv_id="missing-profile-conditions-service",
+        serv_name="추가 자격정보 누락 서비스",
+        detail_url="",
+    )
+    test_database.add(service)
+    test_database.flush()
+    test_database.add(
+        WelfareEligibilityCondition(
+            serv_id=service.serv_id,
+            condition_type="other",
+            operator="unknown",
+            value_text="가구원 수 조건",
+            value_number=None,
+            upper_value_number=None,
+            unit="",
+            source_field="selection_criteria",
+            source_text="가구원 수 조건",
+            comparison_ready=False,
+            parse_status="manual_review",
+            confidence=0.0,
+        )
+    )
+    test_database.commit()
+
+    matched = client.get(
+        "/api/v1/welfare/matched",
+        params={"user_id": user_id},
+    )
+
+    assert matched.status_code == 200
+    analysis = matched.json()["analysis_results"][0]
+    assert analysis["status"] == "needs_review"
+    assert analysis["review_conditions"][0]["current_value"] == (
+        "추가 정보 또는 비교 규칙 필요"
+    )

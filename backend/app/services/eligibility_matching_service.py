@@ -1,6 +1,8 @@
 
 from collections import defaultdict
+import json
 import re
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -23,6 +25,129 @@ class EligibilityMatchingService:
         "other",
     }
     OR_CONNECTOR_PATTERN = re.compile(r"또는|혹은|거나|아니면")
+
+    PROFILE_VALUE_LABELS = {
+        "YES": "예",
+        "NO": "아니요",
+        "MALE": "남성",
+        "FEMALE": "여성",
+        "SINGLE": "미혼",
+        "MARRIED": "기혼",
+        "DIVORCED": "이혼",
+        "WIDOWED": "사별",
+        "EMPLOYED": "취업",
+        "EMPLOYED_SME": "중소기업 재직",
+        "PART_TIME": "시간제 근로",
+        "UNEMPLOYED": "미취업",
+        "STUDENT": "학생",
+        "SELF_EMPLOYED": "자영업",
+        "FREELANCER": "프리랜서",
+        "OTHER": "기타",
+        "LABOR": "근로소득",
+        "BUSINESS": "사업소득",
+    }
+
+    PROFILE_FIELD_MARKERS = {
+        "household_size": ("가구원", "가구 인원", "인 가구"),
+        "owns_home": ("주택 소유", "주택 보유", "무주택", "자가"),
+        "housing_type": ("주거 형태", "주거유형", "주택 유형"),
+        "disability_status": ("장애",),
+        "student_status": ("학생",),
+        "marital_status": ("혼인", "결혼", "미혼", "기혼"),
+        "children_count": ("자녀",),
+        "asset_range": ("재산", "자산"),
+        "gender": ("성별", "남성", "여성"),
+        "qualifications": ("자격 목록",),
+    }
+
+    @classmethod
+    def _display_profile_value(cls, value) -> str | None:
+        if value is None:
+            return None
+
+        if isinstance(value, bool):
+            return "예" if value else "아니요"
+
+        if isinstance(value, str):
+            normalized = value.strip()
+            if not normalized or normalized.casefold() == "unknown":
+                return None
+            return cls.PROFILE_VALUE_LABELS.get(
+                normalized.upper(),
+                normalized,
+            )
+
+        if isinstance(value, (int, float)):
+            return str(value)
+
+        if isinstance(value, (list, dict)):
+            return json.dumps(
+                value,
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+
+        return None
+
+    @classmethod
+    def _profile_field_for_condition(
+        cls,
+        condition: WelfareEligibilityCondition,
+    ) -> str | None:
+        if condition.condition_type not in {"other", "target_group"}:
+            return None
+
+        text = (condition.value_text or "").casefold()
+        matched_fields = [
+            field
+            for field, markers in cls.PROFILE_FIELD_MARKERS.items()
+            if any(marker.casefold() in text for marker in markers)
+        ]
+        return matched_fields[0] if len(matched_fields) == 1 else None
+
+    @classmethod
+    def _current_profile_value(
+        cls,
+        user: User,
+        condition: WelfareEligibilityCondition,
+        eligibility_conditions: dict[str, Any] | None,
+    ) -> str | None:
+        profile = (
+            eligibility_conditions
+            if isinstance(eligibility_conditions, dict)
+            else {}
+        )
+
+        if condition.condition_type == "region":
+            return cls._display_profile_value(user.region)
+
+        if condition.condition_type == "employment":
+            additional = profile.get("additional_conditions")
+            detail = (
+                additional.get("employment_detail")
+                if isinstance(additional, dict)
+                else None
+            )
+            return (
+                cls._display_profile_value(detail)
+                or cls._display_profile_value(user.employment_status)
+            )
+
+        if condition.condition_type == "income_amount":
+            amount = cls._display_profile_value(user.income_level)
+            return f"본인 월 소득 {int(user.income_level):,}원" if amount else None
+
+        profile_field = cls._profile_field_for_condition(condition)
+        if profile_field is None:
+            return None
+
+        value = cls._display_profile_value(profile.get(profile_field))
+        if value is None:
+            return None
+
+        if profile_field in {"household_size", "children_count"}:
+            return f"{value}명"
+        return value
 
     @classmethod
     def _age_conditions_needing_review(
@@ -136,6 +261,7 @@ class EligibilityMatchingService:
         user: User,
         service: WelfareService,
         conditions: list[WelfareEligibilityCondition],
+        eligibility_conditions: dict[str, Any] | None = None,
     ) -> dict:
         evaluated = []
         gaps = []
@@ -286,7 +412,14 @@ class EligibilityMatchingService:
                     self._condition_result(
                         condition=condition,
                         status="needs_review",
-                        current_value="추가 정보 또는 비교 규칙 필요",
+                        current_value=(
+                            self._current_profile_value(
+                                user=user,
+                                condition=condition,
+                                eligibility_conditions=eligibility_conditions,
+                            )
+                            or "추가 정보 또는 비교 규칙 필요"
+                        ),
                         required_value=condition.value_text,
                         message=(
                             "현재 구현에서는 이 조건을 "
@@ -337,6 +470,7 @@ class EligibilityMatchingService:
         self,
         db: Session,
         user: User,
+        eligibility_conditions: dict[str, Any] | None = None,
     ) -> dict:
         services = (
             db.query(WelfareService)
@@ -361,6 +495,7 @@ class EligibilityMatchingService:
                 user=user,
                 service=service,
                 conditions=conditions_by_service[service.serv_id],
+                eligibility_conditions=eligibility_conditions,
             )
             for service in services
         ]

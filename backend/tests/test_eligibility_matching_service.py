@@ -820,3 +820,97 @@ def test_exception_text_on_separate_sentence_is_preserved_for_review():
         "다만 정신질환" in item["required_value"]
         for item in result["review_conditions"]
     )
+
+
+def test_review_conditions_display_relevant_saved_profile_values():
+    conditions = [
+        WelfareEligibilityCondition(
+            serv_id="synthetic-service",
+            condition_type=condition_type,
+            operator="contains",
+            value_text=value_text,
+            value_number=None,
+            upper_value_number=None,
+            unit="",
+            source_field="selection_criteria",
+            source_text=value_text,
+            comparison_ready=False,
+            parse_status="manual_review",
+            confidence=0.0,
+        )
+        for condition_type, value_text in [
+            ("region", "거주 지역 조건"),
+            ("employment", "취업 상태 조건"),
+            ("income_amount", "월 소득 기준"),
+            ("income_ratio", "기준 중위소득 비율 기준"),
+            ("other", "가구원 수 조건"),
+            ("other", "주택 보유 조건"),
+            ("other", "장애 여부 조건"),
+            ("other", "자격 목록 조건"),
+        ]
+    ]
+    user = make_user(25)
+    user.income_level = 2_000_000
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=conditions,
+        eligibility_conditions={
+            "household_size": 0,
+            "owns_home": False,
+            "disability_status": "YES",
+            "qualifications": [],
+            "additional_conditions": {"employment_detail": "PART_TIME"},
+        },
+    )
+
+    current_values = [
+        condition["current_value"]
+        for condition in result["review_conditions"]
+    ]
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert result["match_score"] == 0.0
+    assert current_values == [
+        "서울특별시",
+        "시간제 근로",
+        "본인 월 소득 2,000,000원",
+        "추가 정보 또는 비교 규칙 필요",
+        "0명",
+        "아니요",
+        "예",
+        "[]",
+    ]
+
+
+@pytest.mark.parametrize(
+    "profile_value",
+    [None, "", "  ", "UNKNOWN", "unknown"],
+)
+def test_unknown_or_empty_saved_profile_values_are_not_presented_as_confirmed(
+    profile_value,
+):
+    condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type="other",
+        operator="unknown",
+        value_text="장애 여부 조건",
+        value_number=None,
+        upper_value_number=None,
+        unit="",
+        source_field="selection_criteria",
+        source_text="장애 여부 조건",
+        comparison_ready=False,
+        parse_status="manual_review",
+        confidence=0.0,
+    )
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=make_service(),
+        conditions=[condition],
+        eligibility_conditions={"disability_status": profile_value},
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert result["review_conditions"][0]["current_value"] == "추가 정보 또는 비교 규칙 필요"
