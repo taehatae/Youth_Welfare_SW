@@ -23,9 +23,34 @@ class EligibilityConditionService:
     )
 
     INCOME_RATIO_PATTERN = re.compile(
-        r"(?:기준\s*)?중위소득\s*"
+        r"(?:기준\s*)?중위소득(?:의\s*)?\s*"
         r"(\d+(?:\.\d+)?)\s*%\s*"
-        r"(이하|미만|이상|초과)"
+        r"(?:를\s*)?(이하|미만|이상|초과)"
+    )
+    INCOME_RATIO_INTERVAL_PATTERN = re.compile(
+        r"(?:기준\s*)?중위소득(?:의\s*)?\s*"
+        r"(?P<lower>\d+(?:\.\d+)?)\s*%\s*(?:를\s*)?"
+        r"(?P<lower_operator>초과|이상)\s*"
+        r"(?P<upper>\d+(?:\.\d+)?)\s*%\s*(?:를\s*)?"
+        r"(?P<upper_operator>이하|미만)"
+    )
+    SIMPLE_INCOME_RATIO_PATTERN = re.compile(
+        r"\s*(?:가구\s*)?소득인정액(?:은|이|가|\s*기준)?\s*"
+        r"(?:(?P<year>20\d{2})년|(?P<current_year>당해년도|당해 연도|올해))?\s*"
+        r"(?:기준\s*)?중위소득(?:의\s*)?\s*"
+        r"(?P<percentage>\d+(?:\.\d+)?)\s*%\s*(?:를\s*)?"
+        r"(?P<operator>이하|미만|이상|초과)"
+        r"(?:\s*(?:한\s*자|하는\s*자|인\s*자|인))?\s*[.!]?\s*"
+    )
+    SIMPLE_INCOME_RATIO_INTERVAL_PATTERN = re.compile(
+        r"\s*(?:가구\s*)?소득인정액(?:은|이|가|\s*기준)?\s*"
+        r"(?:(?P<year>20\d{2})년|(?P<current_year>당해년도|당해 연도|올해))?\s*"
+        r"(?:기준\s*)?중위소득(?:의\s*)?\s*"
+        r"(?P<lower>\d+(?:\.\d+)?)\s*%\s*(?:를\s*)?"
+        r"(?P<lower_operator>초과|이상)\s*"
+        r"(?P<upper>\d+(?:\.\d+)?)\s*%\s*(?:를\s*)?"
+        r"(?P<upper_operator>이하|미만)"
+        r"(?:\s*(?:인\s*자|인))?\s*[.!]?\s*"
     )
 
     MONTHLY_INCOME_PATTERN = re.compile(
@@ -65,6 +90,13 @@ class EligibilityConditionService:
         "미취업자": "UNEMPLOYED",
         "중소기업재직자": "EMPLOYED_SME",
     }
+    SIMPLE_PROFILE_STATUS_REQUIREMENTS = {
+        "기초생활수급자": ("basic_benefit_status", "YES"),
+        "기초생활보장급여수급자": ("basic_benefit_status", "YES"),
+        "차상위계층": ("near_poverty_status", "YES"),
+        "한부모가족지원대상": ("single_parent_support_status", "YES"),
+        "한부모가족지원대상자": ("single_parent_support_status", "YES"),
+    }
     PROFILE_LOGIC_RISK_PATTERN = re.compile(
         r"또는|혹은|거나|아니면|및|다만|예외|제외|아닌|재량|"
         r"(?:^|[\s,])단(?:[,\s:]|$)|"
@@ -75,12 +107,15 @@ class EligibilityConditionService:
         "조건부수급자",
         "일반수급자",
         "기초생활수급자",
+        "기초생활보장급여 수급자",
         "수급자",
         "차상위계층",
         "차상위 계층",
         "기초생활보장법",
         "장애인",
         "한부모가족",
+        "한부모가족 지원대상",
+        "한부모가족 지원 대상",
         "보호대상자",
         "자립준비청년",
     )
@@ -131,6 +166,15 @@ class EligibilityConditionService:
         return bool(cls.PROFILE_LOGIC_RISK_PATTERN.search(text))
 
     @classmethod
+    def _has_income_logic_risk(cls, text: str) -> bool:
+        without_reference_year = re.sub(
+            r"20\d{2}년(?=\s*(?:기준\s*)?중위소득)",
+            "",
+            text,
+        )
+        return cls._has_profile_logic_risk(without_reference_year)
+
+    @classmethod
     def normalize_simple_employment_requirement(
         cls,
         text: str | None,
@@ -140,6 +184,55 @@ class EligibilityConditionService:
 
         normalized = re.sub(r"\s+", "", text.strip(" \t-•◈"))
         return cls.SIMPLE_EMPLOYMENT_REQUIREMENTS.get(normalized)
+
+    @classmethod
+    def normalize_simple_profile_status_requirement(
+        cls,
+        text: str | None,
+    ) -> tuple[str, str] | None:
+        if not text or cls._has_profile_logic_risk(text):
+            return None
+
+        normalized = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        return cls.SIMPLE_PROFILE_STATUS_REQUIREMENTS.get(normalized)
+
+    @classmethod
+    def normalize_simple_income_ratio_requirement(
+        cls,
+        text: str | None,
+    ) -> tuple[list[tuple[str, float]], int | None] | None:
+        if not text or cls._has_income_logic_risk(text):
+            return None
+
+        interval = cls.SIMPLE_INCOME_RATIO_INTERVAL_PATTERN.fullmatch(text)
+        if interval:
+            return (
+                [
+                    (
+                        cls.OPERATOR_MAP[interval.group("lower_operator")],
+                        float(interval.group("lower")),
+                    ),
+                    (
+                        cls.OPERATOR_MAP[interval.group("upper_operator")],
+                        float(interval.group("upper")),
+                    ),
+                ],
+                int(interval.group("year")) if interval.group("year") else None,
+            )
+
+        single = cls.SIMPLE_INCOME_RATIO_PATTERN.fullmatch(text)
+        if not single:
+            return None
+
+        return (
+            [
+                (
+                    cls.OPERATOR_MAP[single.group("operator")],
+                    float(single.group("percentage")),
+                )
+            ],
+            int(single.group("year")) if single.group("year") else None,
+        )
 
     @classmethod
     def normalize_simple_sido_requirement(
@@ -368,21 +461,79 @@ class EligibilityConditionService:
             # 3. 기준 중위소득 비율
             # 예) 기준 중위소득 120% 이하
             # 예) 중위소득 50%이하
-            for match in cls.INCOME_RATIO_PATTERN.finditer(line):
+            ratio_matches = []
+            interval_spans = []
+            for match in cls.INCOME_RATIO_INTERVAL_PATTERN.finditer(line):
+                interval_spans.append(match.span())
                 recognized_spans.append(match.span())
-                percentage = float(match.group(1))
+                ratio_matches.extend(
+                    [
+                        (
+                            match.span("lower"),
+                            cls.OPERATOR_MAP[match.group("lower_operator")],
+                            float(match.group("lower")),
+                        ),
+                        (
+                            match.span("upper"),
+                            cls.OPERATOR_MAP[match.group("upper_operator")],
+                            float(match.group("upper")),
+                        ),
+                    ]
+                )
 
+            for match in cls.INCOME_RATIO_PATTERN.finditer(line):
+                if any(
+                    start <= match.start() and match.end() <= end
+                    for start, end in interval_spans
+                ):
+                    continue
+                recognized_spans.append(match.span())
+                ratio_matches.append(
+                    (
+                        match.span(),
+                        cls.OPERATOR_MAP[match.group(2)],
+                        float(match.group(1)),
+                    )
+                )
+
+            normalized_income_requirements = (
+                cls.normalize_simple_income_ratio_requirement(line)
+            )
+            normalized_ratios = (
+                normalized_income_requirements[0]
+                if normalized_income_requirements
+                else None
+            )
+            parsed_ratios = [
+                (operator, percentage)
+                for _, operator, percentage in ratio_matches
+            ]
+            is_simple_income_ratio = (
+                normalized_ratios is not None
+                and normalized_ratios == parsed_ratios
+                and not cls._has_income_logic_risk(line)
+            )
+            if is_simple_income_ratio:
+                recognized_spans.append((0, len(line)))
+
+            for _, operator, percentage in ratio_matches:
                 extracted.append({
                     "condition_type": "income_ratio",
-                    "operator": cls.OPERATOR_MAP[match.group(2)],
-                    "value_text": match.group(0),
+                    "operator": operator,
+                    "value_text": line,
                     "value_number": percentage,
                     "upper_value_number": None,
-                    "unit": "%",
-                    # 가구원 수 및 적용 연도별 기준 정보가 필요하다.
-                    "comparison_ready": False,
-                    "parse_status": "parsed",
-                    "confidence": 0.95,
+                    "unit": (
+                        "income_recognition"
+                        if is_simple_income_ratio
+                        else "%"
+                    ),
+                    # 소득인정액으로 명시되고 단순한 기준만 자동 비교한다.
+                    "comparison_ready": is_simple_income_ratio,
+                    "parse_status": (
+                        "parsed" if is_simple_income_ratio else "manual_review"
+                    ),
+                    "confidence": 0.95 if is_simple_income_ratio else 0.5,
                 })
 
             # 4. 명시적인 월 소득 금액
@@ -421,18 +572,34 @@ class EligibilityConditionService:
             matched_target_terms = bool(target_group_spans)
 
             if matched_target_terms:
+                simple_profile_requirement = (
+                    cls.normalize_simple_profile_status_requirement(line)
+                )
                 recognized_spans.extend(target_group_spans)
                 extracted.append({
                     "condition_type": "target_group",
-                    "operator": "contains",
-                    "value_text": line,
+                    "operator": (
+                        "equals" if simple_profile_requirement else "contains"
+                    ),
+                    "value_text": (
+                        simple_profile_requirement[1]
+                        if simple_profile_requirement
+                        else line
+                    ),
                     "value_number": None,
                     "upper_value_number": None,
-                    "unit": "",
-                    # 문장에 해당 용어가 있다고 자격 충족이 확정되지는 않는다.
-                    "comparison_ready": False,
-                    "parse_status": "manual_review",
-                    "confidence": 0.75,
+                    "unit": (
+                        simple_profile_requirement[0]
+                        if simple_profile_requirement
+                        else ""
+                    ),
+                    # 단일 표준 표현만 프로필 상태와 비교한다. 사용자 응답은
+                    # 공식 증명이 아니며 복합 문구는 계속 수동 검토한다.
+                    "comparison_ready": simple_profile_requirement is not None,
+                    "parse_status": (
+                        "parsed" if simple_profile_requirement else "manual_review"
+                    ),
+                    "confidence": 0.95 if simple_profile_requirement else 0.75,
                 })
 
             # 6. 금융기관 등 외부 기관의 심사 조건

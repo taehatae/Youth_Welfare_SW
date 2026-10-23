@@ -14,6 +14,14 @@ export interface UserProfileInput {
 
 export type YesNoUnknown = "YES" | "NO" | "UNKNOWN"
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue }
+
 export interface EligibilityConditions {
   gender: "MALE" | "FEMALE" | "UNKNOWN"
 
@@ -37,7 +45,7 @@ export interface EligibilityConditions {
 
   qualifications: string[]
 
-  additional_conditions: Record<string, string | number | boolean | null>
+  additional_conditions: Record<string, JsonValue>
 }
 
 export interface SaveProfileResponse {

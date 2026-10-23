@@ -377,16 +377,14 @@ def test_api_excerpt_income_ratio_upper_bound_is_preserved_as_residual():
         item for item in parsed if item["condition_type"] == "other"
     ]
 
-    assert len(income_conditions) == 1
-    assert income_conditions[0]["operator"] == "gt"
-    assert income_conditions[0]["value_number"] == 50.0
-    assert income_conditions[0]["value_text"] == "기준중위소득 50% 초과"
-    assert income_conditions[0]["comparison_ready"] is False
-    assert len(residual_conditions) == 1
-    assert residual_conditions[0]["value_text"] == "100% 이하"
-    assert residual_conditions[0]["source_text"] == source
-    assert residual_conditions[0]["parse_status"] == "manual_review"
-    assert residual_conditions[0]["comparison_ready"] is False
+    assert [(item["operator"], item["value_number"]) for item in income_conditions] == [
+        ("gt", 50.0),
+        ("lte", 100.0),
+    ]
+    assert all(item["comparison_ready"] is False for item in income_conditions)
+    assert all(item["unit"] == "%" for item in income_conditions)
+    assert all(item["source_text"] == source for item in income_conditions)
+    assert residual_conditions == []
 
 
 def test_api_excerpt_income_ratio_with_postposition_is_preserved_for_review():
@@ -398,16 +396,17 @@ def test_api_excerpt_income_ratio_with_postposition_is_preserved_for_review():
         source_field="selection_criteria",
     )
 
-    assert not any(item["condition_type"] == "income_ratio" for item in parsed)
-    assert any(
-        item["condition_type"] == "other"
-        and "중위소득의 40%를 초과" in item["value_text"]
-        and item["source_text"] == source
-        and item["source_field"] == "selection_criteria"
-        and item["parse_status"] == "manual_review"
-        and item["comparison_ready"] is False
-        for item in parsed
-    )
+    income_conditions = [
+        item for item in parsed if item["condition_type"] == "income_ratio"
+    ]
+    assert len(income_conditions) == 1
+    assert income_conditions[0]["operator"] == "gt"
+    assert income_conditions[0]["value_number"] == 40.0
+    assert income_conditions[0]["unit"] == "income_recognition"
+    assert income_conditions[0]["source_text"] == source
+    assert income_conditions[0]["source_field"] == "selection_criteria"
+    assert income_conditions[0]["parse_status"] == "parsed"
+    assert income_conditions[0]["comparison_ready"] is True
 
 
 @pytest.mark.parametrize("source", ["만 18세 이후", "만 15세 이후"])
@@ -909,11 +908,18 @@ def test_review_conditions_display_relevant_saved_profile_values():
 
 
 @pytest.mark.parametrize(
-    "profile_value",
-    [None, "", "  ", "UNKNOWN", "unknown"],
+    ("profile_value", "expected_current_value"),
+    [
+        (None, "미입력"),
+        ("", "미입력"),
+        ("  ", "미입력"),
+        ("UNKNOWN", "모름·확인 필요"),
+        ("unknown", "모름·확인 필요"),
+    ],
 )
 def test_unknown_or_empty_saved_profile_values_are_not_presented_as_confirmed(
     profile_value,
+    expected_current_value,
 ):
     condition = WelfareEligibilityCondition(
         serv_id="synthetic-service",
@@ -938,7 +944,10 @@ def test_unknown_or_empty_saved_profile_values_are_not_presented_as_confirmed(
 
     assert result["status"] == "needs_review"
     assert result["gap_conditions"] == []
-    assert result["review_conditions"][0]["current_value"] == "추가 정보 또는 비교 규칙 필요"
+    assert (
+        result["review_conditions"][0]["current_value"]
+        == expected_current_value
+    )
 
 
 @pytest.mark.parametrize(
@@ -1299,3 +1308,543 @@ def test_review_condition_does_not_change_score_or_auto_result_of_evaluated_cond
     assert result["match_score"] == 100.0
     assert result["gap_conditions"] == []
     assert len(result["review_conditions"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("source", "field", "profile_value", "expected_status"),
+    [
+        ("기초생활수급자", "basic_benefit_status", "YES", "eligible"),
+        ("기초생활수급자", "basic_benefit_status", "NO", "ineligible"),
+        ("기초생활수급자", "basic_benefit_status", "UNKNOWN", "needs_review"),
+        ("기초생활수급자", "basic_benefit_status", None, "needs_review"),
+        ("차상위계층", "near_poverty_status", "YES", "eligible"),
+        ("한부모가족 지원대상", "single_parent_support_status", "YES", "eligible"),
+    ],
+)
+def test_exact_benefit_status_conditions_use_saved_self_report_conservatively(
+    source,
+    field,
+    profile_value,
+    expected_status,
+):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    conditions = [
+        WelfareEligibilityCondition(serv_id="synthetic-service", **item)
+        for item in parsed
+    ]
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=make_service(),
+        conditions=conditions,
+        eligibility_conditions={
+            "additional_conditions": {field: profile_value}
+        },
+    )
+
+    assert len(conditions) == 1
+    assert conditions[0].condition_type == "target_group"
+    assert conditions[0].comparison_ready is True
+    assert conditions[0].unit == field
+    assert result["status"] == expected_status
+    assert len(result["gap_conditions"]) == int(expected_status == "ineligible")
+    assert len(result["review_conditions"]) == int(expected_status == "needs_review")
+
+
+def test_exact_benefit_status_without_saved_value_stays_needs_review():
+    parsed = EligibilityConditionService.parse_text(
+        "차상위계층",
+        source_field="selection_criteria",
+    )
+    conditions = [
+        WelfareEligibilityCondition(serv_id="synthetic-service", **item)
+        for item in parsed
+    ]
+
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=make_service(),
+        conditions=conditions,
+        eligibility_conditions={"additional_conditions": {}},
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+def test_household_income_is_not_used_as_personal_income_match():
+    condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type="income_amount",
+        operator="lte",
+        value_text="월 소득 2,000,000원 이하",
+        value_number=2_000_000,
+        upper_value_number=None,
+        unit="원/월",
+        source_field="selection_criteria",
+        source_text="월 소득 2,000,000원 이하",
+        comparison_ready=True,
+        parse_status="parsed",
+        confidence=0.9,
+    )
+    user = make_user(25)
+    user.income_level = 3_000_000
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[condition],
+        eligibility_conditions={
+            "additional_conditions": {"household_monthly_income_won": 0}
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert result["review_conditions"][0]["current_value"] == "본인 월 소득 3,000,000원"
+
+
+@pytest.mark.parametrize(
+    ("source", "operator", "percentage"),
+    [
+        ("소득인정액은 기준 중위소득 50% 이하", "lte", 50.0),
+        ("소득인정액은 기준 중위소득 50% 미만", "lt", 50.0),
+        ("소득인정액은 기준 중위소득 50% 이상", "gte", 50.0),
+        ("소득인정액은 기준 중위소득 50% 초과", "gt", 50.0),
+        ("소득인정액이 기준 중위소득의 40%를 초과", "gt", 40.0),
+        ("소득인정액은 기준 중위소득 120% 이하", "lte", 120.0),
+    ],
+)
+def test_explicit_recognized_income_ratio_is_parsed_for_comparison(
+    source,
+    operator,
+    percentage,
+):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+
+    ratio = [item for item in parsed if item["condition_type"] == "income_ratio"]
+
+    assert len(ratio) == 1
+    assert ratio[0]["operator"] == operator
+    assert ratio[0]["value_number"] == percentage
+    assert ratio[0]["unit"] == "income_recognition"
+    assert ratio[0]["comparison_ready"] is True
+    assert ratio[0]["parse_status"] == "parsed"
+
+
+def test_median_income_interval_parses_both_bounds_without_losing_operator():
+    source = "소득인정액은 기준 중위소득 50% 초과 100% 이하"
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    ratios = [item for item in parsed if item["condition_type"] == "income_ratio"]
+
+    assert [(item["operator"], item["value_number"]) for item in ratios] == [
+        ("gt", 50.0),
+        ("lte", 100.0),
+    ]
+    assert all(item["comparison_ready"] for item in ratios)
+    assert all(item["unit"] == "income_recognition" for item in ratios)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "기준 중위소득 50% 이하",
+        "가구 소득이 기준 중위소득 50% 이하",
+        "소득인정액은 기준 중위소득 50% 이하 또는 80% 이하",
+        "단, 소득인정액은 기준 중위소득 50% 이하",
+    ],
+)
+def test_ambiguous_or_compound_median_income_conditions_remain_manual_review(source):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    ratios = [item for item in parsed if item["condition_type"] == "income_ratio"]
+
+    assert ratios
+    assert all(item["comparison_ready"] is False for item in ratios)
+    assert all(item["parse_status"] == "manual_review" for item in ratios)
+
+
+def test_general_percentage_without_median_income_is_not_income_ratio():
+    parsed = EligibilityConditionService.parse_text(
+        "지원율 50% 이하",
+        source_field="selection_criteria",
+    )
+
+    assert not any(item["condition_type"] == "income_ratio" for item in parsed)
+
+
+def _median_income_analysis(
+    *,
+    amount,
+    household_size=4,
+    reference_year="2026",
+    source="소득인정액은 기준 중위소득 50% 이하",
+):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    conditions = [
+        WelfareEligibilityCondition(serv_id="synthetic-service", **item)
+        for item in parsed
+        if item["condition_type"] == "income_ratio"
+    ]
+    service = make_service()
+    service.reference_year = reference_year
+    return EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=service,
+        conditions=conditions,
+        eligibility_conditions={
+            "household_size": household_size,
+            "additional_conditions": {
+                "recognized_household_income_won": amount,
+            },
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    ("amount", "expected_status", "gap_count"),
+    [
+        (3_247_369, "eligible", 0),
+        (3_247_368, "eligible", 0),
+        (3_247_370, "ineligible", 1),
+        (0, "eligible", 0),
+    ],
+)
+def test_2026_four_person_median_income_50_percent_boundary(
+    amount,
+    expected_status,
+    gap_count,
+):
+    result = _median_income_analysis(amount=amount)
+
+    assert result["status"] == expected_status
+    assert len(result["gap_conditions"]) == gap_count
+    assert result["review_conditions"] == []
+    assert result["match_score"] == (0.0 if gap_count else 100.0)
+
+
+@pytest.mark.parametrize(
+    ("operator", "amount", "expected_status"),
+    [
+        ("미만", 3_247_368, "eligible"),
+        ("미만", 3_247_369, "ineligible"),
+        ("이하", 3_247_369, "eligible"),
+        ("초과", 3_247_369, "ineligible"),
+        ("초과", 3_247_370, "eligible"),
+        ("이상", 3_247_369, "eligible"),
+        ("이상", 3_247_368, "ineligible"),
+    ],
+)
+def test_median_income_operators_keep_inclusive_and_exclusive_boundaries(
+    operator,
+    amount,
+    expected_status,
+):
+    result = _median_income_analysis(
+        amount=amount,
+        source=f"소득인정액은 기준 중위소득 50% {operator}",
+    )
+
+    assert result["status"] == expected_status
+
+
+@pytest.mark.parametrize(
+    ("year", "household_size", "amount", "expected_status"),
+    [
+        ("2026", 1, 1_282_119, "eligible"),
+        ("2026", 2, 2_099_646, "eligible"),
+        ("2026", 4, 3_247_369, "eligible"),
+        ("2025", 4, 3_247_369, "ineligible"),
+    ],
+)
+def test_median_income_uses_policy_reference_year_and_household_size(
+    year,
+    household_size,
+    amount,
+    expected_status,
+):
+    result = _median_income_analysis(
+        amount=amount,
+        household_size=household_size,
+        reference_year=year,
+    )
+
+    assert result["status"] == expected_status
+
+
+@pytest.mark.parametrize(
+    ("amount", "household_size", "reference_year"),
+    [
+        (None, 4, "2026"),
+        ("UNKNOWN", 4, "2026"),
+        (1_000_000, None, "2026"),
+        (1_000_000, 0, "2026"),
+        (1_000_000, 8, "2026"),
+        (1_000_000, 4, ""),
+        (1_000_000, 4, "2099"),
+    ],
+)
+def test_missing_income_year_or_household_reference_stays_needs_review(
+    amount,
+    household_size,
+    reference_year,
+):
+    result = _median_income_analysis(
+        amount=amount,
+        household_size=household_size,
+        reference_year=reference_year,
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+def test_household_monthly_income_and_personal_income_do_not_replace_income_recognition():
+    parsed = EligibilityConditionService.parse_text(
+        "소득인정액은 기준 중위소득 50% 이하",
+        source_field="selection_criteria",
+    )
+    condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        **next(item for item in parsed if item["condition_type"] == "income_ratio"),
+    )
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=make_service(),
+        conditions=[condition],
+        eligibility_conditions={
+            "household_size": 4,
+            "additional_conditions": {"household_monthly_income_won": 0},
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("unit", "value_text"),
+    [
+        ("%", "소득인정액은 기준 중위소득 50% 이하"),
+        ("income_recognition", "기준 중위소득 50% 이하"),
+    ],
+)
+def test_legacy_median_income_condition_is_revalidated_for_review(unit, value_text):
+    condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type="income_ratio",
+        operator="lte",
+        value_text=value_text,
+        value_number=50,
+        upper_value_number=None,
+        unit=unit,
+        source_field="selection_criteria",
+        source_text="소득인정액은 기준 중위소득 50% 이하",
+        comparison_ready=True,
+        parse_status="parsed",
+        confidence=1.0,
+    )
+    service = make_service()
+    service.reference_year = "2026"
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=service,
+        conditions=[condition],
+        eligibility_conditions={
+            "household_size": 4,
+            "additional_conditions": {"recognized_household_income_won": 1_000_000},
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+def test_median_income_gap_and_unrelated_review_keep_policy_b_state():
+    parsed = EligibilityConditionService.parse_text(
+        "소득인정액은 기준 중위소득 50% 이하",
+        source_field="selection_criteria",
+    )
+    ratio = next(item for item in parsed if item["condition_type"] == "income_ratio")
+    conditions = [
+        WelfareEligibilityCondition(serv_id="synthetic-service", **ratio),
+        WelfareEligibilityCondition(
+            serv_id="synthetic-service",
+            condition_type="other",
+            operator="unknown",
+            value_text="별도 심사 조건",
+            value_number=None,
+            upper_value_number=None,
+            unit="",
+            source_field="selection_criteria",
+            source_text="별도 심사 조건",
+            comparison_ready=False,
+            parse_status="manual_review",
+            confidence=0.0,
+        ),
+    ]
+    service = make_service()
+    service.reference_year = "2026"
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=service,
+        conditions=conditions,
+        eligibility_conditions={
+            "household_size": 4,
+            "additional_conditions": {
+                "recognized_household_income_won": 3_247_370,
+            },
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert len(result["gap_conditions"]) == 1
+    assert len(result["review_conditions"]) == 1
+    assert result["match_score"] == 0.0
+
+
+def test_official_2026_two_person_40_percent_threshold_uses_whole_won_rounding():
+    from decimal import Decimal
+
+    from app.services.median_income_reference import median_income_threshold
+
+    assert median_income_threshold(2026, 2, Decimal("40")) == 1_679_717
+
+
+@pytest.mark.parametrize(
+    ("profile_value", "expected_display"),
+    [("UNKNOWN", "모름·확인 필요"), (None, "미입력")],
+)
+def test_saved_unknown_and_unentered_additional_statuses_display_differently(
+    profile_value,
+    expected_display,
+):
+    condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type="target_group",
+        operator="contains",
+        value_text="차상위계층 조건",
+        value_number=None,
+        upper_value_number=None,
+        unit="",
+        source_field="selection_criteria",
+        source_text="차상위계층 조건",
+        comparison_ready=False,
+        parse_status="manual_review",
+        confidence=0.0,
+    )
+    result = EligibilityMatchingService().analyze_service(
+        user=make_user(25),
+        service=make_service(),
+        conditions=[condition],
+        eligibility_conditions={
+            "additional_conditions": {"near_poverty_status": profile_value}
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["review_conditions"][0]["current_value"] == expected_display
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "기초생활수급자 또는 차상위계층",
+        "차상위계층이며 한부모가족 지원대상",
+        "차상위계층 제외",
+    ],
+)
+def test_combined_or_and_or_exception_benefit_text_stays_manual(source):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    target_groups = [
+        item for item in parsed if item["condition_type"] == "target_group"
+    ]
+
+    assert target_groups
+    assert all(not item["comparison_ready"] for item in target_groups)
+    assert all(item["parse_status"] == "manual_review" for item in target_groups)
+
+
+@pytest.mark.parametrize(
+    ("amount", "expected_status"),
+    [
+        (3_247_370, "eligible"),
+        (3_247_369, "ineligible"),
+        (6_494_738, "eligible"),
+        (6_494_739, "ineligible"),
+    ],
+)
+def test_median_income_interval_compares_both_explicit_bounds(
+    amount,
+    expected_status,
+):
+    result = _median_income_analysis(
+        amount=amount,
+        source="소득인정액은 기준 중위소득 50% 초과 100% 이하",
+    )
+
+    assert result["status"] == expected_status
+
+
+def test_explicit_policy_year_overrides_current_year_when_metadata_absent():
+    result = _median_income_analysis(
+        amount=3_048_887,
+        reference_year="",
+        source="소득인정액은 2025년 기준 중위소득 50% 이하",
+    )
+
+    assert result["status"] == "eligible"
+
+
+def test_conflicting_policy_year_and_service_reference_stays_needs_review():
+    result = _median_income_analysis(
+        amount=3_000_000,
+        reference_year="2026",
+        source="소득인정액은 2025년 기준 중위소득 50% 이하",
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+def test_current_year_phrase_uses_current_applicable_year_data():
+    from decimal import Decimal
+
+    from app.services.median_income_reference import (
+        CURRENT_APPLICABLE_YEAR,
+        median_income_threshold,
+    )
+
+    amount = median_income_threshold(
+        CURRENT_APPLICABLE_YEAR,
+        4,
+        Decimal("50"),
+    )
+    assert amount is not None
+    result = _median_income_analysis(
+        amount=amount,
+        reference_year="",
+        source="소득인정액은 당해년도 기준 중위소득 50% 이하",
+    )
+
+    assert result["status"] == "eligible"

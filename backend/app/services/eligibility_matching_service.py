@@ -2,6 +2,7 @@
 from collections import defaultdict
 import json
 import re
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -14,6 +15,10 @@ from app.models.welfare_service import WelfareService
 from app.schemas.user import EmploymentStatus
 from app.services.eligibility_condition_service import (
     EligibilityConditionService,
+)
+from app.services.median_income_reference import (
+    median_income_threshold,
+    resolve_policy_reference_year,
 )
 
 
@@ -49,6 +54,11 @@ class EligibilityMatchingService:
         "OTHER": "기타",
         "LABOR": "근로소득",
         "BUSINESS": "사업소득",
+        "LIVELIHOOD": "생계급여",
+        "MEDICAL": "의료급여",
+        "HOUSING": "주거급여",
+        "EDUCATION": "교육급여",
+        "NONE": "해당 없음",
     }
 
     PROFILE_FIELD_MARKERS = {
@@ -62,6 +72,23 @@ class EligibilityMatchingService:
         "asset_range": ("재산", "자산"),
         "gender": ("성별", "남성", "여성"),
         "qualifications": ("자격 목록",),
+        "basic_benefit_status": ("기초생활보장급여 수급", "기초생활수급"),
+        "basic_benefit_types": ("생계급여", "의료급여", "주거급여", "교육급여"),
+        "near_poverty_status": ("차상위계층", "차상위 계층"),
+        "single_parent_support_status": ("한부모가족 지원",),
+        "household_monthly_income_won": ("가구 전체 월소득", "가구 월소득"),
+        "household_income_recognition_known": ("소득인정액 확인 여부",),
+        "recognized_household_income_won": ("소득인정액",),
+        "household_basic_benefit_status": ("가구 내 수급자", "가구원 중 수급자"),
+        "child_welfare_protection_experience": ("아동복지시설", "가정위탁 보호 경험"),
+        "protection_ended": ("보호 종료 여부", "보호종료 여부"),
+        "protection_end_month": ("보호 종료 연월", "보호종료 연월"),
+        "protection_duration_months": ("보호 기간",),
+        "job_seek_registration": ("구직 등록", "구직등록"),
+        "employment_support_program": ("취업지원 프로그램",),
+        "self_sufficiency_program_status": ("자활사업 참여", "자활사업 참여 여부"),
+        "registered_address_sido": ("주민등록상 주소", "주민등록 주소"),
+        "registered_residence_start_month": ("거주 시작일", "거주 시작 월"),
     }
 
     @classmethod
@@ -121,6 +148,9 @@ class EligibilityMatchingService:
             if isinstance(eligibility_conditions, dict)
             else {}
         )
+        additional = profile.get("additional_conditions")
+        if isinstance(additional, dict):
+            profile = {**profile, **additional}
 
         if condition.condition_type == "region":
             return cls._display_profile_value(user.region)
@@ -141,13 +171,65 @@ class EligibilityMatchingService:
             amount = cls._display_profile_value(user.income_level)
             return f"본인 월 소득 {int(user.income_level):,}원" if amount else None
 
-        profile_field = cls._profile_field_for_condition(condition)
+        if condition.condition_type == "income_ratio":
+            if condition.unit != "income_recognition":
+                return None
+            additional = profile.get("additional_conditions")
+            income = (
+                additional.get("recognized_household_income_won")
+                if isinstance(additional, dict)
+                else None
+            )
+            household_size = profile.get("household_size")
+            if income is None or income == "":
+                displayed_income = "미입력"
+            elif isinstance(income, str) and income.strip().upper() == "UNKNOWN":
+                displayed_income = "모름·확인 필요"
+            elif isinstance(income, int) and not isinstance(income, bool):
+                displayed_income = f"{income:,}원"
+            else:
+                displayed_income = "확인 필요"
+            displayed_size = (
+                f"{household_size}인 가구"
+                if isinstance(household_size, int)
+                and not isinstance(household_size, bool)
+                and household_size > 0
+                else "가구원 수 미입력"
+            )
+            return f"가구 소득인정액 {displayed_income} · {displayed_size}"
+
+        profile_field = (
+            condition.unit
+            if condition.condition_type == "target_group"
+            and condition.unit in cls.PROFILE_FIELD_MARKERS
+            else cls._profile_field_for_condition(condition)
+        )
         if profile_field is None:
             return None
 
-        value = cls._display_profile_value(profile.get(profile_field))
+        if profile_field not in profile:
+            return None
+
+        raw_value = profile[profile_field]
+        if raw_value is None or (
+            isinstance(raw_value, str) and not raw_value.strip()
+        ):
+            return "미입력"
+        if isinstance(raw_value, str) and raw_value.strip().upper() == "UNKNOWN":
+            return "모름·확인 필요"
+
+        value = cls._display_profile_value(raw_value)
         if value is None:
             return None
+
+        if profile_field == "basic_benefit_types" and isinstance(
+            profile.get(profile_field), list
+        ):
+            values = profile[profile_field]
+            return ", ".join(
+                cls.PROFILE_VALUE_LABELS.get(str(item), str(item))
+                for item in values
+            ) or "미입력"
 
         if profile_field in {"household_size", "children_count"}:
             return f"{value}명"
@@ -157,6 +239,7 @@ class EligibilityMatchingService:
     def _compare_profile_condition(
         user: User,
         condition: WelfareEligibilityCondition,
+        eligibility_conditions: dict[str, Any] | None = None,
     ) -> bool | None:
         if not condition.comparison_ready or condition.parse_status != "parsed":
             return None
@@ -205,6 +288,108 @@ class EligibilityMatchingService:
                 return None
             return current_sido == required_sido
 
+        if condition.condition_type == "target_group":
+            expected = EligibilityConditionService.normalize_simple_profile_status_requirement(
+                condition.source_text
+            )
+            if (
+                condition.operator != "equals"
+                or expected != (condition.unit, condition.value_text)
+            ):
+                return None
+
+            profile = (
+                eligibility_conditions
+                if isinstance(eligibility_conditions, dict)
+                else {}
+            )
+            additional = profile.get("additional_conditions")
+            value = additional.get(condition.unit) if isinstance(additional, dict) else None
+            if not isinstance(value, str) or value not in {"YES", "NO"}:
+                return None
+            return value == condition.value_text
+
+        return None
+
+    @staticmethod
+    def _compare_income_ratio(
+        condition: WelfareEligibilityCondition,
+        service: WelfareService,
+        eligibility_conditions: dict[str, Any] | None,
+    ) -> bool | None:
+        if (
+            not condition.comparison_ready
+            or condition.parse_status != "parsed"
+            or condition.unit != "income_recognition"
+            or condition.value_text != condition.source_text
+            or condition.operator not in {"lte", "lt", "gte", "gt"}
+            or condition.value_number is None
+        ):
+            return None
+
+        source_text = condition.source_text or ""
+        normalized = EligibilityConditionService.normalize_simple_income_ratio_requirement(
+            source_text
+        )
+        if normalized is None:
+            return None
+
+        expected_requirements, _ = normalized
+        try:
+            condition_percentage = Decimal(str(condition.value_number))
+            if not condition_percentage.is_finite() or not any(
+                operator == condition.operator
+                and Decimal(str(percentage)) == condition_percentage
+                for operator, percentage in expected_requirements
+            ):
+                return None
+        except (InvalidOperation, ValueError):
+            return None
+
+        profile = (
+            eligibility_conditions
+            if isinstance(eligibility_conditions, dict)
+            else {}
+        )
+        additional = profile.get("additional_conditions")
+        if isinstance(additional, dict):
+            profile = {**profile, **additional}
+
+        household_size = profile.get("household_size")
+        recognized_income = profile.get("recognized_household_income_won")
+        if (
+            not isinstance(household_size, int)
+            or isinstance(household_size, bool)
+            or household_size < 1
+            or not isinstance(recognized_income, int)
+            or isinstance(recognized_income, bool)
+            or recognized_income < 0
+        ):
+            return None
+
+        year = resolve_policy_reference_year(
+            source_text=source_text,
+            service_reference_year=service.reference_year,
+        )
+        if year is None:
+            return None
+
+        threshold = median_income_threshold(
+            year=year,
+            household_size=household_size,
+            percentage=condition_percentage,
+        )
+        if threshold is None:
+            return None
+
+        if condition.operator == "lte":
+            return recognized_income <= threshold
+        if condition.operator == "lt":
+            return recognized_income < threshold
+        if condition.operator == "gte":
+            return recognized_income >= threshold
+        if condition.operator == "gt":
+            return recognized_income > threshold
         return None
 
     @classmethod
@@ -407,8 +592,12 @@ class EligibilityMatchingService:
                 )
                 continue
 
-            if condition.condition_type in {"region", "employment"}:
-                comparison = self._compare_profile_condition(user, condition)
+            if condition.condition_type in {"region", "employment", "target_group"}:
+                comparison = self._compare_profile_condition(
+                    user,
+                    condition,
+                    eligibility_conditions,
+                )
                 if comparison is not None:
                     current_value = (
                         self._current_profile_value(
@@ -432,6 +621,42 @@ class EligibilityMatchingService:
                             "공식 신청 안내에서 세부 기준을 확인하세요."
                             if comparison
                             else "공식 신청 안내에서 적용 기준과 예외를 확인하세요."
+                        ),
+                    )
+                    evaluated.append(result)
+                    if not comparison:
+                        gaps.append(result)
+                    continue
+
+            if condition.condition_type == "income_ratio":
+                comparison = self._compare_income_ratio(
+                    condition=condition,
+                    service=service,
+                    eligibility_conditions=eligibility_conditions,
+                )
+                if comparison is not None:
+                    current_value = (
+                        self._current_profile_value(
+                            user=user,
+                            condition=condition,
+                            eligibility_conditions=eligibility_conditions,
+                        )
+                        or "추가 정보 또는 비교 규칙 필요"
+                    )
+                    result = self._condition_result(
+                        condition=condition,
+                        status="passed" if comparison else "failed",
+                        current_value=current_value,
+                        required_value=condition.source_text or condition.value_text,
+                        message=(
+                            "가구 소득인정액이 기준 중위소득 기준을 충족합니다."
+                            if comparison
+                            else "가구 소득인정액이 기준 중위소득 기준을 충족하지 않습니다."
+                        ),
+                        action_guide=(
+                            "공식 신청 안내에서 적용 연도와 산정 기준을 확인하세요."
+                            if comparison
+                            else "공식 신청 안내에서 소득 산정 및 예외 기준을 확인하세요."
                         ),
                     )
                     evaluated.append(result)
