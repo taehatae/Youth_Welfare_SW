@@ -145,6 +145,10 @@ class WelfareSyncService:
                     if field in data:
                         setattr(service, field, data[field])
 
+                # 자식 조건을 저장하기 전에 부모 정책을 같은 트랜잭션에 반영한다.
+                # commit은 아래에서 수행하므로 이후 실패 시 함께 롤백된다.
+                db.flush()
+
                 # 상세정보의 자격 요건을 구조화해 저장한다.
                 EligibilityConditionService.replace_conditions(
                     db=db,

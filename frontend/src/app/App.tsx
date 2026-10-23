@@ -21,6 +21,7 @@ import {
   type Snapshot,
 } from "../services/analysisSession"
 import type { UserProfileInput } from "../types/welfareApi"
+import { profileKey, restoreSavedPolicies, type PolicyRow, type SavedPolicy } from "../services/policyResults"
 import "../styles/interface.css"
 
 const pages: Page[] = ["home", "explorer", "diagnosis", "result", "dashboard"]
@@ -40,6 +41,18 @@ export default function App() {
     () => policyFromRoute() ?? POLICIES[0],
   )
   const [storageWarning, setStorageWarning] = useState("")
+  const savedKey = "youth-welfare:saved:v1:" + (IS_DEMO_MODE ? "demo" : "live")
+  const [savedState, setSavedState] = useState<{ items: SavedPolicy[]; warning: string }>(() => {
+    try { return { items: restoreSavedPolicies(window.localStorage.getItem(savedKey)), warning: "" } }
+    catch { return { items: [], warning: "관심 정책을 읽지 못했습니다. 새로 저장하면 현재 목록으로 저장됩니다." } }
+  })
+  const toggleSaved = (policy: PolicyRow, profile: UserProfileInput) => {
+    const key = profileKey(profile)
+    const exists = savedState.items.some(item => item.profileKey === key && item.policy.id === policy.id)
+    const items = exists ? savedState.items.filter(item => !(item.profileKey === key && item.policy.id === policy.id)) : [...savedState.items, { profileKey: key, profile, policy, savedAt: new Date().toISOString() }]
+    try { window.localStorage.setItem(savedKey, JSON.stringify(items)); setSavedState({ items, warning: exists ? "관심 정책 저장을 해제했습니다." : "이 프로필의 관심 정책으로 저장했습니다." }) }
+    catch { setSavedState({ items, warning: "현재 화면에만 반영했습니다. 브라우저 저장에 실패해 새로고침하면 사라질 수 있습니다." }) }
+  }
   const [session, setSession] = useState(() => {
     try {
       return restoreSession(
@@ -160,6 +173,7 @@ export default function App() {
         </div>
       )}
       <Navigation page={page} setPage={setPage} />
+      {savedState.warning && <p role="status" className="analysis-notice saved-feedback">{savedState.warning}</p>}
       {storageWarning && (
         <p
           role="alert"
@@ -196,16 +210,20 @@ export default function App() {
           />
         )}
         {page === "result" && (
-          <ResultPage snapshot={session.diagnosis} setPage={setPage} />
+          <ResultPage snapshot={session.current ?? session.diagnosis} setPage={setPage} refresh={refresh} busy={busy} error={refreshError} savedPolicies={savedState.items} toggleSaved={toggleSaved} />
         )}
         {page === "dashboard" && (
           <DashboardPage
+            savedPolicies={savedState.items}
+            toggleSaved={toggleSaved}
             session={session}
             setPage={setPage}
             refresh={refresh}
             busy={busy}
             error={refreshError}
             clear={() => {
+              try { window.localStorage.removeItem(savedKey); setSavedState({ items: [], warning: "" }) }
+              catch { setSavedState({ items: [], warning: "브라우저의 관심 정책 저장 정보를 삭제하지 못했습니다." }) }
               setSession(emptySession())
               setRefreshError("")
               setPage("home")
