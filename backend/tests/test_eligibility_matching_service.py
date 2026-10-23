@@ -60,6 +60,31 @@ def analyze(age: int, conditions: list[WelfareEligibilityCondition]) -> dict:
     )
 
 
+def make_profile_condition(
+    *,
+    condition_type: str,
+    value_text: str,
+    unit: str,
+    source_text: str,
+    comparison_ready: bool = True,
+    parse_status: str = "parsed",
+) -> WelfareEligibilityCondition:
+    return WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type=condition_type,
+        operator="equals",
+        value_text=value_text,
+        value_number=None,
+        upper_value_number=None,
+        unit=unit,
+        source_field="selection_criteria",
+        source_text=source_text,
+        comparison_ready=comparison_ready,
+        parse_status=parse_status,
+        confidence=1.0 if comparison_ready else 0.0,
+    )
+
+
 @pytest.mark.parametrize(
     ("age", "expected_status", "expected_gap_count"),
     [
@@ -914,3 +939,363 @@ def test_unknown_or_empty_saved_profile_values_are_not_presented_as_confirmed(
     assert result["status"] == "needs_review"
     assert result["gap_conditions"] == []
     assert result["review_conditions"][0]["current_value"] == "추가 정보 또는 비교 규칙 필요"
+
+
+@pytest.mark.parametrize(
+    ("source", "normalized"),
+    [
+        ("미취업자", "UNEMPLOYED"),
+        ("중소기업 재직자", "EMPLOYED_SME"),
+    ],
+)
+def test_explicit_single_employment_requirement_is_normalized(source, normalized):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+
+    employment = [item for item in parsed if item["condition_type"] == "employment"]
+    assert len(employment) == 1
+    assert employment[0]["value_text"] == normalized
+    assert employment[0]["unit"] == "employment_status"
+    assert employment[0]["operator"] == "equals"
+    assert employment[0]["comparison_ready"] is True
+    assert employment[0]["parse_status"] == "parsed"
+    assert employment[0]["source_text"] == source
+    assert not any(item["condition_type"] == "other" for item in parsed)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "취업자",
+        "근로자",
+        "재직자",
+        "미취업자가 아닌 청년",
+        "미취업자 또는 중소기업 재직자",
+        "중소기업 재직 후 3개월 이상",
+    ],
+)
+def test_ambiguous_employment_text_is_not_marked_comparable(source):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+
+    employment = [item for item in parsed if item["condition_type"] == "employment"]
+    assert not any(item["comparison_ready"] for item in employment)
+    assert not any(item["parse_status"] == "parsed" for item in employment)
+
+
+@pytest.mark.parametrize(
+    ("source", "normalized", "comparison_ready"),
+    [
+        ("서울특별시 거주자", "서울특별시", True),
+        ("주민등록상 서울특별시 거주자", "주민등록상 서울특별시 거주자", False),
+        ("서울시에 주민등록을 둔 청년", "서울시에 주민등록을 둔 청년", False),
+        ("서울시 거주자", "서울특별시", True),
+    ],
+)
+def test_explicit_single_sido_residency_normalization_respects_verifiability(
+    source,
+    normalized,
+    comparison_ready,
+):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+
+    regions = [item for item in parsed if item["condition_type"] == "region"]
+    assert len(regions) == 1
+    assert regions[0]["value_text"] == normalized
+    assert regions[0]["operator"] == ("equals" if comparison_ready else "contains")
+    assert regions[0]["unit"] == ("sido" if comparison_ready else "")
+    assert regions[0]["comparison_ready"] is comparison_ready
+    assert regions[0]["parse_status"] == (
+        "parsed" if comparison_ready else "manual_review"
+    )
+    assert regions[0]["source_text"] == source
+    if comparison_ready:
+        assert not any(item["condition_type"] == "other" for item in parsed)
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "주민등록상 서울특별시 거주자",
+        "서울특별시에서 3년 이상 거주한 청년",
+    ],
+)
+def test_residency_proof_or_duration_cannot_be_verified_by_region_string(source):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+    conditions = [
+        WelfareEligibilityCondition(serv_id="synthetic-service", **item)
+        for item in parsed
+    ]
+
+    user = make_user(25)
+    user.region = "서울특별시 관악구"
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=conditions,
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert result["review_conditions"]
+    assert result["evaluated_conditions"] == 0
+
+
+def test_legacy_unnormalized_region_value_text_is_not_reinterpreted_as_normalized():
+    user = make_user(25)
+    user.region = "서울특별시 관악구"
+    # Legacy row shape: value_text kept the source phrase instead of the new
+    # canonical SIDO value, even though its metadata claims it is comparable.
+    condition = make_profile_condition(
+        condition_type="region",
+        value_text="서울특별시 거주자",
+        unit="sido",
+        source_text="서울특별시 거주자",
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[condition],
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+    assert result["evaluated_conditions"] == 0
+    assert result["match_score"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "서울특별시 또는 경기도 거주자",
+        "서울특별시에서 3년 이상 거주한 청년",
+        "서울특별시 거주자가 아닌 경우",
+        "서울특별시 거주 여부는 심사 후 결정",
+    ],
+)
+def test_complex_or_qualified_region_text_remains_manual_review(source):
+    parsed = EligibilityConditionService.parse_text(
+        source,
+        source_field="selection_criteria",
+    )
+
+    region = [item for item in parsed if item["condition_type"] == "region"]
+    assert region
+    assert not any(item["comparison_ready"] for item in region)
+    assert all(item["parse_status"] == "manual_review" for item in region)
+
+
+def test_split_profile_alternatives_and_multiple_profile_requirements_stay_manual():
+    sources = [
+        "서울시 거주자\n또는 경기도 거주자",
+        "서울시 거주자\n중소기업 재직자",
+        "미취업자\n중소기업 재직자",
+    ]
+
+    for source in sources:
+        parsed = EligibilityConditionService.parse_text(
+            source,
+            source_field="selection_criteria",
+        )
+        profile_conditions = [
+            item for item in parsed
+            if item["condition_type"] in {"region", "employment"}
+        ]
+        assert profile_conditions
+        assert not any(item["comparison_ready"] for item in profile_conditions)
+        assert all(
+            item["parse_status"] == "manual_review"
+            for item in profile_conditions
+        )
+
+
+@pytest.mark.parametrize(
+    ("required", "profile_status", "expected_status", "expected_score"),
+    [
+        ("UNEMPLOYED", "UNEMPLOYED", "eligible", 100.0),
+        ("UNEMPLOYED", "EMPLOYED", "ineligible", 0.0),
+        ("EMPLOYED_SME", "EMPLOYED_SME", "eligible", 100.0),
+        ("EMPLOYED_SME", "EMPLOYED", "ineligible", 0.0),
+        ("UNEMPLOYED", "OTHER", "needs_review", 0.0),
+        ("UNEMPLOYED", "STUDENT", "needs_review", 0.0),
+    ],
+)
+def test_explicit_employment_requirement_matches_only_trusted_enum(
+    required,
+    profile_status,
+    expected_status,
+    expected_score,
+):
+    user = make_user(25)
+    user.employment_status = profile_status
+    source_text = {
+        "UNEMPLOYED": "미취업자",
+        "EMPLOYED_SME": "중소기업 재직자",
+    }[required]
+    condition = make_profile_condition(
+        condition_type="employment",
+        value_text=required,
+        unit="employment_status",
+        source_text=source_text,
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[condition],
+    )
+
+    assert result["status"] == expected_status
+    assert result["match_score"] == expected_score
+    assert len(result["gap_conditions"]) == int(expected_status == "ineligible")
+    assert len(result["review_conditions"]) == int(expected_status == "needs_review")
+
+
+def test_unvalidated_employment_detail_does_not_override_other_status():
+    user = make_user(25)
+    user.employment_status = "OTHER"
+    condition = make_profile_condition(
+        condition_type="employment",
+        value_text="EMPLOYED_SME",
+        unit="employment_status",
+        source_text="중소기업 재직자",
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[condition],
+        eligibility_conditions={
+            "additional_conditions": {"employment_detail": "EMPLOYED_SME"}
+        },
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1
+
+
+@pytest.mark.parametrize(
+    ("user_region", "expected_status"),
+    [
+        ("서울특별시 관악구", "eligible"),
+        ("서울시 관악구", "eligible"),
+        ("경기도 수원시", "ineligible"),
+        ("관악구 서울특별시", "needs_review"),
+        ("서울특별시관악구", "needs_review"),
+        ("서울특별시청 관악구", "needs_review"),
+        ("UNKNOWN", "needs_review"),
+        ("", "needs_review"),
+    ],
+)
+def test_single_sido_condition_uses_exact_region_prefix(user_region, expected_status):
+    user = make_user(25)
+    user.region = user_region
+    condition = make_profile_condition(
+        condition_type="region",
+        value_text="서울특별시",
+        unit="sido",
+        source_text="서울특별시 거주자",
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[condition],
+    )
+
+    assert result["status"] == expected_status
+    assert len(result["gap_conditions"]) == int(expected_status == "ineligible")
+    assert len(result["review_conditions"]) == int(expected_status == "needs_review")
+
+
+def test_new_region_comparison_is_included_in_existing_score_and_policy_b():
+    user = make_user(19)
+    user.region = "서울특별시 관악구"
+    age = make_condition(operator="gte", value_number=20)
+    region = make_profile_condition(
+        condition_type="region",
+        value_text="서울특별시",
+        unit="sido",
+        source_text="서울특별시 거주자",
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[age, region],
+    )
+
+    assert result["evaluated_conditions"] == 2
+    assert result["passed_conditions"] == 1
+    assert result["match_score"] == 50.0
+    assert result["status"] == "ineligible"
+    assert [item["condition_type"] for item in result["gap_conditions"]] == ["age"]
+    assert result["review_conditions"] == []
+
+
+def test_auto_failure_and_ambiguous_profile_keep_policy_b_needs_review():
+    user = make_user(19)
+    user.region = "서울특별시 또는 경기도"
+    age = make_condition(operator="gte", value_number=20)
+    region = make_profile_condition(
+        condition_type="region",
+        value_text="서울특별시",
+        unit="sido",
+        source_text="서울특별시 거주자",
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[age, region],
+    )
+
+    assert result["status"] == "needs_review"
+    assert [item["condition_type"] for item in result["gap_conditions"]] == ["age"]
+    assert [item["condition_type"] for item in result["review_conditions"]] == ["region"]
+    assert result["match_score"] == 0.0
+
+
+def test_review_condition_does_not_change_score_or_auto_result_of_evaluated_conditions():
+    user = make_user(25)
+    age = make_condition(operator="gte", value_number=20)
+    review_condition = WelfareEligibilityCondition(
+        serv_id="synthetic-service",
+        condition_type="other",
+        operator="unknown",
+        value_text="합성 추가 확인 조건",
+        value_number=None,
+        upper_value_number=None,
+        unit="",
+        source_field="selection_criteria",
+        source_text="합성 추가 확인 조건",
+        comparison_ready=False,
+        parse_status="manual_review",
+        confidence=0.0,
+    )
+
+    result = EligibilityMatchingService().analyze_service(
+        user=user,
+        service=make_service(),
+        conditions=[age, review_condition],
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["evaluated_conditions"] == 1
+    assert result["passed_conditions"] == 1
+    assert result["match_score"] == 100.0
+    assert result["gap_conditions"] == []
+    assert len(result["review_conditions"]) == 1

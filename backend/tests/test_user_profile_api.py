@@ -16,6 +16,7 @@ from app.models.welfare_eligibility_condition import (
 from app.models.welfare_service import WelfareService  # noqa: F401
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserProfileCreate
+from app.services.eligibility_condition_service import EligibilityConditionService
 
 
 @pytest.fixture
@@ -462,3 +463,58 @@ def test_matched_route_accepts_missing_saved_conditions_row(client, test_databas
     assert analysis["review_conditions"][0]["current_value"] == (
         "추가 정보 또는 비교 규칙 필요"
     )
+
+
+def test_matched_route_applies_supported_region_and_employment_conditions(
+    client,
+    test_database: Session,
+):
+    saved = client.post(
+        "/api/v1/users/profile",
+        json=valid_profile(
+            employment_status="EMPLOYED_SME",
+            region="서울특별시 관악구",
+        ),
+    )
+    user_id = saved.json()["user_id"]
+
+    service = WelfareService(
+        serv_id="simple-profile-conditions",
+        serv_name="단일 지역·고용 조건",
+        detail_url="",
+    )
+    test_database.add(service)
+    test_database.flush()
+
+    conditions = EligibilityConditionService.structure_service(
+        target_details="서울시 거주자",
+        selection_criteria="중소기업 재직자",
+    )
+    for item in conditions:
+        test_database.add(
+            WelfareEligibilityCondition(
+                serv_id=service.serv_id,
+                **item,
+            )
+        )
+    test_database.commit()
+
+    response = client.get(
+        "/api/v1/welfare/matched",
+        params={"user_id": user_id},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["matched_count"] == 1
+    assert body["policies"][0]["policy_id"] == service.serv_id
+    analysis = next(
+        item for item in body["analysis_results"]
+        if item["policy_id"] == service.serv_id
+    )
+    assert analysis["status"] == "eligible"
+    assert analysis["evaluated_conditions"] == 2
+    assert analysis["passed_conditions"] == 2
+    assert analysis["match_score"] == 100.0
+    assert [item["condition_type"] for item in analysis["gap_conditions"]] == []
+    assert analysis["review_conditions"] == []

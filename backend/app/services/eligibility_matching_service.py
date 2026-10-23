@@ -11,6 +11,10 @@ from app.models.welfare_eligibility_condition import (
     WelfareEligibilityCondition,
 )
 from app.models.welfare_service import WelfareService
+from app.schemas.user import EmploymentStatus
+from app.services.eligibility_condition_service import (
+    EligibilityConditionService,
+)
 
 
 class EligibilityMatchingService:
@@ -148,6 +152,60 @@ class EligibilityMatchingService:
         if profile_field in {"household_size", "children_count"}:
             return f"{value}명"
         return value
+
+    @staticmethod
+    def _compare_profile_condition(
+        user: User,
+        condition: WelfareEligibilityCondition,
+    ) -> bool | None:
+        if not condition.comparison_ready or condition.parse_status != "parsed":
+            return None
+
+        if condition.condition_type == "employment":
+            if (
+                condition.operator != "equals"
+                or condition.unit != "employment_status"
+                or EligibilityConditionService.normalize_simple_employment_requirement(
+                    condition.source_text
+                )
+                != condition.value_text
+            ):
+                return None
+
+            try:
+                current_status = EmploymentStatus(user.employment_status).value
+                required_status = EmploymentStatus(condition.value_text).value
+            except (TypeError, ValueError):
+                return None
+
+            # OTHER는 의미가 포괄적이고 STUDENT는 고용 여부를 나타내지 않아
+            # 미취업/재직으로 단정하지 않는다.
+            if current_status in {EmploymentStatus.OTHER.value, EmploymentStatus.STUDENT.value}:
+                return None
+            return current_status == required_status
+
+        if condition.condition_type == "region":
+            if (
+                condition.operator != "equals"
+                or condition.unit != "sido"
+                or EligibilityConditionService.normalize_simple_sido_requirement(
+                    condition.source_text
+                )
+                != condition.value_text
+            ):
+                return None
+
+            required_sido = condition.value_text
+            current_sido = (
+                EligibilityConditionService.canonical_sido_from_profile_region(
+                    user.region
+                )
+            )
+            if current_sido is None:
+                return None
+            return current_sido == required_sido
+
+        return None
 
     @classmethod
     def _age_conditions_needing_review(
@@ -348,6 +406,39 @@ class EligibilityMatchingService:
                     )
                 )
                 continue
+
+            if condition.condition_type in {"region", "employment"}:
+                comparison = self._compare_profile_condition(user, condition)
+                if comparison is not None:
+                    current_value = (
+                        self._current_profile_value(
+                            user=user,
+                            condition=condition,
+                            eligibility_conditions=eligibility_conditions,
+                        )
+                        or "추가 정보 또는 비교 규칙 필요"
+                    )
+                    result = self._condition_result(
+                        condition=condition,
+                        status="passed" if comparison else "failed",
+                        current_value=current_value,
+                        required_value=condition.source_text or condition.value_text,
+                        message=(
+                            "저장된 프로필 정보가 조건과 일치합니다."
+                            if comparison
+                            else "저장된 프로필 정보가 조건과 일치하지 않습니다."
+                        ),
+                        action_guide=(
+                            "공식 신청 안내에서 세부 기준을 확인하세요."
+                            if comparison
+                            else "공식 신청 안내에서 적용 기준과 예외를 확인하세요."
+                        ),
+                    )
+                    evaluated.append(result)
+                    if not comparison:
+                        gaps.append(result)
+                    continue
+
             can_compare_age = (
                 condition.condition_type == "age"
                 and condition.comparison_ready

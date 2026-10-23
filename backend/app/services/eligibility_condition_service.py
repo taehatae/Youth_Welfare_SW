@@ -42,6 +42,35 @@ class EligibilityConditionService:
         "미만": "lt",
     }
 
+    SIDO_ALIASES = {
+        "서울특별시": ("서울특별시", "서울시"),
+        "부산광역시": ("부산광역시", "부산시"),
+        "대구광역시": ("대구광역시", "대구시"),
+        "인천광역시": ("인천광역시", "인천시"),
+        "광주광역시": ("광주광역시",),
+        "대전광역시": ("대전광역시", "대전시"),
+        "울산광역시": ("울산광역시", "울산시"),
+        "세종특별자치시": ("세종특별자치시", "세종시"),
+        "경기도": ("경기도",),
+        "강원특별자치도": ("강원특별자치도",),
+        "충청북도": ("충청북도",),
+        "충청남도": ("충청남도",),
+        "전북특별자치도": ("전북특별자치도",),
+        "전라남도": ("전라남도",),
+        "경상북도": ("경상북도",),
+        "경상남도": ("경상남도",),
+        "제주특별자치도": ("제주특별자치도",),
+    }
+    SIMPLE_EMPLOYMENT_REQUIREMENTS = {
+        "미취업자": "UNEMPLOYED",
+        "중소기업재직자": "EMPLOYED_SME",
+    }
+    PROFILE_LOGIC_RISK_PATTERN = re.compile(
+        r"또는|혹은|거나|아니면|및|다만|예외|제외|아닌|재량|"
+        r"(?:^|[\s,])단(?:[,\s:]|$)|"
+        r"\d+\s*(?:년|개월|주|일)\s*(?:이상|이하|초과|미만|동안|이내)?"
+    )
+
     TARGET_GROUP_TERMS = (
         "조건부수급자",
         "일반수급자",
@@ -96,6 +125,110 @@ class EligibilityConditionService:
                 for match in re.finditer(re.escape(term), text)
             )
         return spans
+
+    @classmethod
+    def _has_profile_logic_risk(cls, text: str) -> bool:
+        return bool(cls.PROFILE_LOGIC_RISK_PATTERN.search(text))
+
+    @classmethod
+    def normalize_simple_employment_requirement(
+        cls,
+        text: str | None,
+    ) -> str | None:
+        if not text or cls._has_profile_logic_risk(text):
+            return None
+
+        normalized = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        return cls.SIMPLE_EMPLOYMENT_REQUIREMENTS.get(normalized)
+
+    @classmethod
+    def normalize_simple_sido_requirement(
+        cls,
+        text: str | None,
+    ) -> str | None:
+        if (
+            not text
+            or cls._has_profile_logic_risk(text)
+            # User.region is a user-entered location, not verified resident
+            # registration/address evidence.
+            or "주민등록" in text
+            or not any(marker in text for marker in ("거주", "주민등록"))
+        ):
+            return None
+
+        compact = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        matches = [
+            (alias, canonical)
+            for canonical, aliases in cls.SIDO_ALIASES.items()
+            for alias in aliases
+            for _ in range(compact.count(alias))
+        ]
+        if len(matches) != 1:
+            return None
+
+        alias, canonical = matches[0]
+        residual = compact.replace(alias, "", 1)
+        allowed_terms = (
+            "주민등록상",
+            "주민등록을",
+            "주민등록",
+            "주소지가",
+            "주소지",
+            "주소",
+            "거주지를",
+            "거주지",
+            "거주하는",
+            "거주한",
+            "거주자",
+            "거주",
+            "두고",
+            "둔",
+            "청년",
+            "대상자",
+            "대상",
+            "에서",
+            "에",
+            "은",
+            "는",
+            "이",
+            "가",
+            "을",
+            "를",
+            "자",
+            "인",
+        )
+        for term in allowed_terms:
+            residual = residual.replace(term, "")
+
+        return canonical if not residual else None
+
+    @classmethod
+    def canonical_sido_from_profile_region(
+        cls,
+        region: str | None,
+    ) -> str | None:
+        if not region or not isinstance(region, str):
+            return None
+
+        normalized = region.strip()
+        matches = [
+            (alias, canonical)
+            for canonical, aliases in cls.SIDO_ALIASES.items()
+            for alias in aliases
+            if normalized == alias or normalized.startswith(f"{alias} ")
+        ]
+        if len(matches) != 1:
+            return None
+
+        alias, canonical = matches[0]
+        remainder = normalized[len(alias):].strip()
+        if any(
+            other_alias in remainder
+            for aliases in cls.SIDO_ALIASES.values()
+            for other_alias in aliases
+        ):
+            return None
+        return canonical
 
     @classmethod
     def _unrecognized_residual(
@@ -166,7 +299,23 @@ class EligibilityConditionService:
                 if part.strip()
             ]
 
-        for line in lines:
+        profile_logic_risk = cls._has_profile_logic_risk(text)
+        employment_candidates = [
+            cls.normalize_simple_employment_requirement(line)
+            for line in lines
+        ]
+        region_candidates = [
+            cls.normalize_simple_sido_requirement(line)
+            for line in lines
+        ]
+        allow_single_profile_condition = (
+            not profile_logic_risk
+            and sum(candidate is not None for candidate in employment_candidates)
+            + sum(candidate is not None for candidate in region_candidates)
+            == 1
+        )
+
+        for line_index, line in enumerate(lines):
             extracted = []
             recognized_spans = []
 
@@ -334,23 +483,6 @@ class EligibilityConditionService:
                 "취업자",
                 "구직",
             )
-
-            employment_spans = cls._term_spans(line, employment_terms)
-            if employment_spans:
-                recognized_spans.extend(employment_spans)
-                extracted.append({
-                    "condition_type": "employment",
-                    "operator": "contains",
-                    "value_text": line,
-                    "value_number": None,
-                    "upper_value_number": None,
-                    "unit": "",
-                    "comparison_ready": False,
-                    "parse_status": "manual_review",
-                    "confidence": 0.5,
-                })
-
-            # 9. 지역 관련 표현
             region_terms = (
                 "거주",
                 "주민등록",
@@ -360,20 +492,65 @@ class EligibilityConditionService:
                 "지역 내",
             )
 
-            region_spans = cls._term_spans(line, region_terms)
-            if region_spans:
-                recognized_spans.extend(region_spans)
+            normalized_employment = employment_candidates[line_index]
+            if allow_single_profile_condition and normalized_employment:
+                recognized_spans.append((0, len(line)))
                 extracted.append({
-                    "condition_type": "region",
-                    "operator": "contains",
-                    "value_text": line,
+                    "condition_type": "employment",
+                    "operator": "equals",
+                    "value_text": normalized_employment,
                     "value_number": None,
                     "upper_value_number": None,
-                    "unit": "",
-                    "comparison_ready": False,
-                    "parse_status": "manual_review",
-                    "confidence": 0.5,
+                    "unit": "employment_status",
+                    "comparison_ready": True,
+                    "parse_status": "parsed",
+                    "confidence": 0.95,
                 })
+            else:
+                employment_spans = cls._term_spans(line, employment_terms)
+                if employment_spans:
+                    recognized_spans.extend(employment_spans)
+                    extracted.append({
+                        "condition_type": "employment",
+                        "operator": "contains",
+                        "value_text": line,
+                        "value_number": None,
+                        "upper_value_number": None,
+                        "unit": "",
+                        "comparison_ready": False,
+                        "parse_status": "manual_review",
+                        "confidence": 0.5,
+                    })
+
+            normalized_region = region_candidates[line_index]
+            if allow_single_profile_condition and normalized_region:
+                recognized_spans.append((0, len(line)))
+                extracted.append({
+                    "condition_type": "region",
+                    "operator": "equals",
+                    "value_text": normalized_region,
+                    "value_number": None,
+                    "upper_value_number": None,
+                    "unit": "sido",
+                    "comparison_ready": True,
+                    "parse_status": "parsed",
+                    "confidence": 0.95,
+                })
+            else:
+                region_spans = cls._term_spans(line, region_terms)
+                if region_spans:
+                    recognized_spans.extend(region_spans)
+                    extracted.append({
+                        "condition_type": "region",
+                        "operator": "contains",
+                        "value_text": line,
+                        "value_number": None,
+                        "upper_value_number": None,
+                        "unit": "",
+                        "comparison_ready": False,
+                        "parse_status": "manual_review",
+                        "confidence": 0.5,
+                    })
 
             # 10. 인식된 조건 바깥의 잔여 문구도 별도 검토 조건으로 보존한다.
             residual = cls._unrecognized_residual(line, recognized_spans)
