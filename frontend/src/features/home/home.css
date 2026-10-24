@@ -112,9 +112,3 @@
   .youth-home-footer { gap: 7px 20px; }
   .youth-home-footer p { flex-basis: 100%; order: 1; }
 }
-@media (prefers-reduced-motion: reduce) {
-  /* 목록 이동 요청에 따라 재생하되, 움직임 감소 환경에서는 더 느리게 표시한다.
-     일시정지 버튼은 모든 환경에서 제공한다. */
-  .youth-ticker-track { animation-duration: 80s; }
-  .youth-primary, .youth-secondary { transition: none; }
-}

@@ -1,14 +1,22 @@
 import type { Page } from "../../types/page"
 
 import { BrandLogo } from "../brand/BrandLogo"
-import LoginDialog from "./LoginDialog"
+import type { Account } from "../../services/welfareApi"
 
 export default function Navigation({
   page,
   setPage,
+  account,
+  busy,
+  onLogin,
+  onLogout,
 }: {
   page: Page
   setPage: (p: Page) => void
+  account: Account | null
+  busy: boolean
+  onLogin: () => void
+  onLogout: () => void
 }) {
   const links: Array<{ id: Page; label: string }> = [
     { id: "home", label: "홈" },
@@ -57,7 +65,8 @@ export default function Navigation({
             </div>
 
             <div className="flex items-center gap-2">
-              <LoginDialog />
+              {account && <span className="auth-name" title={account.display_name}>{account.display_name}님</span>}
+              <button type="button" className="interface-login-button" disabled={busy} onClick={account ? onLogout : onLogin} aria-haspopup={account ? undefined : "dialog"}>{account ? "로그아웃" : "로그인"}</button>
               <button
                 onClick={() => setPage("diagnosis")}
                 className="bg-slate-900 text-white text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"

@@ -6,7 +6,8 @@ import type {
 } from "../types/welfareApi"
 
 export interface Snapshot {
-  profile: UserProfileInput
+  profile: UserProfileInput | null
+  profileKey?: string
   analysis: WelfareAnalysis
   checkedAt: string
 }
@@ -14,6 +15,7 @@ export interface AnalysisSession {
   draft: ProfileDraft
   step: number
   diagnosis: Snapshot | null
+  previousDiagnosis: Snapshot | null
   current: Snapshot | null
   previous: Snapshot | null
   knownPolicies: MatchedPolicy[]
@@ -22,6 +24,7 @@ export const emptySession = (): AnalysisSession => ({
   draft: { ...EMPTY_DRAFT, qualifications: [] },
   step: 0,
   diagnosis: null,
+  previousDiagnosis: null,
   current: null,
   previous: null,
   knownPolicies: [],
@@ -35,11 +38,11 @@ export function isSnapshot(value: unknown): value is Snapshot {
     return (
       typeof s.checkedAt === "string" &&
       Number.isFinite(Date.parse(s.checkedAt)) &&
-      typeof s.profile?.age === "number" &&
+      (s.profile === null || (typeof s.profile?.age === "number" &&
       typeof s.profile?.region === "string" &&
       typeof s.profile?.income_level === "number" &&
       typeof s.profile?.employment_status === "string" &&
-      !!s.profile?.eligibility_conditions &&
+      !!s.profile?.eligibility_conditions)) &&
       typeof s.analysis?.userId === "string" &&
       Array.isArray(s.analysis?.matched?.policies) &&
       s.analysis.matched.policies.every(isMatchedPolicy) &&
@@ -105,14 +108,17 @@ export function restoreSession(raw: string | null): AnalysisSession {
     !Number.isInteger(value.step) ||
     value.step < 0 ||
     value.step > 5 ||
-    ![value.diagnosis, value.current, value.previous].every(
-      (s) => s === null || isSnapshot(s),
-    ) ||
+    ![
+      value.diagnosis,
+      value.current,
+      value.previous,
+      value.previousDiagnosis ?? null,
+    ].every((s) => s === null || isSnapshot(s)) ||
     !Array.isArray(value.knownPolicies) ||
     !value.knownPolicies.every(isMatchedPolicy)
   )
     throw new Error("저장 형식 오류")
-  return value
+  return { ...value, previousDiagnosis: value.previousDiagnosis ?? null }
 }
 export const formatTime = (value: string) =>
   new Date(value).toLocaleString("ko-KR", {

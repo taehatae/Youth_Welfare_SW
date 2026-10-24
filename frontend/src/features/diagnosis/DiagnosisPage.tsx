@@ -1,8 +1,15 @@
+import { profileSummary } from "../../services/profileSummary"
+
 import PageHeading from "../../components/layout/PageHeading"
+
 import { useEffect, useRef, useState } from "react"
+
 import type { Page } from "../../types/page"
+
 import type { UserProfileInput } from "../../types/welfareApi"
+
 import { REGIONS } from "../../data/regions"
+
 import {
   ASSETS,
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -24,43 +31,71 @@ import {
 
 const YES_NO_UNKNOWN_OPTIONS: Option[] = [
   ["YES", "예"],
+
   ["NO", "아니요"],
+
   ["UNKNOWN", "모름·확인 필요"],
 ]
+
 const BENEFIT_TYPE_OPTIONS: Option[] = [
   ["LIVELIHOOD", "생계급여"],
+
   ["MEDICAL", "의료급여"],
+
   ["HOUSING", "주거급여"],
+
   ["EDUCATION", "교육급여"],
 ]
 
 const steps = [
   "기본 정보",
+
   "거주 지역",
+
   "소득",
+
   "가구 · 주거",
+
   "고용",
+
   "추가 조건",
 ]
+
 function Select({
   name,
+
   label,
+
   value,
+
   options,
+
   onChange,
+
   hint,
+
   required = false,
+
   disabled = false,
+
   showUnanswered = false,
 }: {
   name: string
+
   label: string
+
   value: string
+
   options: Option[]
+
   onChange: (value: string) => void
+
   hint?: string
+
   required?: boolean
+
   disabled?: boolean
+
   showUnanswered?: boolean
 }) {
   return (
@@ -106,78 +141,119 @@ function Select({
 
 export default function DiagnosisPage({
   draft,
+
   setDraft,
+
   step,
+
   setStep,
+
   onComplete,
+
   busy,
+
   setPage,
 }: {
   draft: ProfileDraft
+
   setDraft: (value: ProfileDraft) => void
+
   step: number
+
   setStep: (value: number) => void
+
   onComplete: (profile: UserProfileInput) => Promise<void>
+
   busy: boolean
+
   setPage: (page: Page) => void
 }) {
+  const [reviewProfile, setReviewProfile] = useState<UserProfileInput | null>(
+    null,
+  )
+
+  const [returnToReview, setReturnToReview] = useState(false)
+
   const [error, setError] = useState("")
+
   const heading = useRef<HTMLHeadingElement>(null)
+
   useEffect(() => {
-    setError("")
     heading.current?.focus()
-  }, [step])
+  }, [step, reviewProfile])
+
   const update = (key: keyof ProfileDraft, value: string) => {
     const next = { ...draft, [key]: value }
+
     if (key === "region")
       next.district = value === "세종특별자치시" ? value : ""
+
     if (key === "incomeType" && value === "NONE") {
       next.incomeMajor = "0"
+
       next.incomeMinor = "0"
     }
+
     if (key === "qualificationStatus" && value !== "YES")
       next.qualifications = []
+
     setDraft(next)
+
     setError("")
   }
+
   const additional = {
     ...EMPTY_ADDITIONAL_ELIGIBILITY,
+
     ...draft.additionalEligibility,
   }
+
   const updateAdditional = (
     key: keyof AdditionalEligibilityDraft,
+
     value: string | string[],
   ) => {
     const next = { ...additional, [key]: value }
+
     if (key === "basicBenefitStatus") {
       next.basicBenefitTypes = value === "NO" ? ["NONE"] : []
     }
-    if (key === "registeredAddressSido")
-      next.registeredAddressDistrict = ""
-    if (
-      key === "householdIncomeRecognitionKnown" &&
-      value !== "YES"
-    ) {
+
+    if (key === "registeredAddressSido") {
+      next.registeredAddressDistrict =
+        value === "세종특별자치시" ? value as string : ""
+
+      next.registeredResidenceStartMonth = ""
+    }
+
+    if (key === "householdIncomeRecognitionKnown" && value !== "YES") {
       next.recognizedHouseholdIncomeWon = ""
     }
-    if (
-      key === "childWelfareProtectionExperience" &&
-      value !== "YES"
-    ) {
+
+    if (key === "childWelfareProtectionExperience" && value !== "YES") {
       next.protectionEnded = ""
+
       next.protectionEndMonth = ""
+
       next.protectionDurationMonths = ""
     }
+
     if (key === "protectionEnded" && value !== "YES") {
       next.protectionEndMonth = ""
+
       next.protectionDurationMonths = ""
     }
+
     setDraft({ ...draft, additionalEligibility: next })
+
     setError("")
   }
+
   const additionalSelect = (
     key: Exclude<keyof AdditionalEligibilityDraft, "basicBenefitTypes">,
+
     label: string,
+
     hint?: string,
   ) => (
     <Select
@@ -190,12 +266,18 @@ export default function DiagnosisPage({
       showUnanswered
     />
   )
+
   const field = (
     key: Exclude<keyof ProfileDraft, "qualifications" | "additionalEligibility">,
+
     label: string,
+
     options: Option[],
+
     hint?: string,
+
     required = false,
+
     disabled = false,
   ) => (
     <Select
@@ -209,18 +291,37 @@ export default function DiagnosisPage({
       disabled={disabled}
     />
   )
+
   const proceed = async () => {
+    setError("")
+
     const issue = stepError(draft, step)
+
     if (issue) {
       setError(issue)
+
       return
     }
-    if (step < 5) {
+
+    if (step < 5 && !returnToReview) {
       setStep(step + 1)
+
       return
     }
+
     try {
-      await onComplete(toProfile(draft))
+      for (let index = 0; index < 6; index++) {
+        const issue = stepError(draft, index)
+
+        if (issue) {
+          setStep(index)
+          setReturnToReview(false)
+          setError(issue)
+          return
+        }
+      }
+
+      setReviewProfile(toProfile(draft))
     } catch (e) {
       setError(
         e instanceof Error
@@ -229,9 +330,101 @@ export default function DiagnosisPage({
       )
     }
   }
+
+  const submitReview = async () => {
+    if (!reviewProfile || busy) return
+
+    try {
+      await onComplete(reviewProfile)
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "진단을 완료하지 못했어요. 다시 시도해주세요.",
+      )
+    }
+  }
+
+  if (reviewProfile)
+    return (
+      <section className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6">
+        <PageHeading
+          eyebrow="진단 전 마지막 확인"
+          title="입력한 정보를 확인해주세요"
+          description="이 정보로 정책 조건을 비교합니다. 모르는 추가 정보는 미확인으로 남겨도 괜찮아요."
+        />
+        <div className="profile-review step-arrive" aria-busy={busy}>
+          <h2 ref={heading} tabIndex={-1}>
+            이번 진단에 사용할 정보
+          </h2>
+          {profileSummary(reviewProfile).map((group, index) => (
+            <section key={group.title} className="review-group">
+              <header>
+                <h3>{group.title}</h3>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setReviewProfile(null)
+                    setReturnToReview(true)
+                    setStep(index)
+                  }}
+                >
+                  {group.title} 수정 →
+                </button>
+              </header>
+              <dl>
+                {group.items
+                  .filter(([, value]) => value !== "미입력")
+                  .map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </section>
+          ))}
+          <p className="comparison-note">
+            가구 월소득과 소득인정액은 다른 정보예요. 확인하지 못한 소득인정액을
+            임의로 계산해 넣지 마세요.
+          </p>
+          {error && (
+            <p role="alert" className="reverse-alert">
+              {error} 입력 정보는 유지됩니다.
+            </p>
+          )}
+          <div className="review-actions">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => {
+                setReviewProfile(null)
+                setStep(5)
+              }}
+            >
+              입력으로 돌아가기
+            </button>
+            <button
+              type="button"
+              className="interface-primary"
+              disabled={busy}
+              onClick={() => void submitReview()}
+            >
+              {busy ? "정책 비교 중…" : "계정에 저장하고 진단하기"}
+            </button>
+          </div>
+        </div>
+      </section>
+    )
+
   return (
     <section className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6">
-      <PageHeading eyebrow="내 정보에서 시작하는 맞춤 진단" title="내 자격 진단" description="입력 중인 내용은 이 브라우저에 저장됩니다. 모르는 추가 조건은 미확인으로 두세요." />
+      <PageHeading
+        eyebrow="내 정보에서 시작하는 맞춤 진단"
+        title="내 자격 진단"
+        description="진단을 완료하면 입력값과 결과가 내 계정에 저장됩니다. 작성 중에는 새로고침하지 마세요. 모르는 추가 조건은 미확인으로 두세요."
+      />
       <ol
         aria-label="진단 진행 단계"
         className="interface-steps my-6 grid grid-cols-3 gap-2 sm:grid-cols-6"
@@ -261,12 +454,14 @@ export default function DiagnosisPage({
         ))}
       </ol>
       <form
+        key={step}
         noValidate
         onSubmit={(e) => {
           e.preventDefault()
+
           void proceed()
         }}
-        className="interface-form bg-white p-5 sm:p-7"
+        className="interface-form step-arrive bg-white p-5 sm:p-7"
       >
         <h2
           ref={heading}
@@ -284,9 +479,13 @@ export default function DiagnosisPage({
             <>
               {field(
                 "age",
+
                 "만 나이",
+
                 numberOptions(19, 34, "세"),
+
                 "현재 진단은 만 19~34세를 대상으로 합니다.",
+
                 true,
               )}
               {field("gender", "성별", GENDER)}
@@ -303,17 +502,26 @@ export default function DiagnosisPage({
             <>
               {field(
                 "region",
+
                 "시도",
+
                 Object.keys(REGIONS).map((v) => [v, v]),
+
                 "주민등록상 거주지를 선택해주세요.",
+
                 true,
               )}
               {field(
                 "district",
+
                 "시군구",
+
                 (REGIONS[draft.region] ?? []).map((v) => [v, v]),
+
                 undefined,
+
                 true,
+
                 !draft.region,
               )}
             </>
@@ -322,8 +530,11 @@ export default function DiagnosisPage({
             <>
               {field(
                 "incomeType",
+
                 "주된 소득 종류",
+
                 INCOME,
+
                 "여러 소득이 있다면 가장 큰 비중의 소득원을 선택해주세요.",
               )}
               <div>
@@ -333,21 +544,32 @@ export default function DiagnosisPage({
                 <div className="grid grid-cols-2 gap-3">
                   {field(
                     "incomeMajor",
+
                     "백만원 단위",
+
                     numberOptions(0, 99).map(([v]) => [
                       v,
+
                       Number(v) * 100 + "만원",
                     ]),
+
                     undefined,
+
                     true,
+
                     draft.incomeType === "NONE",
                   )}
                   {field(
                     "incomeMinor",
+
                     "나머지 만원 단위",
+
                     numberOptions(0, 99, "만원"),
+
                     undefined,
+
                     true,
+
                     draft.incomeType === "NONE",
                   )}
                 </div>
@@ -372,21 +594,30 @@ export default function DiagnosisPage({
             <>
               {field(
                 "householdSize",
+
                 "주민등록상 가구원 수",
+
                 numberOptions(1, 20, "명"),
+
                 "정책에서 사용하는 가구 범위는 다를 수 있어요.",
               )}
               {field("housing", "현재 주거 형태", HOUSING, undefined, true)}
               {field(
                 "ownsHome",
+
                 "본인 명의 주택 보유 여부",
+
                 YES_NO,
+
                 "현재 거주 형태와 별개로 다른 곳에 보유한 주택도 포함합니다.",
               )}
               {field(
                 "asset",
+
                 "본인 총재산 구간",
+
                 ASSETS,
+
                 "부채 차감 전 부동산·금융재산 등의 합계입니다. 정책별 산정액과는 다를 수 있어요.",
               )}
             </>
@@ -395,9 +626,13 @@ export default function DiagnosisPage({
             <>
               {field(
                 "employment",
+
                 "현재 고용 상태",
+
                 EMPLOYMENT,
+
                 "학생 여부는 다음 단계에서 별도로 선택합니다. 재학 중 아르바이트를 한다면 아르바이트를 선택해주세요.",
+
                 true,
               )}
             </>
@@ -425,6 +660,7 @@ export default function DiagnosisPage({
                         onChange={(e) =>
                           setDraft({
                             ...draft,
+
                             qualifications: e.target.checked
                               ? [...draft.qualifications, value]
                               : draft.qualifications.filter((v) => v !== value),
@@ -442,18 +678,24 @@ export default function DiagnosisPage({
                 </fieldset>
               )}
 
-              <details className="rounded-xl border border-slate-200 p-4">
+              <details className="motion-details rounded-xl border border-slate-200 p-4">
                 <summary className="cursor-pointer font-semibold text-slate-900">
                   복지 수급·가구 소득 등 추가 정보 입력 (선택)
                 </summary>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로 저장됩니다.
-                  입력 내용은 본인 응답이며 공식 자격 증명으로 간주되지 않습니다.
+                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로
+                  저장됩니다. 입력 내용은 본인 응답이며 공식 자격 증명으로
+                  간주되지 않습니다.
                 </p>
-                <div className="mt-5 space-y-7">
+                <div className="details-body mt-5 space-y-7">
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">복지 수급·자격 정보</legend>
-                    {additionalSelect("basicBenefitStatus", "기초생활보장급여 수급 여부")}
+                    <legend className="px-1 font-semibold">
+                      복지 수급·자격 정보
+                    </legend>
+                    {additionalSelect(
+                      "basicBenefitStatus",
+                      "기초생활보장급여 수급 여부",
+                    )}
                     {additional.basicBenefitStatus === "YES" && (
                       <fieldset className="space-y-2">
                         <legend className="text-sm font-semibold">
@@ -463,16 +705,24 @@ export default function DiagnosisPage({
                           현재 해당하는 급여를 모두 선택해주세요.
                         </p>
                         {BENEFIT_TYPE_OPTIONS.map(([value, label]) => (
-                          <label key={value} className="flex items-center gap-3 py-1 text-sm">
+                          <label
+                            key={value}
+                            className="flex items-center gap-3 py-1 text-sm"
+                          >
                             <input
                               type="checkbox"
-                              checked={additional.basicBenefitTypes.includes(value)}
+                              checked={additional.basicBenefitTypes.includes(
+                                value,
+                              )}
                               onChange={(event) =>
                                 updateAdditional(
                                   "basicBenefitTypes",
+
                                   event.target.checked
                                     ? [...additional.basicBenefitTypes, value]
-                                    : additional.basicBenefitTypes.filter((item) => item !== value),
+                                    : additional.basicBenefitTypes.filter(
+                                        (item) => item !== value,
+                                      ),
                                 )
                               }
                               className="h-4 w-4 accent-blue-700"
@@ -483,17 +733,25 @@ export default function DiagnosisPage({
                       </fieldset>
                     )}
                     {additional.basicBenefitStatus === "NO" && (
-                      <p className="text-sm text-slate-600">수급 급여 종류: 해당 없음</p>
+                      <p className="text-sm text-slate-600">
+                        수급 급여 종류: 해당 없음
+                      </p>
                     )}
-                    {additionalSelect("nearPovertyStatus", "차상위계층 해당 여부")}
+                    {additionalSelect(
+                      "nearPovertyStatus",
+                      "차상위계층 해당 여부",
+                    )}
                     {additionalSelect(
                       "singleParentSupportStatus",
+
                       "한부모가족 지원 대상 여부",
                     )}
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">가구 소득 정보</legend>
+                    <legend className="px-1 font-semibold">
+                      가구 소득 정보
+                    </legend>
                     <label className="block space-y-2 text-sm font-semibold text-slate-800">
                       가구 전체 월소득 (원, 선택)
                       <input
@@ -502,13 +760,17 @@ export default function DiagnosisPage({
                         step="1"
                         value={additional.householdMonthlyIncomeWon}
                         onChange={(event) =>
-                          updateAdditional("householdMonthlyIncomeWon", event.target.value)
+                          updateAdditional(
+                            "householdMonthlyIncomeWon",
+                            event.target.value,
+                          )
                         }
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
                       />
                     </label>
                     {additionalSelect(
                       "householdIncomeRecognitionKnown",
+
                       "가구 소득인정액을 알고 있나요?",
                     )}
                     {additional.householdIncomeRecognitionKnown === "YES" && (
@@ -520,7 +782,10 @@ export default function DiagnosisPage({
                           step="1"
                           value={additional.recognizedHouseholdIncomeWon}
                           onChange={(event) =>
-                            updateAdditional("recognizedHouseholdIncomeWon", event.target.value)
+                            updateAdditional(
+                              "recognizedHouseholdIncomeWon",
+                              event.target.value,
+                            )
                           }
                           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
                         />
@@ -528,17 +793,22 @@ export default function DiagnosisPage({
                     )}
                     {additionalSelect(
                       "householdBasicBenefitStatus",
+
                       "가구 내 기초생활보장급여 수급자 여부",
                     )}
                     <p className="text-sm text-slate-500">
-                      본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며, 모르는 금액은 계산하지 않습니다.
+                      본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며,
+                      모르는 금액은 계산하지 않습니다.
                     </p>
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">보호 경험·종료 정보</legend>
+                    <legend className="px-1 font-semibold">
+                      보호 경험·종료 정보
+                    </legend>
                     {additionalSelect(
                       "childWelfareProtectionExperience",
+
                       "아동복지시설 또는 가정위탁 보호 경험 여부",
                     )}
                     {additional.childWelfareProtectionExperience === "YES" && (
@@ -552,7 +822,10 @@ export default function DiagnosisPage({
                                 type="month"
                                 value={additional.protectionEndMonth}
                                 onChange={(event) =>
-                                  updateAdditional("protectionEndMonth", event.target.value)
+                                  updateAdditional(
+                                    "protectionEndMonth",
+                                    event.target.value,
+                                  )
                                 }
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
                               />
@@ -565,7 +838,10 @@ export default function DiagnosisPage({
                                 step="1"
                                 value={additional.protectionDurationMonths}
                                 onChange={(event) =>
-                                  updateAdditional("protectionDurationMonths", event.target.value)
+                                  updateAdditional(
+                                    "protectionDurationMonths",
+                                    event.target.value,
+                                  )
                                 }
                                 className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
                               />
@@ -577,27 +853,37 @@ export default function DiagnosisPage({
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">구직·취업지원·자활 정보</legend>
+                    <legend className="px-1 font-semibold">
+                      구직·취업지원·자활 정보
+                    </legend>
                     {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
                     {additionalSelect(
                       "employmentSupportProgram",
+
                       "취업지원 프로그램 참여 여부",
                     )}
                     {additionalSelect(
                       "selfSufficiencyProgramStatus",
+
                       "자활사업 참여 여부",
                     )}
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">주민등록 주소·거주 기간 정보</legend>
+                    <legend className="px-1 font-semibold">
+                      주민등록 주소·거주 기간 정보
+                    </legend>
                     <p className="text-sm text-slate-500">
-                      지역과 거주 시작 시점은 참고 정보이며, 별도 증빙이 필요한 조건은 추가 확인으로 남습니다.
+                      지역과 거주 시작 시점은 참고 정보이며, 별도 증빙이 필요한
+                      조건은 추가 확인으로 남습니다.
                     </p>
                     <Select
                       name="additional-registeredAddressSido"
                       label="주민등록상 시도"
-                      options={Object.keys(REGIONS).map((value) => [value, value])}
+                      options={Object.keys(REGIONS).map((value) => [
+                        value,
+                        value,
+                      ])}
                       value={additional.registeredAddressSido}
                       onChange={(value) =>
                         updateAdditional("registeredAddressSido", value)
@@ -607,7 +893,9 @@ export default function DiagnosisPage({
                     <Select
                       name="additional-registeredAddressDistrict"
                       label="주민등록상 시군구"
-                      options={(REGIONS[additional.registeredAddressSido] ?? []).map(
+                      options={(
+                        REGIONS[additional.registeredAddressSido] ?? []
+                      ).map(
                         (value) => [value, value],
                       )}
                       value={additional.registeredAddressDistrict}
@@ -623,7 +911,10 @@ export default function DiagnosisPage({
                         type="month"
                         value={additional.registeredResidenceStartMonth}
                         onChange={(event) =>
-                          updateAdditional("registeredResidenceStartMonth", event.target.value)
+                          updateAdditional(
+                            "registeredResidenceStartMonth",
+                            event.target.value,
+                          )
                         }
                         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
                       />
@@ -658,7 +949,11 @@ export default function DiagnosisPage({
             disabled={busy}
             className="interface-primary flex-1"
           >
-            {busy ? "진단 중…" : step === 5 ? "이 정보로 진단하기" : "다음"}
+            {busy
+              ? "진단 중…"
+              : step === 5 || returnToReview
+                ? "입력 내용 확인"
+                : "다음"}
           </button>
         </div>
       </form>
