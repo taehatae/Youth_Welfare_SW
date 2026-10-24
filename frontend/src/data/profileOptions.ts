@@ -103,6 +103,49 @@ export interface ProfileDraft {
   childrenCount: string
   qualificationStatus: string
   qualifications: string[]
+  additionalEligibility?: AdditionalEligibilityDraft
+}
+
+export interface AdditionalEligibilityDraft {
+  basicBenefitStatus: string
+  basicBenefitTypes: string[]
+  nearPovertyStatus: string
+  singleParentSupportStatus: string
+  householdMonthlyIncomeWon: string
+  householdIncomeRecognitionKnown: string
+  recognizedHouseholdIncomeWon: string
+  householdBasicBenefitStatus: string
+  childWelfareProtectionExperience: string
+  protectionEnded: string
+  protectionEndMonth: string
+  protectionDurationMonths: string
+  jobSeekRegistration: string
+  employmentSupportProgram: string
+  selfSufficiencyProgramStatus: string
+  registeredAddressSido: string
+  registeredAddressDistrict: string
+  registeredResidenceStartMonth: string
+}
+
+export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
+  basicBenefitStatus: "",
+  basicBenefitTypes: [],
+  nearPovertyStatus: "",
+  singleParentSupportStatus: "",
+  householdMonthlyIncomeWon: "",
+  householdIncomeRecognitionKnown: "",
+  recognizedHouseholdIncomeWon: "",
+  householdBasicBenefitStatus: "",
+  childWelfareProtectionExperience: "",
+  protectionEnded: "",
+  protectionEndMonth: "",
+  protectionDurationMonths: "",
+  jobSeekRegistration: "",
+  employmentSupportProgram: "",
+  selfSufficiencyProgramStatus: "",
+  registeredAddressSido: "",
+  registeredAddressDistrict: "",
+  registeredResidenceStartMonth: "",
 }
 
 export const EMPTY_DRAFT: ProfileDraft = {
@@ -158,7 +201,37 @@ export function stepError(d: ProfileDraft, step: number): string {
   if (step === 5 && d.qualificationStatus === "YES" && !d.qualifications.length)
     return "보유한 자격을 선택해주세요. 목록에 없으면 해당 항목을 선택할 수 있어요."
 
+  if (step === 5 && d.additionalEligibility) {
+    const additional = d.additionalEligibility
+    const optionalAmounts = [
+      additional.householdMonthlyIncomeWon,
+      additional.recognizedHouseholdIncomeWon,
+      additional.protectionDurationMonths,
+    ]
+    if (
+      optionalAmounts.some(
+        (value) => value !== "" && (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))),
+      )
+    )
+      return "추가 금액과 보호 기간은 0 이상의 정수로 입력해주세요."
+    if (
+      additional.protectionEndMonth &&
+      !validYearMonth(additional.protectionEndMonth)
+    )
+      return "보호 종료 연월을 확인해주세요."
+    if (
+      additional.registeredResidenceStartMonth &&
+      !validYearMonth(additional.registeredResidenceStartMonth)
+    )
+      return "주민등록상 거주 시작 연월을 확인해주세요."
+  }
+
   return ""
+}
+
+function validYearMonth(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})$/.exec(value)
+  return !!match && Number(match[1]) >= 1900 && Number(match[2]) >= 1 && Number(match[2]) <= 12
 }
 
 export function toProfile(d: ProfileDraft): UserProfileInput {
@@ -171,6 +244,12 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
     const error = stepError(d, step)
     if (error) throw new Error(error)
   }
+
+  const extra = {
+    ...EMPTY_ADDITIONAL_ELIGIBILITY,
+    ...d.additionalEligibility,
+  }
+  const optionalNumber = (value: string) => value === "" ? null : Number(value)
 
   return {
     age: Number(d.age),
@@ -202,8 +281,45 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
 
       additional_conditions: {
         qualification_status: d.qualificationStatus,
-        profile_schema_version: 2,
+        profile_schema_version: 3,
         employment_detail: d.employment,
+        basic_benefit_status: extra.basicBenefitStatus || null,
+        basic_benefit_types:
+          ["YES", "NO"].includes(extra.basicBenefitStatus) &&
+          extra.basicBenefitTypes.length > 0
+            ? extra.basicBenefitTypes
+            : null,
+        near_poverty_status: extra.nearPovertyStatus || null,
+        single_parent_support_status: extra.singleParentSupportStatus || null,
+        household_monthly_income_won: optionalNumber(
+          extra.householdMonthlyIncomeWon,
+        ),
+        household_income_recognition_known:
+          extra.householdIncomeRecognitionKnown || null,
+        recognized_household_income_won:
+          extra.householdIncomeRecognitionKnown === "YES"
+            ? optionalNumber(extra.recognizedHouseholdIncomeWon)
+            : null,
+        household_basic_benefit_status:
+          extra.householdBasicBenefitStatus || null,
+        child_welfare_protection_experience:
+          extra.childWelfareProtectionExperience || null,
+        protection_ended: extra.protectionEnded || null,
+        protection_end_month:
+          extra.protectionEnded === "YES" ? extra.protectionEndMonth || null : null,
+        protection_duration_months:
+          extra.childWelfareProtectionExperience === "YES" &&
+          extra.protectionEnded === "YES"
+            ? optionalNumber(extra.protectionDurationMonths)
+            : null,
+        job_seek_registration: extra.jobSeekRegistration || null,
+        employment_support_program: extra.employmentSupportProgram || null,
+        self_sufficiency_program_status:
+          extra.selfSufficiencyProgramStatus || null,
+        registered_address_sido: extra.registeredAddressSido || null,
+        registered_address_district: extra.registeredAddressDistrict || null,
+        registered_residence_start_month:
+          extra.registeredResidenceStartMonth || null,
       },
     },
   }
@@ -213,6 +329,15 @@ export function isDraft(value: unknown): value is ProfileDraft {
   if (!value || typeof value !== "object") return false
 
   const d = value as Record<string, unknown>
+
+  if (
+    d.additionalEligibility !== undefined &&
+    (!d.additionalEligibility || typeof d.additionalEligibility !== "object")
+  )
+    return false
+
+  if (d.additionalEligibility && !isAdditionalEligibilityDraft(d.additionalEligibility))
+    return false
 
   if (
     !Object.keys(EMPTY_DRAFT).every((key) =>
@@ -256,5 +381,47 @@ export function isDraft(value: unknown): value is ProfileDraft {
       : typeof d.region === "string" &&
         Object.prototype.hasOwnProperty.call(REGIONS, d.region) &&
         (d.district === "" || REGIONS[d.region].includes(d.district as string)))
+  )
+}
+
+function isAdditionalEligibilityDraft(
+  value: unknown,
+): value is AdditionalEligibilityDraft {
+  if (!value || typeof value !== "object") return false
+  const additional = value as Record<string, unknown>
+  const statusKeys = [
+    "basicBenefitStatus",
+    "nearPovertyStatus",
+    "singleParentSupportStatus",
+    "householdIncomeRecognitionKnown",
+    "householdBasicBenefitStatus",
+    "childWelfareProtectionExperience",
+    "protectionEnded",
+    "jobSeekRegistration",
+    "employmentSupportProgram",
+    "selfSufficiencyProgramStatus",
+  ]
+  return (
+    Object.keys(EMPTY_ADDITIONAL_ELIGIBILITY).every((key) =>
+      key === "basicBenefitTypes"
+        ? Array.isArray(additional[key]) &&
+          (additional[key] as unknown[]).every(
+            (item) =>
+              typeof item === "string" &&
+              ["LIVELIHOOD", "MEDICAL", "HOUSING", "EDUCATION", "NONE"].includes(item),
+          )
+        : typeof additional[key] === "string",
+    ) &&
+    statusKeys.every((key) =>
+      ["", "YES", "NO", "UNKNOWN"].includes(additional[key] as string),
+    ) &&
+    (additional.registeredAddressSido === "" ||
+      (typeof additional.registeredAddressSido === "string" &&
+        Object.prototype.hasOwnProperty.call(REGIONS, additional.registeredAddressSido))) &&
+    (additional.registeredAddressDistrict === "" ||
+      (typeof additional.registeredAddressSido === "string" &&
+        REGIONS[additional.registeredAddressSido]?.includes(
+          additional.registeredAddressDistrict as string,
+        )))
   )
 }

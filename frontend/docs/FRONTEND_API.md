@@ -72,12 +72,25 @@
     "qualifications": ["COMPUTER_2"],
     "additional_conditions": {
       "qualification_status": "YES",
-      "profile_schema_version": 2,
+      "profile_schema_version": 3,
       "employment_detail": "PART_TIME"
     }
   }
 }
 ```
+
+`additional_conditions`에는 선택 입력한 상세 정보를 함께 저장함. 항목을 입력하지 않으면 `null`, 모름을 선택하면 `UNKNOWN`으로 보냄. 두 값은 구분됨.
+
+| 필드 | 형식 | 값 |
+|---|---|---|
+| `basic_benefit_status`, `near_poverty_status`, `single_parent_support_status`, `household_basic_benefit_status` | 문자열 또는 `null` | `YES`, `NO`, `UNKNOWN` |
+| `basic_benefit_types` | 문자열 배열 또는 `null` | `LIVELIHOOD`, `MEDICAL`, `HOUSING`, `EDUCATION`; 해당 없음은 `NONE` |
+| `household_monthly_income_won`, `recognized_household_income_won`, `protection_duration_months` | 정수 또는 `null` | 원 또는 개월. 소득인정액을 모르면 계산하지 않음 |
+| `household_income_recognition_known`, `child_welfare_protection_experience`, `protection_ended`, `job_seek_registration`, `employment_support_program`, `self_sufficiency_program_status` | 문자열 또는 `null` | `YES`, `NO`, `UNKNOWN` |
+| `protection_end_month`, `registered_residence_start_month` | `YYYY-MM` 문자열 또는 `null` | 연월 |
+| `registered_address_sido`, `registered_address_district` | 문자열 또는 `null` | 시도·시군구 |
+
+가구 소득과 소득인정액은 본인 월소득과 별도로 저장함. 저장된 응답은 사용자 입력이며 공식 자격 증명이 아님.
 
 기존 한글 주거·재산·자격증 문자열은 위 코드로 변경했음. 백엔드 조건 파서와 비교 로직도 이 코드 규약을 사용해야 함. UNKNOWN / null을 false 또는 0으로 취급하면 안 됨.
 

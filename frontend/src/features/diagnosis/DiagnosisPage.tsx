@@ -5,6 +5,7 @@ import type { UserProfileInput } from "../../types/welfareApi"
 import { REGIONS } from "../../data/regions"
 import {
   ASSETS,
+  EMPTY_ADDITIONAL_ELIGIBILITY,
   EMPLOYMENT,
   GENDER,
   HOUSING,
@@ -17,8 +18,21 @@ import {
   stepError,
   toProfile,
   type Option,
+  type AdditionalEligibilityDraft,
   type ProfileDraft,
 } from "../../data/profileOptions"
+
+const YES_NO_UNKNOWN_OPTIONS: Option[] = [
+  ["YES", "예"],
+  ["NO", "아니요"],
+  ["UNKNOWN", "모름·확인 필요"],
+]
+const BENEFIT_TYPE_OPTIONS: Option[] = [
+  ["LIVELIHOOD", "생계급여"],
+  ["MEDICAL", "의료급여"],
+  ["HOUSING", "주거급여"],
+  ["EDUCATION", "교육급여"],
+]
 
 const steps = [
   "기본 정보",
@@ -37,6 +51,7 @@ function Select({
   hint,
   required = false,
   disabled = false,
+  showUnanswered = false,
 }: {
   name: string
   label: string
@@ -46,6 +61,7 @@ function Select({
   hint?: string
   required?: boolean
   disabled?: boolean
+  showUnanswered?: boolean
 }) {
   return (
     <div className="space-y-2">
@@ -65,8 +81,10 @@ function Select({
         aria-describedby={hint ? name + "-hint" : undefined}
         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 focus:outline-2 focus:outline-blue-600 disabled:bg-slate-100"
       >
-        {!options.some(([v]) => v === "UNKNOWN") && (
-          <option value="">{required ? "선택해주세요" : "미확인"}</option>
+        {(showUnanswered || !options.some(([v]) => v === "UNKNOWN")) && (
+          <option value="">
+            {required ? "선택해주세요" : showUnanswered ? "미입력" : "미확인"}
+          </option>
         )}
         {options.map(([id, text]) => (
           <option key={id} value={id}>
@@ -122,8 +140,58 @@ export default function DiagnosisPage({
     setDraft(next)
     setError("")
   }
+  const additional = {
+    ...EMPTY_ADDITIONAL_ELIGIBILITY,
+    ...draft.additionalEligibility,
+  }
+  const updateAdditional = (
+    key: keyof AdditionalEligibilityDraft,
+    value: string | string[],
+  ) => {
+    const next = { ...additional, [key]: value }
+    if (key === "basicBenefitStatus") {
+      next.basicBenefitTypes = value === "NO" ? ["NONE"] : []
+    }
+    if (key === "registeredAddressSido")
+      next.registeredAddressDistrict = ""
+    if (
+      key === "householdIncomeRecognitionKnown" &&
+      value !== "YES"
+    ) {
+      next.recognizedHouseholdIncomeWon = ""
+    }
+    if (
+      key === "childWelfareProtectionExperience" &&
+      value !== "YES"
+    ) {
+      next.protectionEnded = ""
+      next.protectionEndMonth = ""
+      next.protectionDurationMonths = ""
+    }
+    if (key === "protectionEnded" && value !== "YES") {
+      next.protectionEndMonth = ""
+      next.protectionDurationMonths = ""
+    }
+    setDraft({ ...draft, additionalEligibility: next })
+    setError("")
+  }
+  const additionalSelect = (
+    key: Exclude<keyof AdditionalEligibilityDraft, "basicBenefitTypes">,
+    label: string,
+    hint?: string,
+  ) => (
+    <Select
+      name={`additional-${key}`}
+      label={label}
+      options={YES_NO_UNKNOWN_OPTIONS}
+      value={additional[key]}
+      onChange={(value) => updateAdditional(key, value)}
+      hint={hint}
+      showUnanswered
+    />
+  )
   const field = (
-    key: Exclude<keyof ProfileDraft, "qualifications">,
+    key: Exclude<keyof ProfileDraft, "qualifications" | "additionalEligibility">,
     label: string,
     options: Option[],
     hint?: string,
@@ -373,6 +441,196 @@ export default function DiagnosisPage({
                   </p>
                 </fieldset>
               )}
+
+              <details className="rounded-xl border border-slate-200 p-4">
+                <summary className="cursor-pointer font-semibold text-slate-900">
+                  복지 수급·가구 소득 등 추가 정보 입력 (선택)
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로 저장됩니다.
+                  입력 내용은 본인 응답이며 공식 자격 증명으로 간주되지 않습니다.
+                </p>
+                <div className="mt-5 space-y-7">
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">복지 수급·자격 정보</legend>
+                    {additionalSelect("basicBenefitStatus", "기초생활보장급여 수급 여부")}
+                    {additional.basicBenefitStatus === "YES" && (
+                      <fieldset className="space-y-2">
+                        <legend className="text-sm font-semibold">
+                          수급 중인 급여 종류 (복수 선택)
+                        </legend>
+                        <p className="text-sm text-slate-500">
+                          현재 해당하는 급여를 모두 선택해주세요.
+                        </p>
+                        {BENEFIT_TYPE_OPTIONS.map(([value, label]) => (
+                          <label key={value} className="flex items-center gap-3 py-1 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={additional.basicBenefitTypes.includes(value)}
+                              onChange={(event) =>
+                                updateAdditional(
+                                  "basicBenefitTypes",
+                                  event.target.checked
+                                    ? [...additional.basicBenefitTypes, value]
+                                    : additional.basicBenefitTypes.filter((item) => item !== value),
+                                )
+                              }
+                              className="h-4 w-4 accent-blue-700"
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </fieldset>
+                    )}
+                    {additional.basicBenefitStatus === "NO" && (
+                      <p className="text-sm text-slate-600">수급 급여 종류: 해당 없음</p>
+                    )}
+                    {additionalSelect("nearPovertyStatus", "차상위계층 해당 여부")}
+                    {additionalSelect(
+                      "singleParentSupportStatus",
+                      "한부모가족 지원 대상 여부",
+                    )}
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">가구 소득 정보</legend>
+                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+                      가구 전체 월소득 (원, 선택)
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={additional.householdMonthlyIncomeWon}
+                        onChange={(event) =>
+                          updateAdditional("householdMonthlyIncomeWon", event.target.value)
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                      />
+                    </label>
+                    {additionalSelect(
+                      "householdIncomeRecognitionKnown",
+                      "가구 소득인정액을 알고 있나요?",
+                    )}
+                    {additional.householdIncomeRecognitionKnown === "YES" && (
+                      <label className="block space-y-2 text-sm font-semibold text-slate-800">
+                        가구 소득인정액 (원, 선택)
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={additional.recognizedHouseholdIncomeWon}
+                          onChange={(event) =>
+                            updateAdditional("recognizedHouseholdIncomeWon", event.target.value)
+                          }
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                        />
+                      </label>
+                    )}
+                    {additionalSelect(
+                      "householdBasicBenefitStatus",
+                      "가구 내 기초생활보장급여 수급자 여부",
+                    )}
+                    <p className="text-sm text-slate-500">
+                      본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며, 모르는 금액은 계산하지 않습니다.
+                    </p>
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">보호 경험·종료 정보</legend>
+                    {additionalSelect(
+                      "childWelfareProtectionExperience",
+                      "아동복지시설 또는 가정위탁 보호 경험 여부",
+                    )}
+                    {additional.childWelfareProtectionExperience === "YES" && (
+                      <>
+                        {additionalSelect("protectionEnded", "보호 종료 여부")}
+                        {additional.protectionEnded === "YES" && (
+                          <>
+                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
+                              보호 종료 연월 (선택)
+                              <input
+                                type="month"
+                                value={additional.protectionEndMonth}
+                                onChange={(event) =>
+                                  updateAdditional("protectionEndMonth", event.target.value)
+                                }
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                              />
+                            </label>
+                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
+                              보호 기간 (개월, 선택)
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={additional.protectionDurationMonths}
+                                onChange={(event) =>
+                                  updateAdditional("protectionDurationMonths", event.target.value)
+                                }
+                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                              />
+                            </label>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">구직·취업지원·자활 정보</legend>
+                    {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
+                    {additionalSelect(
+                      "employmentSupportProgram",
+                      "취업지원 프로그램 참여 여부",
+                    )}
+                    {additionalSelect(
+                      "selfSufficiencyProgramStatus",
+                      "자활사업 참여 여부",
+                    )}
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">주민등록 주소·거주 기간 정보</legend>
+                    <p className="text-sm text-slate-500">
+                      지역과 거주 시작 시점은 참고 정보이며, 별도 증빙이 필요한 조건은 추가 확인으로 남습니다.
+                    </p>
+                    <Select
+                      name="additional-registeredAddressSido"
+                      label="주민등록상 시도"
+                      options={Object.keys(REGIONS).map((value) => [value, value])}
+                      value={additional.registeredAddressSido}
+                      onChange={(value) =>
+                        updateAdditional("registeredAddressSido", value)
+                      }
+                      showUnanswered
+                    />
+                    <Select
+                      name="additional-registeredAddressDistrict"
+                      label="주민등록상 시군구"
+                      options={(REGIONS[additional.registeredAddressSido] ?? []).map(
+                        (value) => [value, value],
+                      )}
+                      value={additional.registeredAddressDistrict}
+                      onChange={(value) =>
+                        updateAdditional("registeredAddressDistrict", value)
+                      }
+                      disabled={!additional.registeredAddressSido}
+                      showUnanswered
+                    />
+                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+                      주민등록상 거주 시작 연월 (선택)
+                      <input
+                        type="month"
+                        value={additional.registeredResidenceStartMonth}
+                        onChange={(event) =>
+                          updateAdditional("registeredResidenceStartMonth", event.target.value)
+                        }
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                      />
+                    </label>
+                  </fieldset>
+                </div>
+              </details>
             </>
           )}
         </fieldset>

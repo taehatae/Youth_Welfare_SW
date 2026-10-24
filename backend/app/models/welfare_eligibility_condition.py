@@ -40,7 +40,7 @@ class WelfareEligibilityCondition(Base):
         nullable=False,
     )
 
-    # gte, gt, lte, lt, between, contains, unknown
+    # gte, gt, lte, lt, between, contains, equals, unknown
     operator: Mapped[str] = mapped_column(
         String(20),
         nullable=False,

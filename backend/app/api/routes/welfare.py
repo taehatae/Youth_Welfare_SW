@@ -70,9 +70,19 @@ def get_matched_welfare(
             detail="사용자를 찾을 수 없습니다.",
         )
 
+    stored_conditions = user_repository.get_eligibility_conditions(
+        db=db,
+        user_id=user_id,
+    )
+
     result = eligibility_matching_service.analyze_user(
         db=db,
         user=user,
+        eligibility_conditions=(
+            stored_conditions.conditions
+            if stored_conditions is not None
+            else None
+        ),
     )
 
     return MatchedPoliciesResponse(**result)
