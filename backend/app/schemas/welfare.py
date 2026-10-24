@@ -7,6 +7,7 @@ class MatchedPolicy(BaseModel):
     category: str
     support_amount: str
     match_score: float
+    detail_url: str | None = None
 
 
 class ConditionAnalysis(BaseModel):

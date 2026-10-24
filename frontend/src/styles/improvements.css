@@ -1,0 +1,55 @@
+/* Shared detail and comparison surfaces use the existing blue/green palette. */
+.policy-overview { padding: 20px 24px; }
+.condition-counts, .change-counts { display:flex; flex-wrap:wrap; gap:8px; }
+.condition-counts span, .change-counts span { padding:7px 11px; border:1px solid #d4deeb; border-radius:8px; font-size:12px; background:#f6f8fc; }
+.condition-counts b, .change-counts b { margin-left:6px; font-size:16px; }
+.condition-counts [data-kind=passed] { background:#eef8f3; color:#16634c; border-color:#cce7da; }
+.condition-counts [data-kind=failed] { background:#fff2ec; color:#934427; border-color:#f2d4c5; }
+.condition-counts [data-kind=review] { background:#fff8e8; color:#785716; border-color:#eadbb5; }
+.policy-evaluation-note, .policy-description { margin-top:12px; font-size:12px; line-height:1.8; color:#52637d; overflow-wrap:anywhere; }
+.policy-key-reason { display:grid; gap:6px; border-left:3px solid #97b1e3; padding-left:12px; margin-top:16px; font-size:13px; line-height:1.8; overflow-wrap:anywhere; }
+.policy-key-reason strong { color:#344866; font-size:12px; }
+.policy-condition-details { margin:0 22px 22px; border:1px solid #dce5f1; border-radius:10px; background:#fcfdff; }
+.policy-condition-details > summary { cursor:pointer; padding:14px; font-size:13px; font-weight:650; color:#294c91; }
+.policy-condition-details > summary > span { float:right; }
+.policy-condition-details[open] > summary { border-bottom:1px solid #dce5f1; }
+.policy-condition-details .condition-table-scroll { margin-inline:12px; }
+.condition-edit { display:block; margin-top:10px; color:#2456d8; text-decoration:underline; text-underline-offset:3px; }
+.condition-edit:disabled { opacity:.5; }
+.changes-panel { padding:24px; margin-block:24px; background:#fff; border:1px solid #cad9ef; border-radius:16px; box-shadow:0 3px 0 #e8eef8; }
+.changes-heading { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:16px; }
+.changes-heading h2 { font-size:19px; font-weight:700; letter-spacing:-.03em; line-height:1.5; }
+.comparison-toggle { flex-shrink:0; border:1px solid #c8d6eb; padding:9px 12px; border-radius:8px; color:#2456d8; font-size:12px; }
+.changes-panel h3 { font-size:14px; font-weight:700; margin:18px 0 8px; }
+.comparison-time { margin-block:12px; font-size:12px; color:#61728a; line-height:1.8; }
+.comparison-note { font-size:12px; color:#52637d; line-height:1.9; margin-top:16px; }
+.profile-differences { display:grid; gap:8px; font-size:13px; }
+.profile-differences li { display:grid; grid-template-columns:150px 1fr; gap:16px; padding:10px 12px; background:#f5f8fc; border-radius:8px; overflow-wrap:anywhere; }
+.policy-differences { display:grid; gap:12px; margin-top:18px; }
+.policy-differences li { display:flex; flex-wrap:wrap; gap:10px; align-items:center; border-top:1px solid #e6edf5; padding-top:12px; font-size:13px; }
+.policy-differences li > strong { flex:1; min-width:140px; overflow-wrap:anywhere; }
+.policy-differences li > span:last-child { color:#52637d; }
+.change-label { background:#eef3ff; color:#2456d8; border-radius:5px; padding:4px 7px; font-size:11px; }
+.profile-review { margin-top:24px; padding:26px; background:#fff; border:1px solid #cbd8ec; border-radius:16px; }
+.profile-review > h2 { font-size:21px; font-weight:700; outline-offset:5px; }
+.review-group { margin-top:22px; padding-top:18px; border-top:1px solid #e3eaf4; }
+.review-group > header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+.review-group h3 { color:#294c91; font-size:15px; font-weight:700; }
+.review-group button { color:#2456d8; font-size:12px; text-decoration:underline; text-underline-offset:3px; }
+.review-group dl { display:grid; gap:10px; }
+.review-group dl > div { display:grid; grid-template-columns:minmax(120px, .8fr) 1fr; gap:16px; font-size:13px; line-height:1.7; }
+.review-group dt { color:#61728a; }
+.review-group dd { font-weight:600; overflow-wrap:anywhere; }
+.review-actions { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-top:24px; }
+.review-actions > button:first-child { color:#52637d; font-size:13px; padding-block:12px; }
+.review-actions button:disabled, .review-group button:disabled { opacity:.5; cursor:wait; }
+.interface-workspace summary:focus-visible, .comparison-toggle:focus-visible { outline:3px solid #2456d8; outline-offset:3px; }
+@media(max-width:600px) {
+ .policy-overview { padding:18px; }
+ .policy-condition-details { margin-inline:14px; }
+ .changes-panel, .profile-review { padding:18px; }
+ .changes-heading { align-items:flex-start; flex-direction:column; gap:12px; }
+ .profile-differences li { grid-template-columns:1fr; gap:4px; }
+ .review-group dl > div { grid-template-columns:1fr 1fr; gap:12px; }
+ .review-actions { flex-direction:column-reverse; align-items:stretch; text-align:center; }
+}

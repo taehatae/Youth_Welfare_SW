@@ -1,22 +1,34 @@
 import type { MatchedPolicy } from "../../types/welfareApi"
+
 import {
   applicationLabels,
   applicationState,
   safeOfficialUrl,
 } from "../../services/analysisSession"
+
 export default function MatchedPolicyCard({
   policy,
+
   date,
+
   isNew = false,
 }: {
   policy: MatchedPolicy
+
   date: string
+
   isNew?: boolean
 }) {
   const status = applicationState(policy, date)
+
   const url = safeOfficialUrl(policy.detail_url)
+
   return (
-    <article data-status={status} className="interface-policy-card bg-white p-5">
+    <article
+      data-reveal
+      data-status={status}
+      className="interface-policy-card bg-white p-5"
+    >
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
         <span className="text-blue-700">{policy.category}</span>
         <span
@@ -38,7 +50,8 @@ export default function MatchedPolicyCard({
         {policy.title}
       </h3>
       <p className="mt-3 text-xs leading-relaxed text-slate-500">
-        자동 비교 가능한 조건을 충족한 사전 안내입니다. 최종 수급 여부는 담당 기관에 확인해 주세요.
+        자동 비교 가능한 조건을 충족한 사전 안내입니다. 최종 수급 여부는 담당
+        기관에 확인해 주세요.
       </p>
       <p className="mt-3 text-sm text-slate-700">
         {policy.support_amount || "지원 내용 확인 필요"}

@@ -1,0 +1,28 @@
+.auth-form { display: grid; gap: 12px; margin-top: 22px; text-align: left; }
+.auth-form label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; color: #243858; }
+.auth-form input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #14213b; }
+.auth-form input:focus { outline: 2px solid #2563eb; outline-offset: 2px; }
+.auth-form small { color: #64748b; font-size: 12px; }
+.auth-form button { margin-top: 8px; }
+.auth-error { color: #b42318 !important; font-size: 13px !important; }
+.auth-switch { margin-top: 20px; color: #2456d8; font-size: 13px; text-decoration: underline; }
+.auth-close { position: absolute; top: 12px; right: 16px; font-size: 25px; padding: 5px; }
+.interface-login-content { position: relative; }
+.interface-login-dialog { max-height: calc(100dvh - 32px); overflow-y: auto; }
+.auth-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 650; color: #294c91; }
+.auth-notice { padding: 12px 24px; background: #fff7ed; color: #9a3412; font-size: 14px; text-align: center; }
+.auth-notice button { margin-left: 12px; text-decoration: underline; }
+.auth-gate { max-width: 720px; margin: 40px auto; padding: 40px 24px; }
+.auth-gate h1 { font-size: 24px; font-weight: 750; }
+.dashboard-analysis { margin-top: 24px; padding: 24px; border: 1px solid #dce5f6; border-radius: 18px; background: #fff; }
+.dashboard-analysis .reverse-card { margin-top: 16px; }
+.dashboard-analysis-counts { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0; }
+.dashboard-analysis-counts button { padding: 10px 14px; border: 1px solid #d4deed; border-radius: 10px; font-size: 13px; }
+.dashboard-analysis-counts button[aria-pressed=true] { background: #2456d8; border-color: #2456d8; color: #fff; }
+@media (max-width: 640px) { .auth-name { max-width: 60px; } .dashboard-analysis { padding: 18px; } }
+.profile-view-dialog { max-height: 85dvh; overflow-y: auto; }
+.protected-profile-fields { text-align: left; margin: 24px 0; }
+.protected-profile-fields h3 { color: #1854a4; font-weight: 700; margin: 20px 0 8px; }
+.protected-profile-fields dl > div { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e7edf3; }
+.protected-profile-fields dt { color: #64748b; }
+.protected-profile-fields dd { margin: 0; overflow-wrap: anywhere; }

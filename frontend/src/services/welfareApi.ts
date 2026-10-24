@@ -1,132 +1,82 @@
-import type {
-  MatchedPoliciesResponse,
-  ReverseRecommendationsResponse,
-  SaveProfileResponse,
-  UserProfileInput,
-  WelfareAnalysis,
-} from "../types/welfareApi"
+import type { CatalogResponse, CatalogDetail } from "../types/policyCatalog"
+import type { UserProfileInput, MatchedPolicy } from "../types/welfareApi"
+import { isSnapshot, type Snapshot } from "./analysisSession"
+import { restoreSavedPolicies, type SavedPolicy, type TrackingStatus } from "./policyResults"
 
-import { DEMO_ANALYSIS } from "../data/demoAnalysis"
-
-import { isSnapshot } from "./analysisSession"
-
-export const IS_DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true"
-
-const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1"
-).replace(/\/$/, "")
-
+export interface Account {
+  account_id: string
+  username: string
+  display_name: string
+}
+export interface AccountState {
+  profile: UserProfileInput | null
+  diagnosis: Snapshot | null
+  previousDiagnosis: Snapshot | null
+  current: Snapshot | null
+  previous: Snapshot | null
+  knownPolicies: MatchedPolicy[]
+  savedPolicies: SavedPolicy[]
+}
+const apiUrl = new URL(import.meta.env.VITE_API_BASE_URL || "/api/v1", window.location.origin)
+const loopback = new Set(["localhost", "127.0.0.1"])
+if (loopback.has(apiUrl.hostname) && loopback.has(window.location.hostname)) apiUrl.hostname = window.location.hostname
+const API_BASE_URL = apiUrl.href.replace(/\/$/, "")
+let expectedAccountId: string | null = null
+export const setApiAccount = (id: string | null) => { expectedAccountId = id }
+export class ApiError extends Error {
+  constructor(message: string, public status: number) { super(message) }
+}
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const controller = new AbortController()
-
   const timeout = window.setTimeout(() => controller.abort(), 20000)
-
+  const headers: Record<string, string> = { "Content-Type": "application/json" }
+  if (expectedAccountId && !["/auth/login", "/auth/signup", "/auth/me"].includes(path)) headers["X-Account-ID"] = expectedAccountId
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
-      ...init,
-
-      signal: controller.signal,
-
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      ...init, signal: controller.signal, credentials: "include", headers: { ...headers, ...init?.headers },
     })
-
     if (!response.ok) {
-      throw new Error(
-        response.status === 404
-          ? "저장된 프로필을 찾지 못했어요. 내 정보를 확인한 뒤 다시 진단해주세요."
-          : response.status === 422
-            ? "서버에서 입력값을 처리하지 못했어요. 선택한 정보를 확인해주세요."
-            : "조회에 실패했어요. 잠시 후 다시 시도해주세요.",
-      )
+      const data = await response.json().catch(() => null)
+      const message = typeof data?.detail === "string" ? data.detail
+        : response.status === 422 ? "입력 형식을 확인해주세요. 아이디는 영문·숫자·밑줄 3~30자, 비밀번호는 10~128자예요."
+        : "요청을 처리하지 못했어요. 잠시 후 다시 시도해주세요."
+      throw new ApiError(message, response.status)
     }
-
-    return (await response.json()) as T
+    return response.status === 204 ? undefined as T : await response.json() as T
   } catch (error) {
-    if (controller.signal.aborted)
-      throw new Error("응답이 지연되고 있어요. 잠시 후 다시 시도해주세요.")
-
-    if (error instanceof TypeError)
-      throw new Error(
-        "서버에 연결하지 못했어요. 입력한 내용은 유지됩니다. 잠시 후 다시 시도해주세요.",
-      )
-
-    if (error instanceof SyntaxError)
-      throw new Error("서버 응답을 읽지 못했어요. 잠시 후 다시 시도해주세요.")
-
+    if (controller.signal.aborted) throw new Error("응답이 지연되고 있어요. 다시 시도하기 전에 저장 상태를 확인해주세요.")
+    if (error instanceof TypeError) throw new Error("서버에 연결하지 못했어요. 잠시 후 다시 시도해주세요.")
     throw error
-  } finally {
-    window.clearTimeout(timeout)
-  }
+  } finally { window.clearTimeout(timeout) }
 }
-
-export async function analyzeWelfareProfile(
-  profile: UserProfileInput,
-): Promise<WelfareAnalysis> {
-  if (IS_DEMO_MODE) {
-    await new Promise((resolve) => window.setTimeout(resolve, 650))
-
-    return structuredClone(DEMO_ANALYSIS)
+export const currentAccount = () => request<Account>("/auth/me")
+export const signIn = (username: string, password: string) => request<Account>("/auth/login", {
+  method: "POST", body: JSON.stringify({ username, password }),
+})
+export const signUp = (username: string, password: string, display_name: string) => request<Account>("/auth/signup", {
+  method: "POST", body: JSON.stringify({ username, password, display_name }),
+})
+export const signOut = () => request<void>("/auth/logout", { method: "POST" })
+function validateState(state: AccountState): AccountState {
+  if (!state || ![state.diagnosis, state.previousDiagnosis, state.current, state.previous]
+    .every(s => s === null || isSnapshot(s)) || !Array.isArray(state.knownPolicies)) {
+    throw new Error("계정의 저장 정보를 읽지 못했어요. 다시 불러와주세요.")
   }
-
-  const saved = await request<SaveProfileResponse>("/users/profile", {
-    method: "POST",
-
-    body: JSON.stringify({
-      ...profile,
-      employment_status:
-        profile.employment_status === "PART_TIME"
-          ? "OTHER"
-          : profile.employment_status,
-    }),
-  })
-
-  if (!saved.user_id) throw new Error("프로필 저장 응답에 user_id가 없습니다.")
-
-  return refreshWelfareAnalysis(saved.user_id, profile)
+  state.savedPolicies = restoreSavedPolicies(JSON.stringify(state.savedPolicies ?? []))
+  return state
 }
+export const loadAccountState = async () => validateState(await request<AccountState>("/users/state"))
+export const diagnoseAccount = async (profile: UserProfileInput) => validateState(await request<AccountState>("/welfare/diagnose", {
+  method: "POST", body: JSON.stringify({ ...profile,
+    employment_status: profile.employment_status === "PART_TIME" ? "OTHER" : profile.employment_status,
+  }),
+}))
+export const refreshAccount = async () => validateState(await request<AccountState>("/welfare/refresh", { method: "POST" }))
+export const toggleAccountPolicy = (profileKey: string, policyId: string) => request<{ items: SavedPolicy[] }>("/users/saved/toggle", { method: "POST", body: JSON.stringify({ profileKey, policyId }) })
+export const updateAccountPolicy = (profileKey: string, policyId: string, trackingStatus: TrackingStatus, note: string) =>
+  request<{ items: SavedPolicy[] }>("/users/saved", { method: "PATCH", body: JSON.stringify({ profileKey, policyId, trackingStatus, note }) })
+export const viewAccountProfile = (username: string, password: string, snapshot: "current" | "diagnosis") => request<UserProfileInput | null>("/users/profile/view", { method: "POST", body: JSON.stringify({ username, password, snapshot }) })
 
-export async function refreshWelfareAnalysis(
-  savedUserId: string,
-  profile: UserProfileInput,
-): Promise<WelfareAnalysis> {
-  if (IS_DEMO_MODE) {
-    await new Promise((resolve) => window.setTimeout(resolve, 650))
-
-    return structuredClone(DEMO_ANALYSIS)
-  }
-
-  const userId = encodeURIComponent(savedUserId)
-
-  const [matched, reverse] = await Promise.all([
-    request<MatchedPoliciesResponse>(`/welfare/matched?user_id=${userId}`),
-
-    request<ReverseRecommendationsResponse>(
-      `/welfare/reverse-engineering?user_id=${userId}`,
-    ),
-  ])
-
-  const result = { userId: savedUserId, matched, reverse }
-
-  if (
-    !isSnapshot({
-      profile,
-      analysis: result,
-      checkedAt: new Date().toISOString(),
-    })
-  )
-    throw new Error(
-      "조회 결과의 형식이 올바르지 않아요. 이전 결과는 유지됩니다.",
-    )
-
-  result.matched.policies = result.matched.policies.map((policy) => ({
-    ...policy,
-
-    detail_url:
-      policy.detail_url ||
-      result.matched.analysis_results?.find(
-        (item) => item.policy_id === policy.policy_id,
-      )?.detail_url,
-  }))
-
-  return result
-}
+export const loadPolicyCatalog = (query: string, category: string, page: number) =>
+  request<CatalogResponse>("/policies?" + new URLSearchParams({ q: query, category, page: String(page), page_size: "12" }))
+export const loadPolicyDetail = (id: string) => request<CatalogDetail>("/policies/" + encodeURIComponent(id))

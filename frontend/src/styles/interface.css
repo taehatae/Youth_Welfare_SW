@@ -67,4 +67,3 @@
   .interface-login-content { padding: 26px 22px; }
   .interface-empty { padding: 30px 20px; }
 }
-@media (prefers-reduced-motion: reduce) { .interface-primary { transition: none; } }
