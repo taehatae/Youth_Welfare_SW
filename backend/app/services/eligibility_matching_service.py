@@ -33,6 +33,9 @@ class EligibilityMatchingService:
         "target_group",
         "other",
     }
+    RECOMMENDATION_AMBIGUITY_PATTERN = re.compile(
+        r"(?:또는|혹은|거나|아니면|하나라도|중\s*어느\s*하나|중\s*하나|택일|대안|다만|단\s*,|예외|제외|별도\s*심사)"
+    )
     OR_CONNECTOR_PATTERN = re.compile(r"또는|혹은|거나|아니면")
 
     PROFILE_VALUE_LABELS = {
@@ -499,6 +502,92 @@ class EligibilityMatchingService:
             "source_text": condition.source_text,
         }
 
+    @classmethod
+    def _recommendation_metadata(
+        cls,
+        evaluated: list[dict],
+        gaps: list[dict],
+        review: list[dict],
+        conditions: list[WelfareEligibilityCondition],
+    ) -> dict[str, Any]:
+        confirmed = [item for item in evaluated if item["status"] == "passed"]
+        ambiguous_source = any(
+            cls.RECOMMENDATION_AMBIGUITY_PATTERN.search(
+                condition.source_text or ""
+            )
+            for condition in conditions
+        )
+        source_groups = {
+            (condition.source_field, condition.source_text or "")
+            for condition in conditions
+            if condition.condition_type != "informational"
+        }
+        multiple_source_groups = len(source_groups) > 1
+
+        if not evaluated:
+            return {
+                "recommendation_status": "additional_review",
+                "recommendation_reason": (
+                    "현재 정보로 자동 비교할 수 있는 조건이 확인되지 않았습니다."
+                ),
+                "recommendation_uncertainty": None,
+                "confirmed_conditions": confirmed,
+            }
+
+        if not gaps and not review and confirmed and not ambiguous_source:
+            return {
+                "recommendation_status": "priority_recommendation",
+                "recommendation_reason": (
+                    "자동 비교가 가능한 조건을 모두 충족했고 추가 확인 조건이 없습니다."
+                ),
+                "recommendation_uncertainty": None,
+                "confirmed_conditions": confirmed,
+            }
+
+        if not gaps and review and confirmed:
+            return {
+                "recommendation_status": "priority_consideration",
+                "recommendation_reason": (
+                    "확인 가능한 조건은 충족했으며, 남은 조건은 별도 확인이 필요합니다."
+                ),
+                "recommendation_uncertainty": (
+                    "추가 확인 조건이 핵심 자격요건인지 현재 데이터만으로 판별할 수 없습니다."
+                ),
+                "confirmed_conditions": confirmed,
+            }
+
+        if gaps and not review:
+            selection_criteria_gaps = all(
+                item["source_field"] == "selection_criteria"
+                for item in gaps
+            )
+            if (
+                selection_criteria_gaps
+                and not ambiguous_source
+                and not multiple_source_groups
+            ):
+                return {
+                    "recommendation_status": "condition_mismatch",
+                    "recommendation_reason": (
+                        "선정 기준 원문에서 자동 비교한 조건 중 미충족 항목이 확인되었습니다."
+                    ),
+                    "recommendation_uncertainty": None,
+                    "confirmed_conditions": confirmed,
+                }
+
+        return {
+            "recommendation_status": "additional_review",
+            "recommendation_reason": (
+                "조건의 필수 여부 또는 조건 간 관계를 현재 정보만으로 안전하게 확정할 수 없습니다."
+            ),
+            "recommendation_uncertainty": (
+                "미충족·추가 확인 조건의 적용 관계를 공식 안내에서 확인해야 합니다."
+                if gaps or review or ambiguous_source or multiple_source_groups
+                else None
+            ),
+            "confirmed_conditions": confirmed,
+        }
+
     def analyze_service(
         self,
         user: User,
@@ -769,6 +858,13 @@ class EligibilityMatchingService:
         else:
             status = "eligible"
 
+        recommendation = self._recommendation_metadata(
+            evaluated=evaluated,
+            gaps=gaps,
+            review=review,
+            conditions=conditions,
+        )
+
         return {
             "policy_id": service.serv_id,
             "title": service.serv_name,
@@ -778,6 +874,7 @@ class EligibilityMatchingService:
             "passed_conditions": passed_count,
             "gap_conditions": gaps,
             "review_conditions": review,
+            **recommendation,
             "notes": list(dict.fromkeys(notes)),
             "detail_url": service.detail_url,
         }

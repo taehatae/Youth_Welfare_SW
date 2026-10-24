@@ -733,6 +733,220 @@ def test_analyze_user_includes_only_eligible_services_in_policies():
     }
 
 
+def test_recommendation_marks_all_confirmed_conditions_as_priority():
+    result = analyze(
+        20,
+        [make_condition(operator="gte", value_number=20)],
+    )
+
+    assert result["status"] == "eligible"
+    assert result["recommendation_status"] == "priority_recommendation"
+    assert result["recommendation_reason"]
+    assert result["recommendation_uncertainty"] is None
+    assert [item["condition_type"] for item in result["confirmed_conditions"]] == [
+        "age"
+    ]
+    assert result["gap_conditions"] == []
+    assert result["review_conditions"] == []
+    assert result["match_score"] == 100.0
+
+
+def test_recommendation_marks_passed_conditions_with_reviews_as_consideration():
+    review_condition = make_profile_condition(
+        condition_type="other",
+        value_text="수급 자격 확인",
+        unit="",
+        source_text="수급 자격 확인",
+        comparison_ready=False,
+        parse_status="manual_review",
+    )
+    result = analyze(
+        20,
+        [make_condition(operator="gte", value_number=20), review_condition],
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["recommendation_status"] == "priority_consideration"
+    assert "핵심" in result["recommendation_uncertainty"]
+    assert [item["condition_type"] for item in result["confirmed_conditions"]] == [
+        "age"
+    ]
+    assert result["gap_conditions"] == []
+    assert [item["condition_type"] for item in result["review_conditions"]] == [
+        "other"
+    ]
+    assert result["match_score"] == 100.0
+
+
+def test_recommendation_marks_clear_selection_criteria_gap_as_mismatch():
+    result = analyze(
+        19,
+        [make_condition(operator="gte", value_number=20)],
+    )
+
+    assert result["status"] == "ineligible"
+    assert result["recommendation_status"] == "condition_mismatch"
+    assert result["confirmed_conditions"] == []
+    assert len(result["gap_conditions"]) == 1
+    assert result["review_conditions"] == []
+
+
+def test_recommendation_keeps_gap_and_review_as_additional_review():
+    review_condition = make_profile_condition(
+        condition_type="other",
+        value_text="수급 자격 확인",
+        unit="",
+        source_text="수급 자격 확인",
+        comparison_ready=False,
+        parse_status="manual_review",
+    )
+    result = analyze(
+        19,
+        [make_condition(operator="gte", value_number=20), review_condition],
+    )
+
+    assert result["status"] == "needs_review"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["recommendation_uncertainty"]
+    assert result["confirmed_conditions"] == []
+    assert len(result["gap_conditions"]) == 1
+    assert len(result["review_conditions"]) == 1
+    assert result["match_score"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "source_text",
+    [
+        "만 19~24세 또는 만 25~34세",
+        "만 19~24세, 다만 예외 참여 가능",
+    ],
+)
+def test_recommendation_does_not_confirm_ambiguous_gap_as_mismatch(source_text):
+    condition = make_condition(operator="gte", value_number=20)
+    condition.source_text = source_text
+    result = analyze(19, [condition])
+
+    assert result["status"] == "ineligible"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["recommendation_uncertainty"]
+    assert len(result["gap_conditions"]) == 1
+
+
+def test_recommendation_does_not_confirm_gap_from_non_selection_source():
+    condition = make_condition(operator="gte", value_number=20)
+    condition.source_field = "target_details"
+    result = analyze(19, [condition])
+
+    assert result["status"] == "ineligible"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["recommendation_uncertainty"]
+
+
+def test_recommendation_for_no_comparable_conditions_requires_review():
+    condition = make_profile_condition(
+        condition_type="other",
+        value_text="정책 원문 검토",
+        unit="",
+        source_text="정책 원문 검토",
+        comparison_ready=False,
+        parse_status="manual_review",
+    )
+    result = analyze(20, [condition])
+
+    assert result["status"] == "needs_review"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["confirmed_conditions"] == []
+
+
+def test_recommendation_for_missing_conditions_requires_review():
+    result = analyze(20, [])
+
+    assert result["status"] == "needs_review"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["confirmed_conditions"] == []
+
+
+def test_analyze_user_derives_recommendation_from_all_analysis_results():
+    eligible_service = make_service()
+    eligible_service.serv_id = "eligible-service"
+    ineligible_service = WelfareService(
+        serv_id="ineligible-service",
+        serv_name="불일치 서비스",
+        detail_url="",
+    )
+    review_service = WelfareService(
+        serv_id="review-service",
+        serv_name="검토 서비스",
+        detail_url="",
+    )
+    conditions = [
+        make_condition(operator="gte", value_number=20),
+        WelfareEligibilityCondition(
+            serv_id="ineligible-service",
+            condition_type="age",
+            operator="gte",
+            value_text="연령 조건",
+            value_number=30,
+            upper_value_number=None,
+            unit="age",
+            source_field="selection_criteria",
+            source_text="연령 조건",
+            comparison_ready=True,
+            parse_status="parsed",
+            confidence=1.0,
+        ),
+        WelfareEligibilityCondition(
+            serv_id="review-service",
+            condition_type="other",
+            operator="unknown",
+            value_text="정책 원문 검토",
+            value_number=None,
+            upper_value_number=None,
+            unit="",
+            source_field="selection_criteria",
+            source_text="정책 원문 검토",
+            comparison_ready=False,
+            parse_status="manual_review",
+            confidence=0.0,
+        ),
+    ]
+    conditions[0].serv_id = "eligible-service"
+
+    class Query:
+        def __init__(self, model):
+            self.model = model
+
+        def order_by(self, *_args):
+            return self
+
+        def all(self):
+            if self.model is WelfareService:
+                return [eligible_service, ineligible_service, review_service]
+            return conditions
+
+    class Session:
+        def query(self, model):
+            return Query(model)
+
+    result = EligibilityMatchingService().analyze_user(
+        db=Session(),
+        user=make_user(20),
+    )
+
+    assert [item["policy_id"] for item in result["policies"]] == [
+        "eligible-service"
+    ]
+    classifications = {
+        item["policy_id"]: item["recommendation_status"]
+        for item in result["analysis_results"]
+    }
+    assert classifications == {
+        "eligible-service": "priority_recommendation",
+        "ineligible-service": "condition_mismatch",
+        "review-service": "additional_review",
+    }
+
+
 @pytest.mark.parametrize(
     ("age", "expected_status", "expected_gap_count"),
     [
@@ -1251,6 +1465,8 @@ def test_new_region_comparison_is_included_in_existing_score_and_policy_b():
     assert result["passed_conditions"] == 1
     assert result["match_score"] == 50.0
     assert result["status"] == "ineligible"
+    assert result["recommendation_status"] == "additional_review"
+    assert result["recommendation_uncertainty"]
     assert [item["condition_type"] for item in result["gap_conditions"]] == ["age"]
     assert result["review_conditions"] == []
 

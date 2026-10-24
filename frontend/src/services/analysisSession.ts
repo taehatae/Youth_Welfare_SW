@@ -65,6 +65,32 @@ export function isSnapshot(value: unknown): value is Snapshot {
               typeof p.title === "string" &&
               Array.isArray(p.gap_conditions) &&
               Array.isArray(p.review_conditions) &&
+              (p.recommendation_status === undefined ||
+                [
+                  "priority_recommendation",
+                  "priority_consideration",
+                  "condition_mismatch",
+                  "additional_review",
+                ].includes(p.recommendation_status)) &&
+              (p.recommendation_reason === undefined ||
+                typeof p.recommendation_reason === "string") &&
+              (p.recommendation_uncertainty === undefined ||
+                p.recommendation_uncertainty === null ||
+                typeof p.recommendation_uncertainty === "string") &&
+              (p.confirmed_conditions === undefined ||
+                (Array.isArray(p.confirmed_conditions) &&
+                  p.confirmed_conditions.every((c) =>
+                    [
+                      "condition_type",
+                      "status",
+                      "message",
+                      "current_value",
+                      "required_value",
+                      "action_guide",
+                    ].every(
+                      (key) => typeof c[(key as keyof typeof c)] === "string",
+                    ),
+                  ))) &&
               [...p.gap_conditions, ...p.review_conditions].every((c) =>
                 [
                   "condition_type",
