@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./youth_welfare.db"
 
     frontend_origins: str = "http://localhost:5173"
+    cookie_secure: bool = False
 
     welfare_api_service_key: str = ""
     welfare_api_base_url: str = ""

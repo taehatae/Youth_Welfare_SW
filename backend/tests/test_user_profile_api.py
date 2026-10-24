@@ -6,6 +6,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.api.routes.auth import router as auth_router
+from app.services.eligibility_matching_service import EligibilityMatchingService
 from app.api.routes.users import router as users_router
 from app.api.routes.welfare import router as welfare_router
 from app.database.connection import Base, create_database_engine, get_db
@@ -42,6 +44,7 @@ def test_database():
 @pytest.fixture
 def client(test_database: Session):
     app = FastAPI()
+    app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
     app.include_router(welfare_router, prefix="/api/v1")
 
@@ -51,6 +54,7 @@ def client(test_database: Session):
     app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(app, raise_server_exceptions=False) as test_client:
+        assert test_client.post("/api/v1/auth/signup", json={"username": "regression_user", "password": "Regression123!", "display_name": "검증"}).status_code == 201
         yield test_client
 
 
@@ -280,6 +284,7 @@ def test_existing_users_table_and_records_survive_create_all():
         assert existing_user.region == "서울특별시"
 
     app = FastAPI()
+    app.include_router(auth_router, prefix="/api/v1")
     app.include_router(users_router, prefix="/api/v1")
 
     def override_get_db():
@@ -288,6 +293,7 @@ def test_existing_users_table_and_records_survive_create_all():
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as client:
+        assert client.post("/api/v1/auth/signup", json={"username": "legacy_user", "password": "Regression123!", "display_name": "검증"}).status_code == 201
         response = client.post(
             "/api/v1/users/profile",
             json=valid_profile(),
@@ -407,6 +413,9 @@ def test_matched_route_uses_saved_profile_values_for_review_display(client, test
     assert len(analysis["gap_conditions"]) == 1
     assert analysis["gap_conditions"][0]["condition_type"] == "age"
     assert analysis["match_score"] == 0.0
+    assert all(c["current_value"] == "프로필 보호 중" for c in analysis["review_conditions"])
+    # HTTP 응답은 입력값을 숨기되 원래 판정 로직의 입력값 표시는 그대로 검증한다.
+    analysis = EligibilityMatchingService().analyze_user(test_database, test_database.get(User, user_id), profile)["analysis_results"][0]
     current_values = {
         condition["source_text"]: condition["current_value"]
         for condition in analysis["review_conditions"]
@@ -461,7 +470,7 @@ def test_matched_route_accepts_missing_saved_conditions_row(client, test_databas
     analysis = matched.json()["analysis_results"][0]
     assert analysis["status"] == "needs_review"
     assert analysis["review_conditions"][0]["current_value"] == (
-        "추가 정보 또는 비교 규칙 필요"
+        "프로필 보호 중"
     )
 
 
@@ -598,7 +607,7 @@ def test_matched_route_uses_most_recent_submitted_additional_eligibility(client,
     )
 
     assert first.status_code == latest.status_code == 200
-    assert first.json()["user_id"] != latest.json()["user_id"]
+    assert first.json()["user_id"] == latest.json()["user_id"]  # 같은 계정의 프로필 갱신
     result = client.get(
         "/api/v1/welfare/matched",
         params={"user_id": latest.json()["user_id"]},

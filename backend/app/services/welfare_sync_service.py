@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import httpx
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -168,7 +169,14 @@ class WelfareSyncService:
 
                 failed_services.append({
                     "serv_id": serv_id,
-                    "reason": str(exc)[:300],
+                    # HTTP 예외의 URL에는 공공 API 인증키가 포함될 수 있다.
+                    "reason": (
+                        f"공공 API 요청 실패 (HTTP {exc.response.status_code})"
+                        if isinstance(exc, httpx.HTTPStatusError)
+                        else "공공 API 연결 실패"
+                        if isinstance(exc, httpx.HTTPError)
+                        else str(exc)[:300]
+                    ),
                 })
 
         return {

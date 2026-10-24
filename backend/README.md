@@ -59,3 +59,53 @@ python -m uvicorn app.main:app --reload
 ```
 
 기본 주소는 `http://127.0.0.1:8000`이며, Swagger UI는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다.
+
+## 계정과 진단 기록 (2026-10-24)
+
+- 기존 `users`/`user_eligibility_conditions`는 진단 프로필로 유지함.
+- `accounts`는 아이디, 닉네임, PBKDF2-SHA256 비밀번호 해시, 소유 프로필 ID를 저장함.
+- `account_sessions`에는 로그인 토큰의 SHA-256 해시와 7일 만료 시각을 저장함. 원본 토큰은 HttpOnly·SameSite=Lax 쿠키로만 전달함.
+- `account_workspaces`에 진단 당시/이전 진단/최신 현황/직전 현황과 관심 정책을 보관함. 전체 무제한 이력 저장은 아님.
+- `auth_attempts`로 클라이언트 IP 기준 15분 동안 40회의 로그인·가입·프로필 재인증 시도 제한을 적용함. 로컬·단일 서버용 구현임.
+- 기존 테이블을 삭제하거나 ALTER하지 않음. 서버 시작 시 위 테이블만 추가 생성됨. 과거 익명 프로필을 계정에 자동 귀속시키지 않음.
+- 프로필·진단 API는 로그인 필요. 다른 사용자의 user_id로 조회하면 404를 반환함. 공공 정책 동기화 API도 로그인 필요.
+- 비밀번호 재설정·이메일 인증·회원 탈퇴 기능은 이번 범위에 포함하지 않음.
+
+### 추가 환경 설정
+
+`FRONTEND_ORIGINS`에는 사용하는 프론트 주소를 쉼표로 나열함. 로컬에서는 `http://localhost:5173,http://127.0.0.1:5173` 사용.
+`COOKIE_SECURE=false`는 로컬 HTTP 개발용임. HTTPS 배포 시 `COOKIE_SECURE=true`로 설정하고 프론트와 API를 같은 사이트에서 서비스해야 함.
+백엔드 다중 인스턴스 배포 시 시도 제한·계정 상태 동시 갱신 처리를 별도 설계해야 함.
+
+### API 변경
+
+- 공개 정책 안내: `GET /api/v1/policies` (q, category, page, page_size) 및 `GET /api/v1/policies/{policy_id}`. 개인정보나 계정 진단 결과를 반환하지 않음. 기존 수집 데이터를 읽으며 요청마다 외부 공공 API를 호출하지 않음.
+- 분야 분류는 `services/policy_catalog_service.py`의 복지로 관심분야 매핑을 사용함. 복수 분야 정책은 여러 카테고리에 포함하고 원문이 없거나 지원하지 않는 분류는 기타·미분류로 포함함. DB 구조와 판정 로직 변경 없음.
+
+- `POST /api/v1/auth/signup`: `{username, password, display_name}` → 계정 정보 + 세션 쿠키
+- `POST /api/v1/auth/login`: `{username, password}` → 계정 정보 + 세션 쿠키
+- `GET /api/v1/auth/me`, `POST /api/v1/auth/logout`
+- `POST /api/v1/users/profile`: 로그인한 계정의 프로필 갱신
+- `GET /api/v1/users/profile`: 403 반환 (재인증 없는 원문 조회 금지)
+- `POST /api/v1/users/profile/view`: `{username, password, snapshot: "current" | "diagnosis"}`로 매번 재인증 후 해당 진단 프로필 반환
+- `GET /api/v1/users/state`: 계정의 진단/현황/관심 정책. 프로필 원문은 null이며 조건별 current_value도 마스킹됨
+- `POST /api/v1/welfare/diagnose`: 프로필 저장 + 분석 + 결과 저장
+- `POST /api/v1/welfare/refresh`: 저장된 프로필로 현황만 재분석
+- `POST /api/v1/users/saved/toggle`: `{profileKey, policyId}` → 내 저장 결과에서 관심 정책 추가/해제. 클라이언트의 프로필/정책 원문을 신뢰하지 않음
+- `PATCH /api/v1/users/saved`: `{profileKey, policyId, trackingStatus, note}` → 관심 정책의 관리 상태와 메모 저장. 상태는 interested/preparing/applied/archived, 메모는 최대 500자. 실제 접수 상태와 연동되지 않음.
+- 이전 `PUT /api/v1/users/saved`는 410 반환
+
+기존 익명 API 호출 예제는 로그인 쿠키를 함께 보내도록 변경해야 함. 기존 HTTP 테스트는 실제 가입 후 받은 쿠키로 검증하도록 갱신했음. 판정·파싱 서비스 로직은 유지함.
+
+### 프로필 보호 경계
+
+- 일반 state/diagnose/refresh/matched 응답은 입력값을 숨김. 관심 정책 식별자도 프로필 원문 대신 서버 HMAC 식별자를 반환함.
+- 프로필 조회마다 현재 로그인한 계정의 아이디·비밀번호를 모두 확인함. 조회 권한 토큰이나 해제 쿠키를 별도로 발급하지 않음.
+- 프론트는 조회창을 닫거나 창을 전환하거나 2분 경과 시 조회한 입력값을 지움. 수정 화면으로 옮긴 값은 메모리에만 두고 해당 화면을 떠나면 지움.
+- 조회 결과의 충족/미충족 판정 자체로 일부 조건을 추론할 가능성까지 없애는 기능은 아님. 진단 결과 열람에는 로그인 인증을 적용함.
+- 서버 DB의 개인정보 암호화, 다중요소 인증, 외부 보안감사는 이번 기능에 포함하지 않음.
+
+### 검증
+
+`python -m pytest -q`로 기존 회귀 테스트와 `tests/test_account_flow.py`의 가입·로그인·진단·결과 복원·관심 정책·재인증·계정 격리·세션 만료·CSRF·실패 시 롤백을 확인함.
+테스트 정책은 메모리 DB에만 생성하며 실제 정책 DB에 넣지 않음.
