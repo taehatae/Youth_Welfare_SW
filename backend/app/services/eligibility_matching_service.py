@@ -248,6 +248,22 @@ class EligibilityMatchingService:
             return None
 
         if condition.condition_type == "employment":
+            if condition.unit == "employment_exclusion":
+                if (
+                    condition.operator != "not_equals"
+                    or condition.value_text != "EMPLOYED"
+                    or EligibilityConditionService.explicit_employee_exclusion_source(
+                        condition.source_text or ""
+                    ) != condition.source_text
+                ):
+                    return None
+                if user.employment_status in {"EMPLOYED", "EMPLOYED_SME"}:
+                    return False
+                if user.employment_status == "UNEMPLOYED":
+                    return True
+                # A student, freelancer or self-employed primary status cannot
+                # establish whether this policy's salaried-worker exclusion applies.
+                return None
             if (
                 condition.operator != "equals"
                 or condition.unit != "employment_status"
@@ -268,6 +284,10 @@ class EligibilityMatchingService:
             # 미취업/재직으로 단정하지 않는다.
             if current_status in {EmploymentStatus.OTHER.value, EmploymentStatus.STUDENT.value}:
                 return None
+            if required_status == EmploymentStatus.EMPLOYED.value:
+                if current_status in {EmploymentStatus.SELF_EMPLOYED.value, EmploymentStatus.FREELANCER.value}:
+                    return None
+                return current_status in {EmploymentStatus.EMPLOYED.value, EmploymentStatus.EMPLOYED_SME.value}
             return current_status == required_status
 
         if condition.condition_type == "region":
@@ -306,13 +326,39 @@ class EligibilityMatchingService:
                 if isinstance(eligibility_conditions, dict)
                 else {}
             )
-            additional = profile.get("additional_conditions")
-            value = additional.get(condition.unit) if isinstance(additional, dict) else None
-            if not isinstance(value, str) or value not in {"YES", "NO"}:
+            if condition.unit in {"gender", "disability_status", "student_status"}:
+                value = profile.get(condition.unit)
+            else:
+                additional = profile.get("additional_conditions")
+                value = additional.get(condition.unit) if isinstance(additional, dict) else None
+            allowed_values = {"MALE", "FEMALE"} if condition.unit == "gender" else {"YES", "NO"}
+            if not isinstance(value, str) or value not in allowed_values:
                 return None
             return value == condition.value_text
 
         return None
+
+    @staticmethod
+    def _profile_review_message(condition: WelfareEligibilityCondition) -> str:
+        kind = condition.unit
+        if condition.condition_type == "employment" and condition.unit != "employment_exclusion":
+            kind = EligibilityConditionService.employment_clause_kind(condition.source_text or "")
+        elif condition.condition_type == "region":
+            kind = EligibilityConditionService.region_clause_kind(condition.source_text or "")
+        return {
+            "employment_exclusion": "현재 고용 상태만으로 이 취업자 제외 조항의 적용 여부를 확정할 수 없습니다.",
+            "income_reference": "소득 산정 기준의 근로자 표현이며 사용자의 고용 상태를 뜻하지 않습니다.",
+            "benefit_entitlement": "실업급여·구직급여 수급 자격은 단순 고용 상태로 확인할 수 없습니다.",
+            "employer_workforce": "사업장 인원·보수 기준이며 사용자의 고용 상태만으로 비교할 수 없습니다.",
+            "household_or_address": "가구 구성·동거·세대 기준은 단순 거주 지역과 다릅니다.",
+            "housing_status": "주거 형태·시설 요건은 시·도 정보만으로 확인할 수 없습니다.",
+            "country_or_nationality": "국내 거주·국적 요건은 시·도 정보만으로 확인할 수 없습니다.",
+            "residence_or_workplace": "거주지와 근무지 대안의 적용 관계를 추가로 확인해야 합니다.",
+            "residence_duration": "거주·등록 기간을 확인할 정보와 적용 기준이 필요합니다.",
+            "registered_address": "주민등록상 주소 요건은 거주 지역 문자열만으로 확인할 수 없습니다.",
+            "designated_area": "사업 대상 지역의 범위·적용 시점을 추가로 확인해야 합니다.",
+            "area_category": "도서·농어촌 등 지역 구분을 시·도만으로 확정할 수 없습니다.",
+        }.get(kind, "현재 구현에서는 이 조건을 자동으로 판정할 수 없습니다.")
 
     @staticmethod
     def _compare_income_ratio(
@@ -700,7 +746,11 @@ class EligibilityMatchingService:
                         condition=condition,
                         status="passed" if comparison else "failed",
                         current_value=current_value,
-                        required_value=condition.source_text or condition.value_text,
+                        required_value=(
+                            "취업자 제외(명시된 제외 목록)"
+                            if condition.unit == "employment_exclusion"
+                            else condition.source_text or condition.value_text
+                        ),
                         message=(
                             "저장된 프로필 정보가 조건과 일치합니다."
                             if comparison
@@ -758,7 +808,7 @@ class EligibilityMatchingService:
                 and condition.comparison_ready
                 and condition.parse_status == "parsed"
             )
-            
+
             if can_compare_age:
                 comparison = self._compare_age(
                     user.age,
@@ -826,10 +876,7 @@ class EligibilityMatchingService:
                             or "추가 정보 또는 비교 규칙 필요"
                         ),
                         required_value=condition.value_text,
-                        message=(
-                            "현재 구현에서는 이 조건을 "
-                            "자동으로 판정할 수 없습니다."
-                        ),
+                        message=self._profile_review_message(condition),
                         action_guide=(
                             "서비스 상세 자격요건과 필요한 "
                             "추가 정보를 확인하세요."
@@ -891,10 +938,11 @@ class EligibilityMatchingService:
             .all()
         )
 
-        all_conditions = (
-            db.query(WelfareEligibilityCondition)
-            .all()
+        needs_legacy_conditions = any(
+            not ((service.target_details or "").strip() or (service.selection_criteria or "").strip())
+            for service in services
         )
+        all_conditions = db.query(WelfareEligibilityCondition).all() if needs_legacy_conditions else []
 
         conditions_by_service = defaultdict(list)
 
@@ -903,11 +951,26 @@ class EligibilityMatchingService:
                 condition
             )
 
+        # Reinterpret available policy originals without updating stored rows.
+        # Legacy/test services without original text keep their saved conditions.
         analyses = [
             self.analyze_service(
                 user=user,
                 service=service,
-                conditions=conditions_by_service[service.serv_id],
+                conditions=(
+                    [
+                        WelfareEligibilityCondition(serv_id=service.serv_id, **dict(item))
+                        for item in EligibilityConditionService.cached_structure_service(
+                            EligibilityConditionService.PARSER_RULESET_VERSION,
+                            service.target_details or "", service.selection_criteria or ""
+                        )
+                    ]
+                    if (
+                        (service.target_details or "").strip()
+                        or (service.selection_criteria or "").strip()
+                    )
+                    else conditions_by_service[service.serv_id]
+                ),
                 eligibility_conditions=eligibility_conditions,
             )
             for service in services

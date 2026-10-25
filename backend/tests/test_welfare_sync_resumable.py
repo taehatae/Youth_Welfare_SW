@@ -66,6 +66,7 @@ def test_batch_and_item_leases_are_exclusive_and_expired_owner_is_fenced(databas
         database,
         batch.batch_id,
         worker_token="worker-a",
+        now=now,
         page_no=1,
         total_count=1,
         summaries=[{"serv_id": "one"}],
@@ -101,6 +102,7 @@ def test_expired_batch_owner_cannot_persist_while_its_item_lease_remains(databas
         database,
         batch.batch_id,
         worker_token="worker-a",
+        now=now,
         page_no=1,
         total_count=1,
         summaries=[{"serv_id": "one"}],
@@ -214,6 +216,7 @@ def test_item_claim_is_fenced_atomically_if_batch_ownership_changes(database):
         database,
         batch.batch_id,
         worker_token="worker-a",
+        now=now,
         page_no=1,
         total_count=1,
         summaries=[{"serv_id": "one"}],
@@ -252,6 +255,7 @@ def test_received_payload_is_durable_and_claimed_without_detail_request(database
         database,
         batch.batch_id,
         worker_token="worker-a",
+        now=now,
         page_no=1,
         total_count=1,
         summaries=[{"serv_id": "one"}],
@@ -261,7 +265,7 @@ def test_received_payload_is_durable_and_claimed_without_detail_request(database
         database, item.id, "worker-a", {"serv_id": "one", "serv_name": "received"}, now=now
     )
 
-    received = repository.claim_received_item(database, batch.batch_id, "worker-a")
+    received = repository.claim_received_item(database, batch.batch_id, "worker-a", now=now)
 
     assert received.id == item.id
     assert received.detail_payload["serv_name"] == "received"
