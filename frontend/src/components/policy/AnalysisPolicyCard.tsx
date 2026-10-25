@@ -7,6 +7,13 @@ export const statusLabels = {
   ineligible: "미충족 조건 있음",
   needs_review: "추가 확인 필요",
 }
+const recommendationLabels = {
+  priority_recommendation: "우선 추천",
+  priority_consideration: "우선 검토 추천",
+  condition_mismatch: "현재 정보상 조건 불일치",
+  additional_review: "추가 확인 필요",
+} as const
+
 const fields: Record<string, string> = {
   age: "나이",
   income_amount: "소득 금액",
@@ -39,6 +46,8 @@ export default function AnalysisPolicyCard({
 }) {
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
+  const recommendationStatus =
+    policy.recommendationStatus ?? "additional_review"
   const failed = policy.conditions.filter((c) => c.status === "미충족")
   const review = policy.conditions.filter((c) => c.status === "추가 확인")
   const first = failed[0] ?? review[0] ?? policy.conditions[0]
@@ -51,7 +60,12 @@ export default function AnalysisPolicyCard({
     >
       <header>
         <div>
-          <span className="reverse-tag">{statusLabels[policy.status]}</span>
+          <span className="reverse-tag">
+            {recommendationLabels[recommendationStatus]}
+          </span>
+          <span className="reverse-small">
+            진단 상태: {statusLabels[policy.status]}
+          </span>
           <h3>{policy.title}</h3>
         </div>
         <button
@@ -64,6 +78,26 @@ export default function AnalysisPolicyCard({
         </button>
       </header>
       <div className="policy-overview">
+        <p className="policy-key-reason">
+          <strong>추천 이유</strong>
+          <span>{policy.recommendationReason ?? "추가 확인이 필요합니다."}</span>
+        </p>
+        {policy.recommendationUncertainty && (
+          <p className="reverse-alert">{policy.recommendationUncertainty}</p>
+        )}
+        {!!policy.confirmedConditions?.length && (
+          <div className="policy-key-reason" aria-label="확인된 조건">
+            <strong>자동 비교로 확인된 조건</strong>
+            <ul>
+              {policy.confirmedConditions.map((condition, index) => (
+                <li key={`${condition.field}-${index}`}>
+                  {fields[condition.field.toLowerCase()] ?? condition.field}: {condition.current}
+                  {condition.required ? ` · 기준 ${condition.required}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {counts ? (
           <>
             <div className="condition-counts" aria-label="조건 비교 요약">

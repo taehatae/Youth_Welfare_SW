@@ -410,6 +410,10 @@ def test_matched_route_uses_saved_profile_values_for_review_display(client, test
     }
     analysis = body["analysis_results"][0]
     assert analysis["status"] == "needs_review"
+    assert analysis["recommendation_status"] == "additional_review"
+    assert analysis["recommendation_reason"]
+    assert analysis["recommendation_uncertainty"]
+    assert analysis["confirmed_conditions"] == []
     assert len(analysis["gap_conditions"]) == 1
     assert analysis["gap_conditions"][0]["condition_type"] == "age"
     assert analysis["match_score"] == 0.0

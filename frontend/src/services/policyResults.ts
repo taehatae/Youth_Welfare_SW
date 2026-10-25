@@ -1,6 +1,9 @@
 import type { Snapshot } from "./analysisSession"
 
-import type { UserProfileInput } from "../types/welfareApi"
+import type {
+  RecommendationStatus,
+  UserProfileInput,
+} from "../types/welfareApi"
 
 export type PolicyStatus = "eligible" | "ineligible" | "needs_review"
 
@@ -28,6 +31,18 @@ export interface PolicyRow {
     required: string
     status: string
     guide: string
+  }[]
+
+  recommendationStatus?: RecommendationStatus
+
+  recommendationReason?: string
+
+  recommendationUncertainty?: string
+
+  confirmedConditions?: {
+    field: string
+    current: string
+    required: string
   }[]
 }
 
@@ -81,6 +96,22 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
           ? p.status
           : "needs_review",
 
+      recommendationStatus:
+        p.recommendation_status ?? "additional_review",
+
+      recommendationReason:
+        p.recommendation_reason ??
+        "이 저장된 결과에는 추천 분류 정보가 없습니다. 상세 조건을 확인해 주세요.",
+
+      recommendationUncertainty:
+        p.recommendation_uncertainty ?? undefined,
+
+      confirmedConditions: (p.confirmed_conditions ?? []).map((c) => ({
+        field: c.condition_type,
+        current: c.current_value,
+        required: c.required_value,
+      })),
+
       url: p.detail_url,
       description: (p.notes ?? []).join(" "),
 
@@ -124,6 +155,13 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
       id: p.policy_id,
       title: p.title,
       status: existing?.status ?? "eligible",
+      recommendationStatus:
+        existing?.recommendationStatus ?? "additional_review",
+      recommendationReason:
+        existing?.recommendationReason ??
+        "이 저장된 결과에는 추천 분류 정보가 없습니다. 상세 조건을 확인해 주세요.",
+      recommendationUncertainty: existing?.recommendationUncertainty,
+      confirmedConditions: existing?.confirmedConditions ?? [],
       url: p.detail_url || existing?.url,
       description: p.support_amount,
       counts: existing?.counts,
@@ -143,6 +181,13 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
       title: r.target_policy,
       status:
         existing?.status ?? (r.current_eligibility ? "eligible" : "ineligible"),
+      recommendationStatus:
+        existing?.recommendationStatus ?? "additional_review",
+      recommendationReason:
+        existing?.recommendationReason ??
+        "이 저장된 결과에는 추천 분류 정보가 없습니다. 상세 조건을 확인해 주세요.",
+      recommendationUncertainty: existing?.recommendationUncertainty,
+      confirmedConditions: existing?.confirmedConditions ?? [],
       url: existing?.url,
       description: existing?.description ?? "",
       counts: existing?.counts,

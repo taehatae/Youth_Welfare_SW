@@ -1,4 +1,14 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
+
+
+RecommendationStatus = Literal[
+    "priority_recommendation",
+    "priority_consideration",
+    "condition_mismatch",
+    "additional_review",
+]
 
 
 class MatchedPolicy(BaseModel):
@@ -32,6 +42,12 @@ class EligibilityAnalysis(BaseModel):
         default_factory=list
     )
     review_conditions: list[ConditionAnalysis] = Field(
+        default_factory=list
+    )
+    recommendation_status: RecommendationStatus
+    recommendation_reason: str
+    recommendation_uncertainty: str | None = None
+    confirmed_conditions: list[ConditionAnalysis] = Field(
         default_factory=list
     )
     notes: list[str] = Field(default_factory=list)

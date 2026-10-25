@@ -127,10 +127,24 @@ export interface PolicyAnalysis {
 
   review_conditions: ConditionAnalysis[]
 
+  recommendation_status?: RecommendationStatus
+
+  recommendation_reason?: string
+
+  recommendation_uncertainty?: string | null
+
+  confirmed_conditions?: ConditionAnalysis[]
+
   notes: string[]
 
   detail_url: string
 }
+
+export type RecommendationStatus =
+  | "priority_recommendation"
+  | "priority_consideration"
+  | "condition_mismatch"
+  | "additional_review"
 
 export interface MissingCondition {
   field: string

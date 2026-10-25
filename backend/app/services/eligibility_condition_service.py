@@ -1,5 +1,6 @@
 
 import re
+from functools import lru_cache
 
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,85 @@ from app.models.welfare_eligibility_condition import (
 
 class EligibilityConditionService:
     """복지서비스 자격 요건 원문을 구조화한다."""
+
+    PARSER_RULESET_VERSION = "2026-10-25-phase-two-1"
+    SHORT_SIDO_NAMES = {
+        "서울": "서울특별시", "부산": "부산광역시", "대구": "대구광역시",
+        "인천": "인천광역시", "광주": "광주광역시", "대전": "대전광역시",
+        "울산": "울산광역시", "세종": "세종특별자치시", "경기": "경기도",
+        "강원": "강원특별자치도", "충북": "충청북도", "충남": "충청남도",
+        "전북": "전북특별자치도", "전남": "전라남도", "경북": "경상북도",
+        "경남": "경상남도", "제주": "제주특별자치도",
+    }
+    EMPLOYEE_EXCLUSION_HEADINGS = {
+        "아래 해당되는 참여자 제외됩니다.",
+        "다음에 해당하는 경우에는 사업에 참여할 수 없습니다.",
+        "제외 대상:",
+    }
+
+    @classmethod
+    def explicit_employee_exclusion_source(cls, text: str) -> str | None:
+        """Find a literal excluded employee item with its contiguous parent scope."""
+        raw_lines = text.splitlines(keepends=True)
+        clean = [line.strip(" \t\r\n-•·") for line in raw_lines]
+        if clean.count("취업자") != 1:
+            return None
+        start = None
+        offset = 0
+        for raw, line in zip(raw_lines, clean):
+            if line in cls.EMPLOYEE_EXCLUSION_HEADINGS:
+                start = offset
+            elif start is not None:
+                if line == "취업자":
+                    return text[start:offset + len(raw.rstrip("\r\n"))]
+                if (
+                    re.search(r"또는|혹은|거나|아니면|다만|예외", line)
+                    or line.endswith((":", "："))
+                    or re.search(r"지원\s*대상|기본\s*자격|우대\s*대상", line)
+                    or not line.endswith("자")
+                ):
+                    return None
+            offset += len(raw)
+        return None
+
+    @classmethod
+    def employment_clause_kind(cls, text: str) -> str:
+        """Diagnostic meaning, not a claim that the clause is a required job status."""
+        if re.search(r"도시근로자|근로자가구|상시근로자소득|공적이전소득", text):
+            return "income_reference"
+        if re.search(r"근로자\s*\d+|근로자수|피보험자수|근로자에 대한 재산", text):
+            return "employer_workforce"
+        if re.search(r"실업급여|구직급여", text):
+            return "benefit_entitlement"
+        if text.strip() in {"취업자", "(취업자 기준)", "(산업단지근로자)"}:
+            return "unscoped_item"
+        if "우선" in text:
+            return "preference"
+        if cls.normalize_simple_employment_requirement(text):
+            return "simple_status"
+        if re.search(r"또는|혹은|거나|아니면|및|다만|예외|제외", text):
+            return "alternative_or_exception"
+        return "occupation_or_program"
+
+    @staticmethod
+    def region_clause_kind(text: str) -> str:
+        if re.search(r"지역.*거주.*취업자|지역.*소재.*사업장|근무지", text):
+            return "residence_or_workplace"
+        if re.search(r"\d+\s*(?:개월|년).*거주|거주지보호기간|\d+년\s*이상.*등재", text):
+            return "residence_duration"
+        if re.search(r"주민등록.*(?:가구|가족|세대|동거|자녀|주택)|동일\s*주소지|동거하는", text):
+            return "household_or_address"
+        if "주민등록" in text:
+            return "registered_address"
+        if re.search(r"도서|벽지|농어촌|난시청", text):
+            return "area_category"
+        if "국내" in text:
+            return "country_or_nationality"
+        if re.search(r"사업지역|시범사업|해당지역|주택건설지역|지역특화", text):
+            return "designated_area"
+        if re.search(r"거주시설|공공임대주택|비주택|거주공간|전대차|임대차|거주지로 간주", text):
+            return "housing_status"
+        return "other_context"
 
     AGE_PATTERN = re.compile(
         r"(?:만\s*)?(\d{1,2})\s*세\s*"
@@ -87,8 +167,19 @@ class EligibilityConditionService:
         "제주특별자치도": ("제주특별자치도",),
     }
     SIMPLE_EMPLOYMENT_REQUIREMENTS = {
+        "재직중인근로자": "EMPLOYED",
         "미취업자": "UNEMPLOYED",
+        "미취업청년": "UNEMPLOYED",
+        "실업자": "UNEMPLOYED",
         "중소기업재직자": "EMPLOYED_SME",
+        "중소기업재직청년": "EMPLOYED_SME",
+    }
+    PERSONAL_FACT_REQUIREMENTS = {
+        "여성": ("gender", "FEMALE"),
+        "남성": ("gender", "MALE"),
+        "여성청소년": ("gender", "FEMALE"),
+        "등록장애인": ("disability_status", "YES"),
+        "재학생": ("student_status", "YES"),
     }
     SIMPLE_PROFILE_STATUS_REQUIREMENTS = {
         "기초생활수급자": ("basic_benefit_status", "YES"),
@@ -182,19 +273,93 @@ class EligibilityConditionService:
         if not text or cls._has_profile_logic_risk(text):
             return None
 
-        normalized = re.sub(r"\s+", "", text.strip(" \t-•◈"))
-        return cls.SIMPLE_EMPLOYMENT_REQUIREMENTS.get(normalized)
+        normalized = cls._strip_support_sentence(text)
+        if normalized in cls.SIMPLE_EMPLOYMENT_REQUIREMENTS:
+            return cls.SIMPLE_EMPLOYMENT_REQUIREMENTS[normalized]
+        body = re.sub(r"\s+", "", text.split("*", 1)[0])
+        if re.fullmatch(
+            r"(?:만)?\d+세이상「장애인복지법」상등록된미취업장애인을대상으로합니다[.!]?",
+            body,
+        ):
+            return "UNEMPLOYED"
+        return None
+
+    @staticmethod
+    def _strip_support_sentence(text: str) -> str:
+        compact = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        return re.sub(r"(?:을|를)(?:대상으로)?지원합니다[.!。]?$", "", compact)
+
+    @classmethod
+    def _profile_fact(cls, text: str | None):
+        """Return (field/value, whole-clause recognition), never infer an OR group."""
+        if not text:
+            return None
+        compact = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        # Negation is accepted only for an explicit, complete single exclusion.
+        exclusion = re.fullmatch(
+            r"(등록장애인|재학생)(?:은|는)?(?:지원|참여)대상에서제외합니다[.!。]?",
+            compact,
+        )
+        if exclusion:
+            field, _ = cls.PERSONAL_FACT_REQUIREMENTS[exclusion.group(1)]
+            return ((field, "NO"), True)
+        # Ignore only an explicitly labelled reference year, not exceptions or
+        # alternatives appearing in a footnote after the eligibility sentence.
+        without_reference_year = re.sub(r"20\d{2}년\s*기준", "", text)
+        if cls._has_profile_logic_risk(without_reference_year):
+            return None
+        normalized = cls._strip_support_sentence(text)
+        known = {**cls.SIMPLE_PROFILE_STATUS_REQUIREMENTS, **cls.PERSONAL_FACT_REQUIREMENTS}
+        if normalized in known:
+            return (known[normalized], True)
+        body = re.sub(r"\s+", "", text.split("*", 1)[0])
+        # Bounded real-source forms. Keep all other income/age clauses and the
+        # footnote as residual; this extracts only the explicit personal fact.
+        if re.fullmatch(
+            r"가구의소득인정액이「국민기초생활보장법」에의한기준중위소득"
+            r"\d+%초과\d+%이하가구의\d+세이상의등록장애인을지원합니다[.!]?",
+            body,
+        ):
+            return (("disability_status", "YES"), False)
+        if re.fullmatch(r"자격기준[:：]취약계층\d+[~∼-]\d+세여성청소년", compact):
+            return (("gender", "FEMALE"), False)
+        return None
+
+    @classmethod
+    def clause_role(cls, text: str) -> str:
+        """Classify only bounded notice templates; unknown scope stays reviewable."""
+        compact = re.sub(r"\s+", "", text).rstrip(".!。:：")
+        if compact in {
+            "선발일반사항은다음과같습니다",
+            "지방산림청장,국유림관리소장및시장,도지사,군수,구청장이선발합니다",
+        }:
+            return "procedure"
+        if compact == "특별한기술,자격및경험을필요로하는사업은경험이있는자를우선고용할수있음":
+            # Whether the selected project requires this skill is unknown.
+            return "conditional_preference"
+        if compact in {
+            "우대대상", "우선선발대상", "가점대상",
+            "취업취약계층우선선발기준은다음과같습니다",
+            "모집·공고시'취업취약계층우선선발'을명시토록하고,선발시취업취약계층지원자에게가점부여등을통해우선선발",
+        } or re.fullmatch(
+            r"저소득층,장애인,장기실직자,한부모가족등취업취약계층의참여목표인원"
+            r"\(\d+(?:\.\d+)?%이상\)을사전확정하여선발및사후관리", compact
+        ):
+            return "preference"
+        if re.search(r"제외|불가|참여할수없|지원할수없|배제", compact):
+            return "exclusion"
+        fact = cls._profile_fact(text)
+        if fact and fact[1]:
+            return "requirement"
+        return "uncertain"
 
     @classmethod
     def normalize_simple_profile_status_requirement(
         cls,
         text: str | None,
     ) -> tuple[str, str] | None:
-        if not text or cls._has_profile_logic_risk(text):
-            return None
-
-        normalized = re.sub(r"\s+", "", text.strip(" \t-•◈"))
-        return cls.SIMPLE_PROFILE_STATUS_REQUIREMENTS.get(normalized)
+        fact = cls._profile_fact(text)
+        return fact[0] if fact else None
 
     @classmethod
     def normalize_simple_income_ratio_requirement(
@@ -249,7 +414,14 @@ class EligibilityConditionService:
         ):
             return None
 
-        compact = re.sub(r"\s+", "", text.strip(" \t-•◈"))
+        compact = cls._strip_support_sentence(text)
+        short_sido = re.fullmatch(
+            r"(" + "|".join(map(re.escape, cls.SHORT_SIDO_NAMES)) + r")"
+            r"(?:에|에서)?(?:거주자|거주하는청년|거주중인청년|거주중인자)",
+            compact,
+        )
+        if short_sido:
+            return cls.SHORT_SIDO_NAMES[short_sido.group(1)]
         matches = [
             (alias, canonical)
             for canonical, aliases in cls.SIDO_ALIASES.items()
@@ -304,6 +476,11 @@ class EligibilityConditionService:
             return None
 
         normalized = region.strip()
+        tokens = normalized.split()
+        if tokens[0] in cls.SHORT_SIDO_NAMES:
+            if any(token in cls.SHORT_SIDO_NAMES for token in tokens[1:]):
+                return None
+            normalized = " ".join([cls.SHORT_SIDO_NAMES[tokens[0]], *tokens[1:]])
         matches = [
             (alias, canonical)
             for canonical, aliases in cls.SIDO_ALIASES.items()
@@ -360,6 +537,8 @@ class EligibilityConditionService:
         ).strip()
 
         # 연령 조건 뒤에 붙은 일반적인 대상 명칭만 남은 경우는 새 조건으로 보지 않는다.
+        if not any(character.isalnum() for character in residual):
+            return ""
         if residual in {"청년", "청년층", "대상", "대상자", "자"}:
             return ""
 
@@ -407,10 +586,35 @@ class EligibilityConditionService:
             + sum(candidate is not None for candidate in region_candidates)
             == 1
         )
+        profile_fact_candidates = [cls._profile_fact(line) for line in lines]
+        allow_single_profile_fact = (
+            sum(fact is not None for fact in profile_fact_candidates) == 1
+            and not any(re.match(r"^(?:또는|혹은|아니면|다음.*어느\s*하나)", line) for line in lines)
+        )
 
+        exclusion_scope = False
+        preference_scope = False
         for line_index, line in enumerate(lines):
             extracted = []
             recognized_spans = []
+            role = cls.clause_role(line)
+            compact_heading = re.sub(r"\s+", "", line).rstrip(".!。:：")
+            if role in {"procedure", "preference"}:
+                conditions.append({
+                    "condition_type": "informational", "operator": "unknown",
+                    "value_text": line, "value_number": None, "upper_value_number": None,
+                    "unit": role, "comparison_ready": False, "parse_status": "parsed",
+                    "confidence": 0.95, "source_field": source_field, "source_text": line,
+                })
+                exclusion_scope = False
+                preference_scope = compact_heading in {"우대대상", "우선선발대상", "가점대상"}
+                continue
+            if role == "exclusion" and (line in cls.EMPLOYEE_EXCLUSION_HEADINGS or re.fullmatch(
+                r".*(?:제외|불가).*대상|다음.*(?:참여|지원)할수없습니다|(?:지원|참여)불가",
+                compact_heading,
+            )):
+                exclusion_scope = True
+                preference_scope = False
 
             # 1. 연령 범위: 예) 19~34세
             age_ranges = list(cls.AGE_RANGE_PATTERN.finditer(line))
@@ -569,13 +773,22 @@ class EligibilityConditionService:
                 line,
                 cls.TARGET_GROUP_TERMS,
             )
-            matched_target_terms = bool(target_group_spans)
+            simple_profile_requirement = (
+                cls.normalize_simple_profile_status_requirement(line)
+                if not (exclusion_scope or preference_scope) and allow_single_profile_fact else None
+            )
+            matched_target_terms = bool(target_group_spans) or simple_profile_requirement is not None
 
             if matched_target_terms:
-                simple_profile_requirement = (
-                    cls.normalize_simple_profile_status_requirement(line)
-                )
                 recognized_spans.extend(target_group_spans)
+                if simple_profile_requirement:
+                    fact = cls._profile_fact(line)
+                    if fact[1]:
+                        recognized_spans.append((0, len(line)))
+                    else:
+                        recognized_spans.extend(
+                            match.span() for match in re.finditer(r"등록\s*장애인|여성청소년", line)
+                        )
                 extracted.append({
                     "condition_type": "target_group",
                     "operator": (
@@ -660,8 +873,25 @@ class EligibilityConditionService:
             )
 
             normalized_employment = employment_candidates[line_index]
-            if allow_single_profile_condition and normalized_employment:
+            excluded_employee_source = (
+                cls.explicit_employee_exclusion_source(text) if line == "취업자" else None
+            )
+            if excluded_employee_source:
                 recognized_spans.append((0, len(line)))
+                extracted.append({
+                    "condition_type": "employment", "operator": "not_equals",
+                    "value_text": "EMPLOYED", "value_number": None, "upper_value_number": None,
+                    "unit": "employment_exclusion", "comparison_ready": True,
+                    "parse_status": "parsed", "confidence": 0.95,
+                    "source_text": excluded_employee_source,
+                })
+            elif allow_single_profile_condition and normalized_employment:
+                if cls._strip_support_sentence(line) in cls.SIMPLE_EMPLOYMENT_REQUIREMENTS:
+                    recognized_spans.append((0, len(line)))
+                else:
+                    # An embedded job requirement does not account for the
+                    # remaining disability criteria or job-description note.
+                    recognized_spans.extend(match.span() for match in re.finditer("미취업", line))
                 extracted.append({
                     "condition_type": "employment",
                     "operator": "equals",
@@ -676,14 +906,16 @@ class EligibilityConditionService:
             else:
                 employment_spans = cls._term_spans(line, employment_terms)
                 if employment_spans:
-                    recognized_spans.extend(employment_spans)
+                    kind = cls.employment_clause_kind(line)
+                    non_job_status = kind in {"income_reference", "benefit_entitlement", "employer_workforce"}
+                    recognized_spans.extend([(0, len(line))] if non_job_status else employment_spans)
                     extracted.append({
-                        "condition_type": "employment",
-                        "operator": "contains",
+                        "condition_type": "other" if non_job_status else "employment",
+                        "operator": "unknown" if non_job_status else "contains",
                         "value_text": line,
                         "value_number": None,
                         "upper_value_number": None,
-                        "unit": "",
+                        "unit": kind if non_job_status else "",
                         "comparison_ready": False,
                         "parse_status": "manual_review",
                         "confidence": 0.5,
@@ -706,14 +938,16 @@ class EligibilityConditionService:
             else:
                 region_spans = cls._term_spans(line, region_terms)
                 if region_spans:
-                    recognized_spans.extend(region_spans)
+                    kind = cls.region_clause_kind(line)
+                    non_geographic = kind in {"household_or_address", "housing_status", "country_or_nationality"}
+                    recognized_spans.extend([(0, len(line))] if non_geographic else region_spans)
                     extracted.append({
-                        "condition_type": "region",
-                        "operator": "contains",
+                        "condition_type": "other" if non_geographic else "region",
+                        "operator": "unknown" if non_geographic else "contains",
                         "value_text": line,
                         "value_number": None,
                         "upper_value_number": None,
-                        "unit": "",
+                        "unit": kind if non_geographic else "",
                         "comparison_ready": False,
                         "parse_status": "manual_review",
                         "confidence": 0.5,
@@ -728,18 +962,40 @@ class EligibilityConditionService:
                     "value_text": residual,
                     "value_number": None,
                     "upper_value_number": None,
-                    "unit": "",
+                    "unit": ("exclusion" if exclusion_scope else "preference" if preference_scope
+                             else role if role != "uncertain" else ""),
                     "comparison_ready": False,
                     "parse_status": "manual_review",
                     "confidence": 0.0,
                 })
 
             for item in extracted:
+                if (
+                    (exclusion_scope or preference_scope)
+                    and item["comparison_ready"]
+                    and item["unit"] != "employment_exclusion"
+                ):
+                    item["comparison_ready"] = False
+                    item["parse_status"] = "manual_review"
+                    item["confidence"] = 0.5
                 item["source_field"] = source_field
-                item["source_text"] = line
+                item.setdefault("source_text", line)
                 conditions.append(item)
 
         return conditions
+
+    @classmethod
+    @lru_cache(maxsize=256)
+    def cached_structure_service(
+        cls, ruleset_version: str, target_details: str, selection_criteria: str,
+    ) -> tuple[tuple[tuple[str, object], ...], ...]:
+        """Immutable public-source templates only; never cache profiles or decisions.
+
+        Source contents and the explicit ruleset version are cache keys. Each
+        request creates fresh ORM objects, so a caller cannot mutate cached rows.
+        Bump PARSER_RULESET_VERSION whenever interpretation rules change.
+        """
+        return tuple(tuple(item.items()) for item in cls.structure_service(target_details, selection_criteria))
 
     @classmethod
     def structure_service(
