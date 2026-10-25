@@ -44,8 +44,9 @@ class EligibilityAnalysis(BaseModel):
     review_conditions: list[ConditionAnalysis] = Field(
         default_factory=list
     )
-    recommendation_status: RecommendationStatus
-    recommendation_reason: str
+    # 추천 판정 도입 이전에 저장된 진단 결과도 읽을 수 있도록 기본값을 둔다.
+    recommendation_status: RecommendationStatus = "additional_review"
+    recommendation_reason: str = "이전에 저장된 진단 결과예요. 다시 진단하면 추천 사유를 확인할 수 있어요."
     recommendation_uncertainty: str | None = None
     confirmed_conditions: list[ConditionAnalysis] = Field(
         default_factory=list
