@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     welfare_api_service_key: str = ""
     welfare_api_base_url: str = ""
+    welfare_sync_operator_token: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

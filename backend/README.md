@@ -109,3 +109,30 @@ python -m uvicorn app.main:app --reload
 
 `python -m pytest -q`로 기존 회귀 테스트와 `tests/test_account_flow.py`의 가입·로그인·진단·결과 복원·관심 정책·재인증·계정 격리·세션 만료·CSRF·실패 시 롤백을 확인함.
 테스트 정책은 메모리 DB에만 생성하며 실제 정책 DB에 넣지 않음.
+
+## 재개 가능한 복지서비스 동기화 운영
+
+목록 API와 상세 API의 호출 한도는 별도로 기록합니다. 날짜가 바뀌었다는 이유만으로 한도가 초기화된 것으로 간주하지 않습니다. 실제 잔여 호출 가능량을 확인한 뒤 각 API 작업용 창을 등록해야 합니다. API 키는 기존 `.env` 설정을 사용하며 명령행 인자나 출력에 넣지 않습니다.
+
+아래 명령은 `backend/` 디렉터리에서 실행합니다. `WINDOW_ID`는 운영자가 확인한 호출 한도 구간 식별자이며, 잔여 횟수는 외부 제공자 기준으로 확인한 값이어야 합니다.
+
+```powershell
+python -m scripts.welfare_sync confirm-window --window-id WINDOW_ID --operation list --verified-available-calls 2 --operator-name YOUR_NAME --confirm-provider-quota
+python -m scripts.welfare_sync confirm-window --window-id WINDOW_ID --operation detail --verified-available-calls 100 --operator-name YOUR_NAME --confirm-provider-quota
+python -m scripts.welfare_sync run --start-new-batch --list-window-id WINDOW_ID --detail-window-id WINDOW_ID
+```
+
+한 번의 실행은 상세 요청을 최대 100건까지만 시도합니다. 이어서 실행할 때는 출력된 `batch_id`를 지정하고, 새로 확인한 상세 API 잔여 한도를 별도 창으로 등록한 뒤 `--detail-window-id`에 전달합니다. 실패 항목 재시도는 해당 부분 실패 배치에 `--retry-failed`를 명시해야 합니다. 성공 항목은 재조회하지 않습니다. 목록 수집, 상세 응답 저장, 자격조건 저장 및 실패 상태는 각각 별도로 결과에 표시됩니다.
+
+기존 HTTP 경로 `POST /api/v1/welfare/sync`도 유지되지만, 계정 로그인 외에 `WELFARE_SYNC_OPERATOR_TOKEN` 설정과 `X-Welfare-Sync-Token` 헤더가 필요합니다. 운영자 토큰이 설정되지 않은 환경에서는 HTTP 동기화가 비활성화됩니다. HTTP 요청은 호출 한도 창을 만들거나 초기화하지 않습니다.
+
+## SQLite 백업 및 복원 확인
+
+백업·복원 명령은 명시한 원본을 읽고 새 대상 파일을 생성합니다. 대상 경로가 이미 있으면 덮어쓰지 않고 실패합니다. 백업은 동기화와 별도로 실행하며 자동으로 생성되지 않습니다.
+
+```powershell
+python -m scripts.backup_database backup --source .\youth_welfare.db --destination .\backups\youth_welfare-YYYYMMDD.db
+python -m scripts.backup_database restore --source .\backups\youth_welfare-YYYYMMDD.db --destination .\backups\restore-check.db
+```
+
+명령은 SQLite `integrity_check`와 사용자 테이블별 행 수를 검사해 출력합니다. 복원 검증은 별도의 새 파일로 수행하고, 실제 운영 DB를 대상으로 복원하지 마세요. 실행 전에 대상 경로와 원본 경로가 의도한 로컬 파일인지 직접 확인하고, 백업 파일을 안전한 위치에 보관하세요.

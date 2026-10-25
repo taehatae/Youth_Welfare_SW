@@ -1,6 +1,8 @@
 
+import hmac
+
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -19,6 +21,7 @@ from app.services.account_service import AccountService
 from app.schemas.account import WorkspaceState
 from app.schemas.user import UserProfileCreate
 from app.services.profile_privacy import public_state, hide_input_values
+from app.core.config import settings
 
 router = APIRouter(
     prefix="/welfare",
@@ -37,6 +40,13 @@ async def sync_welfare_services(
         le=500,
         description="동기화할 최대 서비스 수. 테스트 시 5를 지정하고, 생략하면 전체 조회",
     ),
+    batch_id: str | None = Query(default=None),
+    list_window_id: str | None = Query(default=None),
+    detail_window_id: str | None = Query(default=None),
+    start_new_batch: bool = Query(default=False),
+    retry_failed: bool = Query(default=False),
+    max_detail_attempts: int = Query(default=100, ge=1, le=100),
+    sync_token: str | None = Header(default=None, alias="X-Welfare-Sync-Token"),
     db: Session = Depends(get_db),
     account: Account = Depends(current_account),
 ):
@@ -47,10 +57,21 @@ async def sync_welfare_services(
     전체 동기화는 max_services=500으로 여러 번 실행하거나,
     다음 단계에서 전체 동기화 옵션을 별도로 제공할 수 있다.
     """
+    if not settings.welfare_sync_operator_token:
+        raise HTTPException(status_code=503, detail="HTTP welfare sync is disabled; use the local operator command.")
+    if not sync_token or not hmac.compare_digest(sync_token, settings.welfare_sync_operator_token):
+        raise HTTPException(status_code=403, detail="Operator authorization is required.")
+
     try:
         return await welfare_sync_service.sync_welfare_services(
             db=db,
             max_services=max_services,
+            batch_id=batch_id,
+            list_window_id=list_window_id,
+            detail_window_id=detail_window_id,
+            start_new_batch=start_new_batch,
+            retry_failed=retry_failed,
+            max_detail_attempts=max_detail_attempts,
         )
     except httpx.HTTPError:
         raise HTTPException(status_code=502, detail="공공 API 연결 또는 호출 한도를 확인해주세요.") from None

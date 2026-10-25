@@ -8,9 +8,40 @@ import httpx
 from app.core.config import settings
 
 
+class WelfareApiError(RuntimeError):
+    """Safe, bounded upstream error without request URLs or provider text."""
+
+    def __init__(self, category: str, code: str | None = None):
+        self.category = category
+        self.code = code
+        safe_code = f" ({code})" if code else ""
+        super().__init__(f"Welfare API {category}{safe_code}")
+
+    @classmethod
+    def from_http_status(cls, status_code: int) -> "WelfareApiError":
+        category = "quota_exhausted" if status_code == 429 else "http_error"
+        return cls(category, str(status_code))
+
+
 class WelfareApiClient:
     LIST_ENDPOINT = "NationalWelfarelistV001"
     DETAIL_ENDPOINT = "NationalWelfaredetailedV001"
+
+    async def _get_text(self, url: str, params: dict) -> str:
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, params=params)
+                response.raise_for_status()
+                return response.text
+        except httpx.HTTPStatusError as exc:
+            raise WelfareApiError.from_http_status(exc.response.status_code) from None
+        except httpx.HTTPError:
+            raise WelfareApiError("network_error") from None
+
+    @staticmethod
+    def _raise_provider_error(result_code: str | None) -> None:
+        if result_code not in (None, "0"):
+            raise WelfareApiError("provider_error", str(result_code)[:40])
 
     def __init__(self):
         self.base_url = settings.welfare_api_base_url.rstrip("/")
@@ -75,7 +106,7 @@ class WelfareApiClient:
 
         url = f"{self.base_url}/{self.LIST_ENDPOINT}"
 
-        
+
         params = {
             "serviceKey": self.service_key,
             "callTp": "L",
@@ -87,10 +118,7 @@ class WelfareApiClient:
         if life_array:
             params["lifeArray"] = life_array
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.text
+        return await self._get_text(url, params)
 
     def parse_welfare_services(self, xml_text: str) -> list[dict]:
         """복지서비스 목록 XML을 파싱한다."""
@@ -102,12 +130,7 @@ class WelfareApiClient:
             ) from exc
 
         result_code = root.findtext(".//resultCode")
-        result_message = root.findtext(".//resultMessage", default="")
-
-        if result_code not in (None, "0"):
-            raise ValueError(
-                f"복지서비스 API 오류: {result_code} - {result_message}"
-            )
+        self._raise_provider_error(result_code)
 
         services = []
 
@@ -158,54 +181,30 @@ class WelfareApiClient:
             ) from exc
 
         result_code = root.findtext(".//resultCode")
-        result_message = root.findtext(".//resultMessage", default="")
-
-        if result_code not in (None, "0"):
-            raise ValueError(
-                f"복지서비스 API 오류: {result_code} - {result_message}"
-            )
+        self._raise_provider_error(result_code)
 
         service = {
-            "serv_id": self.clean_text(
-                root.findtext("servId", default="")
-            ),
-            "serv_name": self.clean_text(
-                root.findtext("servNm", default="")
-            ),
-            "department": self.clean_text(
-                root.findtext("jurMnofNm", default="")
-            ),
-            "target_details": self.clean_text(
-                root.findtext("tgtrDtlCn", default="")
-            ),
-            "selection_criteria": self.clean_text(
-                root.findtext("slctCritCn", default="")
-            ),
-            "support_content": self.clean_text(
-                root.findtext("alwServCn", default="")
-            ),
-            "reference_year": self.clean_text(
-                root.findtext("crtrYr", default="")
-            ),
-            "summary": self.clean_text(
-                root.findtext("wlfareInfoOutlCn", default="")
-            ),
-            "support_cycle": self.clean_text(
-                root.findtext("sprtCycNm", default="")
-            ),
-            "support_type": self.clean_text(
-                root.findtext("srvPvsnNm", default="")
-            ),
-            "life_stages": self.clean_text(
-                root.findtext("lifeArray", default="")
-            ),
-            "target_groups": self.clean_text(
-                root.findtext("trgterIndvdlArray", default="")
-            ),
-            "interest_categories": self.clean_text(
-                root.findtext("intrsThemaArray", default="")
-            ),
+            "serv_id": self.clean_text(root.findtext("servId", default="")),
         }
+        scalar_fields = {
+            "serv_name": "servNm",
+            "department": "jurMnofNm",
+            "target_details": "tgtrDtlCn",
+            "selection_criteria": "slctCritCn",
+            "support_content": "alwServCn",
+            "reference_year": "crtrYr",
+            "summary": "wlfareInfoOutlCn",
+            "support_cycle": "sprtCycNm",
+            "support_type": "srvPvsnNm",
+            "life_stages": "lifeArray",
+            "target_groups": "trgterIndvdlArray",
+            "interest_categories": "intrsThemaArray",
+        }
+        for field_name, tag_name in scalar_fields.items():
+            element = root.find(tag_name)
+            if element is not None:
+                # Missing XML is distinct from an explicitly present empty value.
+                service[field_name] = self.clean_text(element.text or "")
 
         list_fields = {
             "application_methods": "applmetList",
@@ -216,9 +215,12 @@ class WelfareApiClient:
         }
 
         for field_name, tag_name in list_fields.items():
+            elements = root.findall(tag_name)
+            if not elements and root.find(tag_name) is None:
+                continue
             service[field_name] = []
 
-            for item in root.findall(tag_name):
+            for item in elements:
                 service[field_name].append(
                     {
                         "name": self.clean_text(
@@ -244,7 +246,4 @@ class WelfareApiClient:
             "servId": serv_id,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url, params=params)
-            response.raise_for_status()
-            return response.text
+        return await self._get_text(url, params)

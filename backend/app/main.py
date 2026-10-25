@@ -16,6 +16,11 @@ from app.models.welfare_eligibility_condition import (
     WelfareEligibilityCondition,  # noqa: F401
 )
 from app.models.account import Account, AccountSession, AccountWorkspace, AuthAttempt  # noqa: F401
+from app.models.welfare_sync import (  # noqa: F401
+    WelfareApiQuotaWindow,
+    WelfareSyncBatch,
+    WelfareSyncItem,
+)
 
 # 데이터베이스 테이블 생성
 Base.metadata.create_all(bind=engine)
