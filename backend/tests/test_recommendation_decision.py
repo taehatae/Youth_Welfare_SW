@@ -207,14 +207,15 @@ def test_synthetic_bare_gate_followed_by_dependent_continuation_is_not_self():
     assert result["recommendation_decision"] == "unverified"
 
 
-@pytest.mark.parametrize("value,expected", [("NO", "excluded"), ("YES", "unverified"), ("UNKNOWN", "unverified")])
+@pytest.mark.parametrize("value,expected", [("NO", "excluded"), ("YES", "candidate"), ("UNKNOWN", "unverified")])
 def test_actual_job_registration_failure_is_independent_of_employment_exceptions(value, expected):
     import json
     from pathlib import Path
     selection = json.loads((Path(__file__).parent / "fixtures" /
         "registered_job_selection_excerpt.json").read_text(encoding="utf-8"))["selection_criteria"]
     result = analyze(JOB, value, selection=selection)
-    # YES alone cannot resolve the separate employment/other exceptions.
+    # Phase 3-A: an already verified registration match is not defeated by
+    # independent employment exceptions; other unknown details remain review.
     assert result["recommendation_decision"] == expected
     registration = next(e for e in result["decision_evidence"]
                         if e["input_fields"] == ["eligibility_conditions.disability_status"])
@@ -311,3 +312,33 @@ def test_both_diagnosis_paths_and_saved_snapshot_use_same_decision(api_client, v
     saved = client.get("/api/v1/users/state")
     assert saved.status_code == 200
     assert saved.json()["current"]["analysis"]["matched"]["analysis_results"] == result["analysis_results"]
+
+
+def test_public_youth_age_candidates_are_consistent_in_both_diagnosis_paths(api_client):
+    import json
+    from pathlib import Path
+    from app.models.account import Account
+    client, db = api_client
+    cases = json.loads((Path(__file__).parent / "fixtures" /
+        "recommendation_age_target_excerpts.json").read_text(encoding="utf-8"))["services"]
+    for case in cases:
+        db.add(WelfareService(serv_id=case["service_id"], serv_name=case["service_name"],
+            detail_url="", target_details=case["target_details"], selection_criteria=case["selection_criteria"]))
+    db.commit()
+    response = client.post("/api/v1/welfare/diagnose", json={
+        "age": 22, "region": "서울특별시", "income_level": 0,
+        "employment_status": "UNEMPLOYED", "eligibility_conditions": {},
+    })
+    assert response.status_code == 200
+    diagnosed = response.json()["current"]["analysis"]["matched"]
+    matched = client.get("/api/v1/welfare/matched", params={"user_id": db.query(Account).one().profile_id})
+    assert matched.status_code == 200
+    assert matched.json()["analysis_results"] == diagnosed["analysis_results"]
+    rows = {row["policy_id"]: row for row in diagnosed["analysis_results"]}
+    for case in cases:
+        row = rows[case["service_id"]]
+        assert row["recommendation_decision"] == "candidate"
+        assert row["status"] == "needs_review"
+        assert row["match_score"] == 100
+        assert row["review_conditions"]
+    assert {row["policy_id"] for row in diagnosed["policies"]} == {"age"}

@@ -5,6 +5,7 @@ row, a passed comparison, or a keyword alone does not establish a required gate.
 This is deliberately not a general AND/OR/exception interpreter.
 """
 import re
+import math
 
 from app.models.welfare_eligibility_condition import WelfareEligibilityCondition
 from app.models.welfare_service import WelfareService
@@ -12,7 +13,7 @@ from app.services.eligibility_condition_service import EligibilityConditionServi
 
 
 class RecommendationDecisionService:
-    RULESET_VERSION = "2026-10-30-recommendation-gates-1"
+    RULESET_VERSION = "2026-10-30-recommendation-context-3a-1"
     RELATION_RISK = re.compile(
         r"또는|혹은|아니면|거나|중\s*(?:어느\s*)?하나|하나\s*이상|다만|예외|"
         r"(?:^|[\s,(（※])단(?:[,，:\s]|$)", re.MULTILINE
@@ -66,6 +67,13 @@ class RecommendationDecisionService:
 
     @classmethod
     def _source_matches_row(cls, row):
+        if row.condition_type == "age" and row.operator == "between":
+            bounds = (row.value_number, row.upper_value_number)
+            if any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                   or not math.isfinite(value) for value in bounds):
+                return False
+            if bounds[0] > bounds[1]:
+                return False
         parsed = Parser.parse_text(row.source_text, row.source_field)
         if any(cls._row_signature(item) == cls._row_signature(row) for item in parsed):
             return True
@@ -94,6 +102,47 @@ class RecommendationDecisionService:
             or Parser.normalize_age_exclusion(text) is not None
         )
 
+    @staticmethod
+    def _applicant_age_sentence(source):
+        """A complete program target statement, not an age/subject keyword.
+
+        Numeric predicates are separately checked against the real parser row.
+        Do not use this to certify sibling age clauses as independent: their
+        AND/OR relationship has not been established.
+        """
+        return bool(re.fullmatch(
+            r"(?:만\s*)?\d{1,2}\s*(?:세\s*(?:이상|이하|미만|초과)|"
+            r"[~∼\-–]\s*(?:만\s*)?\d{1,2}\s*세)"
+            r"(?:의|인)?\s*청소년(?:을|를)\s*"
+            r"(?:지원합니다|대상으로\s*(?:지원합니다|합니다))[.!。]?",
+            source.strip(),
+        ))
+
+    @staticmethod
+    def _non_eligibility_notice(text):
+        """Only whole reference/procedure statements, never a label alone."""
+        compact = re.sub(r"\s+", "", text.strip(" \t-•·"))
+        return bool(re.fullmatch(
+            r"지원대상(?:을|(?:의)?내용을?)?참고"
+            r"(?:해주시기바랍니다|해주기바랍니다|하시기바랍니다|해주세요|"
+            r"하세요|하십시오|해주십시오|바랍니다)?[.!。]?", compact,
+        ) or re.fullmatch(
+            r"신청(?:방법|안내|절차)[:：](?:20\d{2}년기준)?"
+            r"온라인또는방문(?:신청이가능합니다|으로신청합니다)[.!。]?", compact,
+        ))
+
+    @classmethod
+    def _risk_context(cls, service, row=None):
+        text = (
+            service.target_details or ""
+            if row is not None and cls._registration_has_independent_selection(service, row)
+            else "\n".join((service.target_details or "", service.selection_criteria or ""))
+        )
+        # Drop only positively verified non-eligibility notices from risk
+        # detection. Unknown prose and mixed notices retain their full risk.
+        return "\n".join(part for part in re.split(r"\n|\*|(?<=[.!?。])\s+", text)
+                         if not cls._non_eligibility_notice(part))
+
     @classmethod
     def _independent_block(cls, text):
         """Positive, bounded evidence that text cannot waive/qualify a gate.
@@ -106,6 +155,8 @@ class RecommendationDecisionService:
             return True
         paragraphs = [part.strip(" \t-•·") for part in re.split(r"\n|(?<=[.!?。])\s+", text) if part.strip()]
         for paragraph in paragraphs:
+            if cls._non_eligibility_notice(paragraph):
+                continue
             if paragraph in {
                 "추가 서류 심사가 필요합니다.", "추가 서류 확인이 필요합니다.",
                 "추가 기관 심사가 필요합니다.", "담당 기관의 추가 확인이 필요합니다.",
@@ -137,13 +188,16 @@ class RecommendationDecisionService:
         return True
 
     @classmethod
-    def _verified_context(cls, service, row):
+    def _context_reason_codes(cls, service, row):
         if row.source_field not in {"target_details", "selection_criteria"}:
-            return False
+            return ["SOURCE_FIELD_NOT_ELIGIBILITY"]
         original = getattr(service, row.source_field, None) or ""
         source = row.source_text or ""
+        if not source or original.count(source) != 1:
+            return ["SOURCE_NOT_UNIQUELY_LINKED"]
+        reasons = []
         if not cls._internal_notes_verified(source):
-            return False
+            reasons.append("INTERNAL_NOTE_UNVERIFIED")
         if row.source_field == "selection_criteria":
             # A detached selection paragraph may describe a component, parent
             # or ranking group. Without explicit structure, certify it only
@@ -151,31 +205,32 @@ class RecommendationDecisionService:
             # context. This trades coverage for avoiding false exclusions.
             target = service.target_details or ""
             if source not in target:
-                return False
-            target_row = WelfareEligibilityCondition(
-                source_field="target_details", source_text=source,
-            )
-            if not cls._verified_context(service, target_row):
-                return False
-        if not source or original.count(source) != 1:
-            return False
+                reasons.append("SELECTION_SCOPE_NOT_CORROBORATED")
+            else:
+                target_row = WelfareEligibilityCondition(source_field="target_details", source_text=source)
+                if not cls._verified_context(service, target_row):
+                    reasons.append("SELECTION_SCOPE_NOT_CORROBORATED")
         if row.source_field == "target_details" and not cls._registration_has_independent_selection(service, row):
             if not cls._independent_block(service.selection_criteria or ""):
-                return False
+                reasons.append("CONTEXT_OTHER_FIELD_UNVERIFIED")
         suffix = original.split(source, 1)[1].strip()
         # Bare labels may be split subject/complement phrases. A complete
         # sentence can have unrelated review text; a fragment cannot certify
         # that its continuation is unrelated without explicit structure.
         if suffix and not re.search(r"(?:합니다|됩니다)[.!。]?(?:\*.*)?$", source, re.DOTALL):
-            return False
+            reasons.append("SOURCE_FRAGMENT_WITH_CONTINUATION")
         if not cls._independent_block(suffix):
-            return False
+            reasons.append("CONTEXT_FOLLOWING_TEXT_UNVERIFIED")
         prefix = original.split(source, 1)[0].strip()
-        if not prefix:
-            return True
         # A preceding unknown paragraph may govern role/subject/scope. Accept
         # only bounded sibling gates and generic whole-program field headings.
-        return cls._independent_block(prefix)
+        if not cls._independent_block(prefix):
+            reasons.append("CONTEXT_PRECEDING_TEXT_UNVERIFIED")
+        return reasons
+
+    @classmethod
+    def _verified_context(cls, service, row):
+        return not cls._context_reason_codes(service, row)
 
     @classmethod
     def _metadata(cls, row):
@@ -195,7 +250,7 @@ class RecommendationDecisionService:
             metadata.update(role="requirement", subject="family" if family[1] == "가족" else "guardian",
                             scope="program", time_basis="current")
             return metadata
-        if kind == "informational" or Parser.is_age_ranking_table(source):
+        if kind == "informational" or Parser.is_age_ranking_table(source) or cls._non_eligibility_notice(source):
             metadata["role"] = "preference" if Parser.clause_role(source) == "preference" else "information"
             return metadata
         if kind == "external_review":
@@ -219,7 +274,7 @@ class RecommendationDecisionService:
                 return metadata
             if role == "age_exclusion":
                 metadata.update(role="exclusion", subject="applicant", scope="program", time_basis="current")
-            elif cls._standalone_gate(source) or (
+            elif cls._applicant_age_sentence(source) or cls._standalone_gate(source) or (
                 Parser.normalize_simple_employment_requirement(source) == "UNEMPLOYED"
                 and Parser.normalize_simple_profile_status_requirement(source) == ("disability_status", "YES")
             ):
@@ -249,7 +304,7 @@ class RecommendationDecisionService:
     @classmethod
     def classify(cls, service: WelfareService, conditions: list[WelfareEligibilityCondition],
                  observations: dict[int, str]) -> dict:
-        original = "\n".join((service.target_details or "", service.selection_criteria or ""))
+        original = cls._risk_context(service)
         # Without a relationship graph, a linked alternative/exception cannot
         # be certified irrelevant to a failing gate. Preserve that uncertainty.
         relationship_unknown = bool(cls.RELATION_RISK.search(original))
@@ -264,7 +319,7 @@ class RecommendationDecisionService:
             metadata = cls._metadata(row)
             # A verified independent block cannot defeat the registration
             # gate. All other gates still retain the full uncertainty checks.
-            context = service.target_details if cls._registration_has_independent_selection(service, row) else original
+            context = cls._risk_context(service, row)
             row_relationship_unknown = bool(cls.RELATION_RISK.search(context))
             row_context_unknown = bool(cls.CONTEXT_REFERENCE.search(context))
             row_time_unknown = bool(cls.TIME_RISK.search(context))
@@ -275,8 +330,10 @@ class RecommendationDecisionService:
             )
             if not semantic_gate:
                 reasons.append("ROLE_SUBJECT_OR_SCOPE_NOT_VERIFIED")
-            if not cls._verified_context(service, row):
+            context_reasons = cls._context_reason_codes(service, row)
+            if context_reasons:
                 reasons.append("ORIGINAL_CONTEXT_NOT_VERIFIED")
+                reasons.extend(context_reasons)
             if semantic_gate and not cls._source_matches_row(row):
                 reasons.append("SOURCE_PREDICATE_NOT_VERIFIED")
             if semantic_gate and row_time_unknown:
@@ -301,7 +358,10 @@ class RecommendationDecisionService:
 
         verified_failures = [item for item in evidence if item["decision_usable"] and item["comparison_result"] == "failed"]
         verified_passes = [item for item in evidence if item["decision_usable"] and item["comparison_result"] == "passed"]
-        unresolved_conflict = relationship_unknown or context_unknown or time_unknown or any(
+        # Relevant uncertainty already prevents a row from being certified.
+        # Do not invalidate certified passes again with whole-service keywords
+        # from a notice/section whose independence has already been verified.
+        unresolved_conflict = any(
             item["comparison_result"] == "failed" and not item["decision_usable"] for item in evidence
         )
         warnings = [cls.WARNING]
@@ -312,7 +372,7 @@ class RecommendationDecisionService:
             decision = "candidate"
             reason = "입력 정보와 검증 가능한 필수 조건의 일치 근거가 있으며 확정적인 불일치는 확인되지 않았습니다."
             if any(item["comparison_result"] == "unknown" for item in evidence):
-                warnings.append("미입력·미확인 세부 요건이 남아 있습니다. 신청 전 공식 안내에서 확인하세요.")
+                warnings.append("기존 분석에 추가 확인 항목이 남아 있습니다. 신청 전 공식 안내에서 확인하세요.")
         else:
             decision = "unverified"
             reason = "필수 조건의 일치·불일치를 확정할 근거가 부족하거나 대상·범위·대안·예외 관계를 확인해야 합니다."
@@ -320,6 +380,8 @@ class RecommendationDecisionService:
             warnings.append(
                 "원문에 대안·예외 관계가 있어 단일 조건으로 추천 또는 제외를 확정하지 않았습니다."
                 if decision == "unverified" else
+                "다른 항목의 대안·예외는 신청 전에 확인해야 하며, 인증된 일치 근거와 구분됩니다."
+                if decision == "candidate" else
                 "다른 조건의 대안·예외는 남아 있으나, 해당 예외와 독립적인 필수 조건의 불일치가 확인됐습니다."
             )
         if context_unknown or time_unknown:
