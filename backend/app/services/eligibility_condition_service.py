@@ -12,7 +12,7 @@ from app.models.welfare_eligibility_condition import (
 class EligibilityConditionService:
     """복지서비스 자격 요건 원문을 구조화한다."""
 
-    PARSER_RULESET_VERSION = "2026-10-25-phase-two-1"
+    PARSER_RULESET_VERSION = "2026-10-30-age-role-safety-1"
     SHORT_SIDO_NAMES = {
         "서울": "서울특별시", "부산": "부산광역시", "대구": "대구광역시",
         "인천": "인천광역시", "광주": "광주광역시", "대전": "대전광역시",
@@ -321,6 +321,11 @@ class EligibilityConditionService:
             body,
         ):
             return (("disability_status", "YES"), False)
+        if re.fullmatch(
+            r"(?:만)?\d+세이상「장애인복지법」상등록된미취업장애인을대상으로합니다[.!]?",
+            body,
+        ):
+            return (("disability_status", "YES"), False)
         if re.fullmatch(r"자격기준[:：]취약계층\d+[~∼-]\d+세여성청소년", compact):
             return (("gender", "FEMALE"), False)
         return None
@@ -329,6 +334,8 @@ class EligibilityConditionService:
     def clause_role(cls, text: str) -> str:
         """Classify only bounded notice templates; unknown scope stays reviewable."""
         compact = re.sub(r"\s+", "", text).rstrip(".!。:：")
+        if cls.is_age_ranking_table(text):
+            return "preference"
         if compact in {
             "선발일반사항은다음과같습니다",
             "지방산림청장,국유림관리소장및시장,도지사,군수,구청장이선발합니다",
@@ -352,6 +359,89 @@ class EligibilityConditionService:
         if fact and fact[1]:
             return "requirement"
         return "uncertain"
+
+    @staticmethod
+    def is_age_ranking_table(text: str) -> bool:
+        """A complete observed score-table form, never a keyword-only decision."""
+        compact = re.sub(r"\s+", "", text)
+        return bool(re.fullmatch(
+            r"(?:\d+\.)?연령\(\d+점\)[:：]청년\d+점\(\d+세이하\),"
+            r"비청년\d+점\(\d+세\),\d+점\(\d+세\)…\d+점\(\d+세이상\)",
+            compact,
+        ))
+
+    @staticmethod
+    def normalize_age_exclusion(text: str) -> int | None:
+        """Only a complete single-age exclusion or the observed arts list.
+
+        Other listed exclusion categories remain unrecognized review content.
+        OR, family subjects and exception suffixes do not match these forms.
+        """
+        compact = re.sub(r"\s+", "", text)
+        match = re.fullmatch(
+            r"(?:만)?(?P<age>\d{1,2})세미만(?:은|인자는)?참여가?불가합니다[.!]?",
+            compact,
+        )
+        if match:
+            return int(match.group("age"))
+        match = re.fullmatch(
+            r"만(?P<age>\d{1,2})세미만,격년제예술활동준비금지원사업운영에따른"
+            r"전년도사업수혜예술인,당해연도우리재단<예술인파견지원사업-예술로>,"
+            r"<청년예술인예술활동적립계좌>참여예술인등은참여가불가합니다\."
+            r"\*사업공고문참조",
+            compact,
+        )
+        return int(match.group("age")) if match else None
+
+    @staticmethod
+    def has_age_exclusion_exception(text: str) -> bool:
+        return bool(re.search(
+            r"다만|예외|또는|혹은|아니면|거나|(?:^|[\s,(（※])단(?:[,，:\s]|$)", text
+        ))
+
+    @classmethod
+    def age_clause_role(cls, source: str, value_text: str) -> str:
+        """Revalidate public source semantics for both new and legacy rows."""
+        if cls.is_age_ranking_table(source):
+            return "preference"
+        compact = re.sub(r"\s+", "", source)
+        value = re.sub(r"\s+", "", value_text)
+        if re.match(r"(?:\d+\.)?연령\(\d+점\)[:：]", compact):
+            return "manual_review"
+        medical = re.fullmatch(
+            r"(?P<program>주민등록상사업지역\(\d+개시군구\)에거주하는"
+            r"\d+세이상고혈압·당뇨병환자를대상으로합니다\.)"
+            r"※의료비\(진료비및약제비\)지원대상[:：]"
+            r"(?P<component>\d+세이상고혈압,당뇨병환자)", compact,
+        )
+        if medical:
+            if not value or compact.count(value) != 1:
+                return "manual_review"
+            if value in medical.group("component"):
+                return "benefit_component"
+            if value in medical.group("program"):
+                return "requirement"
+            return "manual_review"
+        if re.fullmatch(
+            r"※?의료비\(진료비및약제비\)지원대상[:：]\d+세이상고혈압,당뇨병환자",
+            compact,
+        ):
+            return "benefit_component"
+        if re.search(r"의료비.*지원대상[:：]", compact):
+            return "manual_review"
+        # The age immediately qualifies a dependent/guardian, not the user.
+        if value and value in compact:
+            tail = compact.split(value, 1)[1]
+            if re.match(r"(?:인|의)?(?:자녀|손자녀|보호자|다른가족구성원|다문화가족자녀)", tail):
+                return "manual_review"
+        excluded_age = cls.normalize_age_exclusion(source)
+        if excluded_age is not None:
+            if value in {f"만{excluded_age}세미만", f"{excluded_age}세미만"}:
+                return "age_exclusion"
+            return "manual_review"
+        if re.search(r"참여가?불가|참여할수없|지원대상에서제외", compact):
+            return "manual_review"
+        return "requirement"
 
     @classmethod
     def normalize_simple_profile_status_requirement(
@@ -564,7 +654,15 @@ class EligibilityConditionService:
         ]
 
         # 줄바꿈이 없는 원문도 문장 단위로 나눈다.
-        if len(lines) <= 1:
+        # These complete forms contain a numbered heading, scope delimiter or
+        # trailing notice. Splitting at their period would detach that evidence.
+        preserve_clause = (
+            cls.is_age_ranking_table(text)
+            or bool(re.match(r"\s*(?:\d+\.\s*)?연령\s*\(\d+점\)\s*[:：]", text))
+            or cls.normalize_age_exclusion(text) is not None
+            or bool(re.search(r"※\s*의료비.*지원\s*대상\s*[:：]", text))
+        )
+        if len(lines) <= 1 and not preserve_clause:
             lines = [
                 part.strip()
                 for part in re.split(r"(?<=[.!?。])\s+", text)
@@ -591,6 +689,13 @@ class EligibilityConditionService:
             sum(fact is not None for fact in profile_fact_candidates) == 1
             and not any(re.match(r"^(?:또는|혹은|아니면|다음.*어느\s*하나)", line) for line in lines)
         )
+        # An exception elsewhere in the same field must not be detached from
+        # the newly supported registered/unemployed applicant template.
+        if any("등록된 미취업 장애인" in line for line in lines) and (
+            cls.has_age_exclusion_exception(text)
+            or re.search(r"등록.*(?:않|아니|없)", text)
+        ):
+            allow_single_profile_fact = False
 
         exclusion_scope = False
         preference_scope = False
@@ -663,6 +768,10 @@ class EligibilityConditionService:
                 })
 
             # 3. 기준 중위소득 비율
+            # A complete, unconditional single-age prohibition has no unknown
+            # residual. The arts list, in contrast, has other excluded groups.
+            if cls.normalize_age_exclusion(line) is not None and "," not in line:
+                recognized_spans.append((0, len(line)))
             # 예) 기준 중위소득 120% 이하
             # 예) 중위소득 50%이하
             ratio_matches = []
@@ -970,10 +1079,21 @@ class EligibilityConditionService:
                 })
 
             for item in extracted:
+                if item["condition_type"] == "age":
+                    age_role = cls.age_clause_role(line, item["value_text"])
+                    if age_role == "age_exclusion" and cls.has_age_exclusion_exception(text):
+                        age_role = "manual_review"
+                    if age_role in {"benefit_component", "manual_review"}:
+                        item["unit"] = age_role
+                        item["comparison_ready"] = False
+                        item["parse_status"] = "manual_review"
+                    elif age_role == "age_exclusion":
+                        item["operator"] = "gte"
+                        item["unit"] = "age_exclusion"
                 if (
                     (exclusion_scope or preference_scope)
                     and item["comparison_ready"]
-                    and item["unit"] != "employment_exclusion"
+                    and item["unit"] not in {"employment_exclusion", "age_exclusion"}
                 ):
                     item["comparison_ready"] = False
                     item["parse_status"] = "manual_review"
