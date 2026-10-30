@@ -1,7 +1,10 @@
 import { useState } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
-  statusLabels,
+  resultCategoryOf,
+  resultCategoryLabels,
+  resultCategoryOrder,
+  type ResultCategory,
 } from "../../components/policy/AnalysisPolicyCard"
 import AnalysisChanges, {
   changedPolicyIds,
@@ -11,12 +14,11 @@ import { formatTime, type Snapshot } from "../../services/analysisSession"
 import {
   policyResults,
   type PolicyRow,
-  type PolicyStatus,
   type SavedPolicy,
 } from "../../services/policyResults"
 import "./reverse.css"
 
-type Filter = "all" | PolicyStatus | "saved" | "changed"
+type Filter = "all" | ResultCategory | "saved" | "changed"
 export default function ResultPage({
   snapshot,
   previous,
@@ -60,17 +62,22 @@ export default function ResultPage({
       </section>
     )
   const { analysis } = snapshot
-  const rows = policyResults(snapshot)
+  const rows = [...policyResults(snapshot)].sort(
+    (a, b) =>
+      resultCategoryOrder.indexOf(resultCategoryOf(a)) -
+      resultCategoryOrder.indexOf(resultCategoryOf(b)),
+  )
   const key = snapshot.profileKey ?? ""
   const savedIds = new Set(
     savedPolicies.filter((p) => p.profileKey === key).map((p) => p.policy.id),
   )
   const changedIds = changedPolicyIds(previous, snapshot)
-  const counts = {
-    eligible: rows.filter((p) => p.status === "eligible").length,
-    ineligible: rows.filter((p) => p.status === "ineligible").length,
-    needs_review: rows.filter((p) => p.status === "needs_review").length,
-  }
+  const counts = Object.fromEntries(
+    resultCategoryOrder.map((category) => [
+      category,
+      rows.filter((p) => resultCategoryOf(p) === category).length,
+    ]),
+  ) as Record<ResultCategory, number>
   const filtered = rows.filter(
     (p) =>
       (filter === "all" ||
@@ -78,7 +85,7 @@ export default function ResultPage({
           ? savedIds.has(p.id)
           : filter === "changed"
             ? changedIds.has(p.id)
-            : p.status === filter)) &&
+            : resultCategoryOf(p) === filter)) &&
       p.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   )
   const filters: {
@@ -87,9 +94,11 @@ export default function ResultPage({
     count: number
   }[] = [
     { id: "all", label: "전체", count: rows.length },
-    { id: "eligible", label: "자동 비교상 충족", count: counts.eligible },
-    { id: "ineligible", label: "미충족 조건 있음", count: counts.ineligible },
-    { id: "needs_review", label: "추가 확인 필요", count: counts.needs_review },
+    ...resultCategoryOrder.map((category) => ({
+      id: category,
+      label: resultCategoryLabels[category],
+      count: counts[category],
+    })),
     {
       id: "saved",
       label: "관심 정책",
@@ -112,7 +121,7 @@ export default function ResultPage({
         ? "이번 진단의 관심 정책"
         : filter === "changed"
           ? "추가·변경 정책"
-          : statusLabels[filter]
+          : resultCategoryLabels[filter]
   return (
     <section className="reverse-page" aria-busy={busy}>
       <PageHeading
@@ -132,9 +141,11 @@ export default function ResultPage({
           <strong>
             총 {analysis.matched.evaluated_count ?? rows.length}건 분석
           </strong>
-          <span>자동 비교상 충족 {counts.eligible}건</span>
-          <span>미충족 조건 있음 {counts.ineligible}건</span>
-          <span>추가 확인 {counts.needs_review}건</span>
+          {resultCategoryOrder.map((category) => (
+            <span key={category} data-category={category}>
+              {resultCategoryLabels[category]} {counts[category]}건
+            </span>
+          ))}
         </div>
       </PageHeading>
       <AnalysisChanges
@@ -174,14 +185,18 @@ export default function ResultPage({
             </button>
           </section>
           <section data-reveal className="reverse-note">
-            <h2>추가 확인은 무슨 뜻인가요?</h2>
+            <h2>결과는 이렇게 나눠요</h2>
             <p>
-              자동으로 비교하지 못한 조건이 남은 정책입니다. 이 표시만으로 신청
-              불가를 뜻하지는 않아요.
+              판정은 내가 입력한 정보와 비교할 수 있는 조건만으로 해요.
             </p>
             <p>
-              미충족 조건이 함께 있을 수 있으니, 조건 개수와 상세 안내를 같이
-              확인해주세요.
+              <strong>신청 가능</strong> 입력한 정보와 맞지 않는 조건이 없어요.
+              입력값으로 비교할 수 없는 조건은 카드의 추가 확인 항목을
+              봐주세요.
+            </p>
+            <p>
+              <strong>신청 불가</strong> 입력한 정보로 비교한 조건 중 부족한
+              조건이 있어요. 카드에서 어떤 조건인지 확인하세요.
             </p>
           </section>
         </aside>
@@ -225,6 +240,7 @@ export default function ResultPage({
             {filters.map((item) => (
               <button
                 key={item.id}
+                data-category={item.id}
                 aria-pressed={filter === item.id}
                 onClick={() => setFilter(item.id)}
               >

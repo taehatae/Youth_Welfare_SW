@@ -7,12 +7,25 @@ export const statusLabels = {
   ineligible: "미충족 조건 있음",
   needs_review: "추가 확인 필요",
 }
-const recommendationLabels = {
-  priority_recommendation: "우선 추천",
-  priority_consideration: "우선 검토 추천",
-  condition_mismatch: "현재 정보상 조건 불일치",
-  additional_review: "추가 확인 필요",
+// 신청 가능 여부는 사용자가 입력한 값과 비교한 조건만으로 판단한다.
+// 입력값으로 비교할 수 없는 조건은 판정에 쓰지 않고 '추가 확인'으로만 안내한다.
+export const resultCategoryLabels = {
+  likely: "신청 가능",
+  gap: "신청 불가",
 } as const
+export type ResultCategory = keyof typeof resultCategoryLabels
+export const resultCategoryOrder: ResultCategory[] = ["likely", "gap"]
+export const resultCategoryOf = (policy: PolicyRow): ResultCategory =>
+  policy.conditions.some((c) => c.status === "미충족") ? "gap" : "likely"
+const resultReason = (policy: PolicyRow): string => {
+  if (resultCategoryOf(policy) === "gap")
+    return "입력한 정보로 비교한 결과 부족한 조건이 있어요. 아래 ‘확인된 미충족 조건’을 확인하세요."
+  const passed =
+    policy.counts?.passed ?? policy.confirmedConditions?.length ?? 0
+  return passed > 0
+    ? "입력한 정보로 비교한 조건을 모두 충족했어요. 나머지 조건은 아래 추가 확인 항목을 공식 안내에서 확인하세요."
+    : "입력한 정보와 맞지 않는 조건이 없어요. 세부 자격 요건은 아래 추가 확인 항목을 공식 안내에서 확인하세요."
+}
 
 const fields: Record<string, string> = {
   age: "나이",
@@ -46,8 +59,6 @@ export default function AnalysisPolicyCard({
 }) {
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
-  const recommendationStatus =
-    policy.recommendationStatus ?? "additional_review"
   const failed = policy.conditions.filter((c) => c.status === "미충족")
   const review = policy.conditions.filter((c) => c.status === "추가 확인")
   const first = failed[0] ?? review[0] ?? policy.conditions[0]
@@ -56,15 +67,12 @@ export default function AnalysisPolicyCard({
       className="reverse-card"
       data-reveal
       data-reveal-delay={index % 3}
-      data-policy-status={policy.status}
+      data-result={resultCategoryOf(policy)}
     >
       <header>
         <div>
-          <span className="reverse-tag">
-            {recommendationLabels[recommendationStatus]}
-          </span>
-          <span className="reverse-small">
-            진단 상태: {statusLabels[policy.status]}
+          <span className="reverse-tag" data-result={resultCategoryOf(policy)}>
+            {resultCategoryLabels[resultCategoryOf(policy)]}
           </span>
           <h3>{policy.title}</h3>
         </div>
@@ -79,8 +87,8 @@ export default function AnalysisPolicyCard({
       </header>
       <div className="policy-overview">
         <p className="policy-key-reason">
-          <strong>추천 이유</strong>
-          <span>{policy.recommendationReason ?? "추가 확인이 필요합니다."}</span>
+          <strong>판정 이유</strong>
+          <span>{resultReason(policy)}</span>
         </p>
         {policy.recommendationUncertainty && (
           <p className="reverse-alert">{policy.recommendationUncertainty}</p>

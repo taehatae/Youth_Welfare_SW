@@ -492,9 +492,9 @@ export default function DiagnosisPage({
               <button
                 type="button"
                 onClick={() => setPage("explorer")}
-                className="text-sm text-blue-700 underline underline-offset-4"
+                className="text-action"
               >
-                대상 연령 밖이라면 정책 목록 살펴보기
+                대상 연령 밖이라면 정책 목록 살펴보기 →
               </button>
             </>
           )}

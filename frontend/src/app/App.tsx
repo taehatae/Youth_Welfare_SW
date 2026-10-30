@@ -20,6 +20,7 @@ import "../styles/interface.css"
 import "../styles/motion.css"
 import "../styles/improvements.css"
 import "../styles/auth.css"
+import "../styles/actions.css"
 
 const pages: Page[] = ["home", "explorer", "diagnosis", "result", "dashboard"]
 function policyFromRoute(): string {

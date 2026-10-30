@@ -1,0 +1,91 @@
+/* 진단 결과 분류 색: 신청 가능(초록) · 신청 불가(빨강) · 관심 정책(분홍) */
+:root {
+  --result-likely: #1f9d55;
+  --result-likely-ink: #12733a;
+  --result-likely-soft: #e7f6ed;
+  --result-likely-line: #bfe5cc;
+  --result-gap: #d64545;
+  --result-gap-ink: #b42323;
+  --result-gap-soft: #fdecec;
+  --result-gap-line: #f3c2c2;
+  --saved: #e0457b;
+  --saved-ink: #c2185b;
+  --saved-soft: #fdebf3;
+  --saved-line: #f6c1d9;
+}
+
+.reverse-tag[data-result="likely"] { background: var(--result-likely-soft); color: var(--result-likely-ink); font-weight: 700; }
+.reverse-tag[data-result="gap"] { background: var(--result-gap-soft); color: var(--result-gap-ink); font-weight: 700; }
+.reverse-card[data-result="likely"] > header { border-left: 4px solid var(--result-likely); }
+.reverse-card[data-result="gap"] > header { border-left: 4px solid var(--result-gap); }
+
+.analysis-filters button[data-category="likely"] { color: var(--result-likely-ink); border-color: var(--result-likely-line); background: var(--result-likely-soft); }
+.analysis-filters button[data-category="likely"][aria-pressed="true"] { background: var(--result-likely); border-color: var(--result-likely); color: #fff; }
+.analysis-filters button[data-category="gap"] { color: var(--result-gap-ink); border-color: var(--result-gap-line); background: var(--result-gap-soft); }
+.analysis-filters button[data-category="gap"][aria-pressed="true"] { background: var(--result-gap); border-color: var(--result-gap); color: #fff; }
+.analysis-filters button[data-category="saved"] { color: var(--saved-ink); border-color: var(--saved-line); background: var(--saved-soft); }
+.analysis-filters button[data-category="saved"][aria-pressed="true"] { background: var(--saved); border-color: var(--saved); color: #fff; }
+
+.analysis-summary span[data-category="likely"] { color: var(--result-likely-ink); background: var(--result-likely-soft); border-color: var(--result-likely-line); font-weight: 650; }
+.analysis-summary span[data-category="gap"] { color: var(--result-gap-ink); background: var(--result-gap-soft); border-color: var(--result-gap-line); font-weight: 650; }
+
+.workspace-saved-verdict strong[data-result="likely"] { color: var(--result-likely-ink); }
+.workspace-saved-verdict strong[data-result="gap"] { color: var(--result-gap-ink); }
+
+.policy-save { transition: background .15s, color .15s, border-color .15s; }
+.policy-save:hover { border-color: var(--saved-line); color: var(--saved-ink); }
+.policy-save[aria-pressed="true"] { background: var(--saved-soft); color: var(--saved-ink); border-color: var(--saved-line); font-weight: 650; }
+
+/* 화살표 텍스트로만 보이던 보조 버튼을 같은 모양의 버튼으로 통일한다 */
+.reverse-edit,
+.workspace-next button,
+.text-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid #c9d7f2;
+  border-radius: 10px;
+  background: #f5f8ff;
+  color: #2456d8;
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.text-action { width: auto; display: inline-flex; margin-top: 4px; }
+.condition-edit,
+.review-group header button {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 6px 10px;
+  border: 1px solid #c9d7f2;
+  border-radius: 8px;
+  background: #f5f8ff;
+  color: #2456d8;
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.review-group header button { margin-top: 0; }
+.reverse-edit:hover,
+.workspace-next button:hover,
+.text-action:hover,
+.condition-edit:hover,
+.review-group header button:hover { background: #e8efff; border-color: #2456d8; }
+.reverse-edit:disabled,
+.workspace-next button:disabled,
+.condition-edit:disabled,
+.review-group header button:disabled { opacity: .5; cursor: not-allowed; }
+.reverse-edit:focus-visible,
+.workspace-next button:focus-visible,
+.text-action:focus-visible,
+.condition-edit:focus-visible,
+.review-group header button:focus-visible { outline: 2px solid #2456d8; outline-offset: 2px; }
