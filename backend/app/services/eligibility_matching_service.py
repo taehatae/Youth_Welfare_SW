@@ -16,6 +16,7 @@ from app.schemas.user import EmploymentStatus
 from app.services.eligibility_condition_service import (
     EligibilityConditionService,
 )
+from app.services.recommendation_decision_service import RecommendationDecisionService
 from app.services.median_income_reference import (
     median_income_threshold,
     resolve_policy_reference_year,
@@ -450,7 +451,13 @@ class EligibilityMatchingService:
         age_conditions_by_field = defaultdict(list)
 
         for condition in conditions:
-            if condition.condition_type == "age" and condition.source_text:
+            if (
+                condition.condition_type == "age"
+                and condition.source_text
+                and EligibilityConditionService.age_clause_role(
+                    condition.source_text, condition.value_text or ""
+                ) not in {"preference", "benefit_component"}
+            ):
                 age_conditions_by_field[condition.source_field].append(condition)
                 age_conditions_by_source[
                     (condition.source_field, condition.source_text)
@@ -645,11 +652,63 @@ class EligibilityMatchingService:
         gaps = []
         review = []
         notes = []
+        observations = {}
+
+        def condition_result(**kwargs):
+            observations[id(kwargs["condition"])] = kwargs["status"]
+            return self._condition_result(**kwargs)
+
         age_condition_ids_needing_review = self._age_conditions_needing_review(
             conditions
         )
 
         for condition in conditions:
+            original_field = (
+                getattr(service, condition.source_field, None)
+                if condition.source_field in {"target_details", "selection_criteria"}
+                else None
+            )
+            age_role = None
+            if condition.condition_type == "age":
+                age_role = EligibilityConditionService.age_clause_role(
+                    condition.source_text or "", condition.value_text or ""
+                )
+                if age_role == "preference":
+                    if condition.source_text:
+                        notes.append(condition.source_text)
+                    continue
+                if age_role == "age_exclusion" and (
+                    EligibilityConditionService.has_age_exclusion_exception(original_field or "")
+                ):
+                    age_role = "manual_review"
+                if age_role in {"benefit_component", "manual_review"} or condition.unit in {
+                    "benefit_component", "manual_review"
+                }:
+                    review.append(condition_result(
+                        condition=condition, status="needs_review", current_value=f"{user.age}세",
+                        required_value=condition.source_text or condition.value_text,
+                        message="세부 지원 범위 또는 연령 조항의 역할·제외 관계를 추가로 확인해야 합니다.",
+                        action_guide="전체 사업의 필수 연령과 세부 지원·예외 기준을 공식 안내에서 확인하세요.",
+                    ))
+                    continue
+            if (
+                condition.condition_type == "target_group"
+                and condition.unit == "disability_status"
+                and EligibilityConditionService.normalize_simple_employment_requirement(
+                    condition.source_text or ""
+                ) == "UNEMPLOYED"
+                and (
+                    EligibilityConditionService.has_age_exclusion_exception(original_field or "")
+                    or re.search(r"등록.*(?:않|아니|없)", original_field or "")
+                )
+            ):
+                review.append(condition_result(
+                    condition=condition, status="needs_review", current_value="추가 확인 필요",
+                    required_value=condition.source_text or condition.value_text,
+                    message="등록장애 요건에 적용될 수 있는 대안·예외를 확인해야 합니다.",
+                    action_guide="등록장애 요건의 적용 범위를 공식 안내에서 확인하세요.",
+                ))
+                continue
             if condition.condition_type == "informational":
                 if condition.value_text:
                     notes.append(condition.value_text)
@@ -657,7 +716,7 @@ class EligibilityMatchingService:
 
             if condition.condition_type == "external_review":
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value="자동 판정 불가",
@@ -675,7 +734,7 @@ class EligibilityMatchingService:
 
             if id(condition) in age_condition_ids_needing_review:
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=f"{user.age}세",
@@ -710,7 +769,7 @@ class EligibilityMatchingService:
 
             if is_discretionary_age_clause:
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=f"{user.age}세",
@@ -742,7 +801,7 @@ class EligibilityMatchingService:
                         )
                         or "추가 정보 또는 비교 규칙 필요"
                     )
-                    result = self._condition_result(
+                    result = condition_result(
                         condition=condition,
                         status="passed" if comparison else "failed",
                         current_value=current_value,
@@ -782,7 +841,7 @@ class EligibilityMatchingService:
                         )
                         or "추가 정보 또는 비교 규칙 필요"
                     )
-                    result = self._condition_result(
+                    result = condition_result(
                         condition=condition,
                         status="passed" if comparison else "failed",
                         current_value=current_value,
@@ -810,14 +869,22 @@ class EligibilityMatchingService:
             )
 
             if can_compare_age:
-                comparison = self._compare_age(
-                    user.age,
-                    condition,
-                )
+                if age_role == "age_exclusion":
+                    excluded_age = EligibilityConditionService.normalize_age_exclusion(condition.source_text)
+                    comparison = (
+                        user.age >= excluded_age
+                        if excluded_age == condition.value_number
+                        and condition.operator in {"lt", "gte"}
+                        else None
+                    )
+                elif condition.unit == "age_exclusion":
+                    comparison = None  # Reject stale/tampered exclusion metadata.
+                else:
+                    comparison = self._compare_age(user.age, condition)
 
                 if comparison is None:
                     review.append(
-                        self._condition_result(
+                        condition_result(
                             condition=condition,
                             status="needs_review",
                             current_value=f"{user.age}세",
@@ -831,15 +898,18 @@ class EligibilityMatchingService:
                     )
                     continue
 
-                result = self._condition_result(
+                result = condition_result(
                     condition=condition,
                     status="passed" if comparison else "failed",
                     current_value=f"{user.age}세",
-                    required_value=condition.value_text,
+                    required_value=(
+                        f"연령 제외 조건: {condition.source_text}"
+                        if age_role == "age_exclusion" else condition.value_text
+                    ),
                     message=(
-                        "연령 조건을 충족합니다."
-                        if comparison
-                        else "연령 조건을 충족하지 않습니다."
+                        ("연령 제외 조건에 해당하지 않습니다." if comparison else "연령 제외 조건에 해당합니다.")
+                        if age_role == "age_exclusion"
+                        else ("연령 조건을 충족합니다." if comparison else "연령 조건을 충족하지 않습니다.")
                     ),
                     action_guide=(
                         "별도의 연령 조치는 필요하지 않습니다."
@@ -864,7 +934,7 @@ class EligibilityMatchingService:
                 or not condition.comparison_ready
             ):
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=(
@@ -912,7 +982,13 @@ class EligibilityMatchingService:
             conditions=conditions,
         )
 
+        from app.services.semantic_condition_service import SemanticConditionService
+        semantic = SemanticConditionService.evaluate(self, service, user, eligibility_conditions,
+            conditions=conditions, observations=observations)
+        decision = SemanticConditionService.augment(
+            RecommendationDecisionService.classify(service, conditions, observations), semantic)
         return {
+            "semantic_analysis": semantic,
             "policy_id": service.serv_id,
             "title": service.serv_name,
             "status": status,
@@ -922,6 +998,7 @@ class EligibilityMatchingService:
             "gap_conditions": gaps,
             "review_conditions": review,
             **recommendation,
+            **decision,
             "notes": list(dict.fromkeys(notes)),
             "detail_url": service.detail_url,
         }
