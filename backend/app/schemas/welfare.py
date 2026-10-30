@@ -31,6 +31,32 @@ class ConditionAnalysis(BaseModel):
     source_text: str
 
 
+class DecisionEvidence(BaseModel):
+    """Public policy evidence; input field references, never raw profile values."""
+
+    condition_ref: str
+    condition_type: str
+    operator: str
+    value_text: str
+    value_number: float | None = None
+    upper_value_number: float | None = None
+    unit: str
+    source_field: str
+    source_text: str
+    comparison_result: Literal["passed", "failed", "unknown", "not_evaluated"]
+    input_fields: list[str] = Field(default_factory=list)
+    role: str = "unresolved"
+    subject: str = "unresolved"
+    scope: str = "unresolved"
+    time_basis: str = "unresolved"
+    semantics_verified: bool = False
+    decision_usable: bool = False
+    reason_codes: list[str] = Field(default_factory=list)
+    comparison_semantics: Literal["eligibility_gate"] = "eligibility_gate"
+    parser_version: str = ""
+    decision_ruleset_version: str = ""
+
+
 class EligibilityAnalysis(BaseModel):
     policy_id: str
     title: str
@@ -52,6 +78,12 @@ class EligibilityAnalysis(BaseModel):
     )
     notes: list[str] = Field(default_factory=list)
     detail_url: str
+    # Defaults keep previously saved workspace snapshots readable.
+    recommendation_decision: Literal["candidate", "excluded", "unverified"] = "unverified"
+    decision_reason: str = "추천 근거를 아직 확인하지 않은 이전 분석 결과입니다."
+    decision_warnings: list[str] = Field(default_factory=list)
+    decision_evidence: list[DecisionEvidence] = Field(default_factory=list)
+    semantic_analysis: list[dict] = Field(default_factory=list)
 
 
 class MatchedPoliciesResponse(BaseModel):

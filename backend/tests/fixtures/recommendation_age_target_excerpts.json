@@ -1,0 +1,23 @@
+{
+  "provenance": "Public policy fields copied from the operational DB read-only on 2026-10-30; no new API request. Profiles and counterexamples in tests are synthetic.",
+  "services": [
+    {
+      "service_id": "WLF00003236",
+      "service_name": "청소년상담1388 전화상담",
+      "target_details": "9~24세 청소년을 지원합니다.",
+      "selection_criteria": "지원대상의 내용을 참고해주시기 바랍니다."
+    },
+    {
+      "service_id": "WLF00003200",
+      "service_name": "청소년동반자프로그램 운영",
+      "target_details": "9~24세 청소년을 대상으로 지원합니다.",
+      "selection_criteria": "지원대상의 내용을 참고해주시기 바랍니다."
+    },
+    {
+      "service_id": "WLF00001141",
+      "service_name": "지역사회 청소년통합지원체계(청소년안전망)",
+      "target_details": "9~24세의 청소년을 대상으로 합니다.",
+      "selection_criteria": "지원대상의 내용을 참고해 주시기 바랍니다."
+    }
+  ]
+}
