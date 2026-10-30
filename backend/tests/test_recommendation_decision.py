@@ -342,3 +342,58 @@ def test_public_youth_age_candidates_are_consistent_in_both_diagnosis_paths(api_
         assert row["match_score"] == 100
         assert row["review_conditions"]
     assert {row["policy_id"] for row in diagnosed["policies"]} == {"age"}
+
+
+def test_semantic_and_is_consistent_in_both_diagnosis_paths_and_snapshot(api_client):
+    """Synthetic compound, isolated SQLite; no production profile data."""
+    from app.models.account import Account
+    client, db = api_client
+    db.add(WelfareService(serv_id='semantic-and', serv_name='Synthetic AND', detail_url='',
+        target_details='만 18세 이상 34세 이하의 미취업 청년 중 기준 중위소득 100% 이하인 자',
+        selection_criteria=''))
+    db.commit()
+    response = client.post('/api/v1/welfare/diagnose', json={
+        'age': 25, 'region': '서울특별시', 'income_level': 0,
+        'employment_status': 'UNEMPLOYED', 'eligibility_conditions': {},
+    })
+    assert response.status_code == 200
+    diagnosed = response.json()['current']['analysis']['matched']
+    matched = client.get('/api/v1/welfare/matched', params={'user_id': db.query(Account).one().profile_id})
+    assert matched.status_code == 200
+    assert matched.json()['analysis_results'] == diagnosed['analysis_results']
+    result = next(row for row in diagnosed['analysis_results'] if row['policy_id'] == 'semantic-and')
+    assert result['recommendation_decision'] == 'candidate'
+    assert result['status'] == 'needs_review'
+    assert len(result['semantic_analysis']) == 3
+    assert 'semantic-and' not in {row['policy_id'] for row in diagnosed['policies']}
+    saved = client.get('/api/v1/users/state')
+    assert saved.status_code == 200
+    assert saved.json()['current']['analysis']['matched']['analysis_results'] == diagnosed['analysis_results']
+
+
+@pytest.mark.parametrize('disability,expected', [('YES', 'candidate'), ('NO', 'excluded')])
+def test_public_registered_targets_are_consistent_in_both_api_paths(api_client, disability, expected):
+    import json
+    from pathlib import Path
+    from app.models.account import Account
+    client, db = api_client
+    cases = json.loads((Path(__file__).parent / 'fixtures' /
+        'registered_semantic_excerpts.json').read_text(encoding='utf-8'))['services'][:3]
+    for index, case in enumerate(cases):
+        db.add(WelfareService(serv_id=f'public-registered-{index}', serv_name=case['name'], detail_url='',
+            target_details=case['target_details'], selection_criteria=case['selection_criteria']))
+    db.commit()
+    response = client.post('/api/v1/welfare/diagnose', json={
+        'age': 25, 'region': '서울특별시', 'income_level': 0,
+        'employment_status': 'UNEMPLOYED', 'eligibility_conditions': {'disability_status': disability},
+    })
+    assert response.status_code == 200
+    diagnosed = response.json()['current']['analysis']['matched']
+    matched = client.get('/api/v1/welfare/matched', params={'user_id': db.query(Account).one().profile_id})
+    assert matched.status_code == 200
+    assert diagnosed['analysis_results'] == matched.json()['analysis_results']
+    for row in diagnosed['analysis_results']:
+        if row['policy_id'].startswith('public-registered-'):
+            assert row['recommendation_decision'] == expected
+    assert all(row['policy_id'] not in {r['policy_id'] for r in diagnosed['policies']}
+               for row in diagnosed['analysis_results'] if row['status'] != 'eligible')

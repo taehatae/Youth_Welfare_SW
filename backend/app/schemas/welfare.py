@@ -83,6 +83,7 @@ class EligibilityAnalysis(BaseModel):
     decision_reason: str = "추천 근거를 아직 확인하지 않은 이전 분석 결과입니다."
     decision_warnings: list[str] = Field(default_factory=list)
     decision_evidence: list[DecisionEvidence] = Field(default_factory=list)
+    semantic_analysis: list[dict] = Field(default_factory=list)
 
 
 class MatchedPoliciesResponse(BaseModel):

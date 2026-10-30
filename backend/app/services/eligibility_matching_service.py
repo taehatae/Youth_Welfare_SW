@@ -982,7 +982,13 @@ class EligibilityMatchingService:
             conditions=conditions,
         )
 
+        from app.services.semantic_condition_service import SemanticConditionService
+        semantic = SemanticConditionService.evaluate(self, service, user, eligibility_conditions,
+            conditions=conditions, observations=observations)
+        decision = SemanticConditionService.augment(
+            RecommendationDecisionService.classify(service, conditions, observations), semantic)
         return {
+            "semantic_analysis": semantic,
             "policy_id": service.serv_id,
             "title": service.serv_name,
             "status": status,
@@ -992,7 +998,7 @@ class EligibilityMatchingService:
             "gap_conditions": gaps,
             "review_conditions": review,
             **recommendation,
-            **RecommendationDecisionService.classify(service, conditions, observations),
+            **decision,
             "notes": list(dict.fromkeys(notes)),
             "detail_url": service.detail_url,
         }
