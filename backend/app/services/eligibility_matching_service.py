@@ -16,6 +16,7 @@ from app.schemas.user import EmploymentStatus
 from app.services.eligibility_condition_service import (
     EligibilityConditionService,
 )
+from app.services.recommendation_decision_service import RecommendationDecisionService
 from app.services.median_income_reference import (
     median_income_threshold,
     resolve_policy_reference_year,
@@ -651,6 +652,12 @@ class EligibilityMatchingService:
         gaps = []
         review = []
         notes = []
+        observations = {}
+
+        def condition_result(**kwargs):
+            observations[id(kwargs["condition"])] = kwargs["status"]
+            return self._condition_result(**kwargs)
+
         age_condition_ids_needing_review = self._age_conditions_needing_review(
             conditions
         )
@@ -677,7 +684,7 @@ class EligibilityMatchingService:
                 if age_role in {"benefit_component", "manual_review"} or condition.unit in {
                     "benefit_component", "manual_review"
                 }:
-                    review.append(self._condition_result(
+                    review.append(condition_result(
                         condition=condition, status="needs_review", current_value=f"{user.age}세",
                         required_value=condition.source_text or condition.value_text,
                         message="세부 지원 범위 또는 연령 조항의 역할·제외 관계를 추가로 확인해야 합니다.",
@@ -695,7 +702,7 @@ class EligibilityMatchingService:
                     or re.search(r"등록.*(?:않|아니|없)", original_field or "")
                 )
             ):
-                review.append(self._condition_result(
+                review.append(condition_result(
                     condition=condition, status="needs_review", current_value="추가 확인 필요",
                     required_value=condition.source_text or condition.value_text,
                     message="등록장애 요건에 적용될 수 있는 대안·예외를 확인해야 합니다.",
@@ -709,7 +716,7 @@ class EligibilityMatchingService:
 
             if condition.condition_type == "external_review":
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value="자동 판정 불가",
@@ -727,7 +734,7 @@ class EligibilityMatchingService:
 
             if id(condition) in age_condition_ids_needing_review:
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=f"{user.age}세",
@@ -762,7 +769,7 @@ class EligibilityMatchingService:
 
             if is_discretionary_age_clause:
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=f"{user.age}세",
@@ -794,7 +801,7 @@ class EligibilityMatchingService:
                         )
                         or "추가 정보 또는 비교 규칙 필요"
                     )
-                    result = self._condition_result(
+                    result = condition_result(
                         condition=condition,
                         status="passed" if comparison else "failed",
                         current_value=current_value,
@@ -834,7 +841,7 @@ class EligibilityMatchingService:
                         )
                         or "추가 정보 또는 비교 규칙 필요"
                     )
-                    result = self._condition_result(
+                    result = condition_result(
                         condition=condition,
                         status="passed" if comparison else "failed",
                         current_value=current_value,
@@ -877,7 +884,7 @@ class EligibilityMatchingService:
 
                 if comparison is None:
                     review.append(
-                        self._condition_result(
+                        condition_result(
                             condition=condition,
                             status="needs_review",
                             current_value=f"{user.age}세",
@@ -891,7 +898,7 @@ class EligibilityMatchingService:
                     )
                     continue
 
-                result = self._condition_result(
+                result = condition_result(
                     condition=condition,
                     status="passed" if comparison else "failed",
                     current_value=f"{user.age}세",
@@ -927,7 +934,7 @@ class EligibilityMatchingService:
                 or not condition.comparison_ready
             ):
                 review.append(
-                    self._condition_result(
+                    condition_result(
                         condition=condition,
                         status="needs_review",
                         current_value=(
@@ -985,6 +992,7 @@ class EligibilityMatchingService:
             "gap_conditions": gaps,
             "review_conditions": review,
             **recommendation,
+            **RecommendationDecisionService.classify(service, conditions, observations),
             "notes": list(dict.fromkeys(notes)),
             "detail_url": service.detail_url,
         }
