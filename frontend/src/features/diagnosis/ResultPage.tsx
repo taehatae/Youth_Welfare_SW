@@ -19,6 +19,9 @@ import {
 import "./reverse.css"
 
 type Filter = "all" | ResultCategory | "saved" | "changed"
+// 같은 분류 안에서는 입력값과 대조해 충족한 조건이 많은 정책을 먼저 보여준다.
+const metCount = (policy: PolicyRow) =>
+  policy.counts?.passed ?? policy.confirmedConditions?.length ?? 0
 export default function ResultPage({
   snapshot,
   previous,
@@ -65,7 +68,8 @@ export default function ResultPage({
   const rows = [...policyResults(snapshot)].sort(
     (a, b) =>
       resultCategoryOrder.indexOf(resultCategoryOf(a)) -
-      resultCategoryOrder.indexOf(resultCategoryOf(b)),
+        resultCategoryOrder.indexOf(resultCategoryOf(b)) ||
+      metCount(b) - metCount(a),
   )
   const key = snapshot.profileKey ?? ""
   const savedIds = new Set(
