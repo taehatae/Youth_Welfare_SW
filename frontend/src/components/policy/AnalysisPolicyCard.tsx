@@ -1,3 +1,4 @@
+import { useId, useState } from "react"
 import { safeOfficialUrl } from "../../services/analysisSession"
 import { conditionStep } from "../../services/profileSummary"
 import type { PolicyRow } from "../../services/policyResults"
@@ -62,29 +63,59 @@ export default function AnalysisPolicyCard({
   const failed = policy.conditions.filter((c) => c.status === "미충족")
   const review = policy.conditions.filter((c) => c.status === "추가 확인")
   const first = failed[0] ?? review[0] ?? policy.conditions[0]
+  const [open, setOpen] = useState(false)
+  const bodyId = useId()
+  const passed = counts?.passed ?? policy.confirmedConditions?.length ?? 0
   return (
     <article
       className="reverse-card"
       data-reveal
       data-reveal-delay={index % 3}
       data-result={resultCategoryOf(policy)}
+      data-open={open}
     >
       <header>
-        <div>
+        <div className="card-heading">
           <span className="reverse-tag" data-result={resultCategoryOf(policy)}>
             {resultCategoryLabels[resultCategoryOf(policy)]}
           </span>
           <h3>{policy.title}</h3>
+          <p className="card-brief">
+            {failed.length
+              ? `${fields[failed[0].field.toLowerCase()] ?? failed[0].field} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
+              : passed > 0
+                ? `입력값으로 비교한 조건 ${passed}개 충족`
+                : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요"}
+          </p>
+          {counts && (
+            <div className="condition-counts compact" aria-label="조건 비교 요약">
+              <span data-kind="passed">충족 <b>{counts.passed}</b></span>
+              <span data-kind="failed">미충족 <b>{counts.failed}</b></span>
+              <span data-kind="review">추가 확인 <b>{counts.review}</b></span>
+            </div>
+          )}
         </div>
-        <button
-          className="policy-save"
-          aria-pressed={saved}
-          aria-label={`${policy.title} 관심 정책 ${saved ? "해제" : "저장"}`}
-          onClick={toggle}
-        >
-          {saved ? "★ 저장됨" : "☆ 관심 저장"}
-        </button>
+        <div className="card-header-actions">
+          <button
+            className="policy-save"
+            aria-pressed={saved}
+            aria-label={`${policy.title} 관심 정책 ${saved ? "해제" : "저장"}`}
+            onClick={toggle}
+          >
+            {saved ? "★ 저장됨" : "☆ 관심 저장"}
+          </button>
+          <button
+            className="card-toggle"
+            type="button"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            onClick={() => setOpen(!open)}
+          >
+            {open ? "접기" : "자세히"} <span aria-hidden="true">{open ? "▴" : "▾"}</span>
+          </button>
+        </div>
       </header>
+      <div id={bodyId} hidden={!open}>
       <div className="policy-overview">
         <p className="policy-key-reason">
           <strong>판정 이유</strong>
@@ -107,24 +138,11 @@ export default function AnalysisPolicyCard({
           </div>
         )}
         {counts ? (
-          <>
-            <div className="condition-counts" aria-label="조건 비교 요약">
-              <span data-kind="passed">
-                충족 <b>{counts.passed}</b>
-              </span>
-              <span data-kind="failed">
-                미충족 <b>{counts.failed}</b>
-              </span>
-              <span data-kind="review">
-                추가 확인 <b>{counts.review}</b>
-              </span>
-            </div>
-            <p className="policy-evaluation-note">
-              {counts.evaluated === 0
-                ? "판정 정보 부족 · 자동 비교할 수 있는 조건이 없어요."
-                : `자동 비교한 조건 ${counts.evaluated}개 중 ${counts.passed}개를 충족했어요. 전체 수급 자격의 확정을 뜻하지 않아요.`}
-            </p>
-          </>
+          <p className="policy-evaluation-note">
+            {counts.evaluated === 0
+              ? "판정 정보 부족 · 자동 비교할 수 있는 조건이 없어요."
+              : `자동 비교한 조건 ${counts.evaluated}개 중 ${counts.passed}개를 충족했어요. 전체 수급 자격의 확정을 뜻하지 않아요.`}
+          </p>
         ) : (
           <p className="policy-evaluation-note">
             조건별 집계가 제공되지 않은 결과예요.
@@ -232,6 +250,7 @@ export default function AnalysisPolicyCard({
           자동 비교에 따른 사전 안내이며 최종 자격은 담당 기관에서 확인해주세요.
         </p>
       </footer>
+      </div>
     </article>
   )
 }

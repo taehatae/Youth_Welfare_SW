@@ -89,3 +89,33 @@
 .text-action:focus-visible,
 .condition-edit:focus-visible,
 .review-group header button:focus-visible { outline: 2px solid #2456d8; outline-offset: 2px; }
+
+/* 결과 카드: 기본은 접힌 요약, '자세히'로 상세 펼치기 */
+.reverse-list { gap: 12px; }
+.reverse-card > header { padding: 18px 22px; }
+.reverse-card[data-open="false"] > header { border-bottom: 0; }
+.card-heading { min-width: 0; flex: 1; }
+.card-heading h3 { margin-top: 6px; }
+.card-brief { margin-top: 6px; font-size: 13px; color: #536580; line-height: 1.6; }
+.reverse-card[data-result="gap"] .card-brief { color: var(--result-gap); font-weight: 600; }
+.condition-counts.compact { margin-top: 10px; gap: 6px; }
+.condition-counts.compact span { padding: 4px 9px; font-size: 11px; }
+.condition-counts.compact b { margin-left: 4px; font-size: 13px; }
+.card-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
+.card-toggle {
+  padding: 8px 12px;
+  border: 1px solid #c9d8f5;
+  border-radius: 8px;
+  background: #f4f7ff;
+  color: #2456d8;
+  font-size: 12px;
+  font-weight: 650;
+  transition: background .15s, border-color .15s;
+}
+.card-toggle:hover { background: #e8efff; border-color: #2456d8; }
+.card-toggle:focus-visible { outline: 2px solid #2456d8; outline-offset: 2px; }
+@media (max-width: 760px) {
+  .reverse-layout > .reverse-content { order: -1; }
+  .reverse-card > header { padding: 16px; }
+  .card-header-actions { flex-direction: row; width: 100%; justify-content: flex-end; }
+}
