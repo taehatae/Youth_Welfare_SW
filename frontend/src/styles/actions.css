@@ -170,3 +170,16 @@
   .choice-group { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
   .choice-option span { padding: 10px 6px; font-size: 13px; }
 }
+
+/* 홈 미리보기 카드의 신청 불가 표시 */
+.youth-condition-gap { color: var(--result-gap); font-weight: 650; }
+
+/* 나의 현황 관리 탭: 관심정책 분홍 테마 */
+.workspace-tabs button { border-color: var(--saved-line); color: var(--saved-ink); }
+.workspace-tabs button:hover { background: var(--saved-soft); }
+.workspace-tabs button[aria-pressed="true"] { background: var(--saved); border-color: var(--saved); color: #fff; }
+
+/* 모바일 상단바: 닉네임은 숨기고 버튼 간격을 확보한다 */
+@media (max-width: 600px) {
+  .auth-name { display: none; }
+}
