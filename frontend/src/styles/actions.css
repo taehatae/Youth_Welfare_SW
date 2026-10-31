@@ -183,3 +183,4 @@
 @media (max-width: 600px) {
   .auth-name { display: none; }
 }
+.reverse-card[data-open="false"] .policy-card-actions p { display: none; }

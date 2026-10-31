@@ -232,6 +232,7 @@ export default function AnalysisPolicyCard({
             : "서버가 제공한 조건별 비교 정보가 없습니다."}
         </p>
       )}
+      </div>
       <footer className="policy-card-actions">
         {url ? (
           <a
@@ -250,7 +251,6 @@ export default function AnalysisPolicyCard({
           자동 비교에 따른 사전 안내이며 최종 자격은 담당 기관에서 확인해주세요.
         </p>
       </footer>
-      </div>
     </article>
   )
 }

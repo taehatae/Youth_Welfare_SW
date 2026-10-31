@@ -2,7 +2,7 @@
 @keyframes detail-arrive { from { opacity: .4; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .page-arrive { animation: page-arrive 280ms ease-out both; }
 .step-arrive { animation: page-arrive 300ms ease-out both; }
-.reveal-ready { transition: opacity 320ms ease, transform 320ms cubic-bezier(.2,.7,.25,1); }
+.reveal-ready { transition: opacity 480ms ease, transform 480ms cubic-bezier(.2,.7,.25,1); }
 .reveal-ready.reveal-pending { opacity: 0; transform: translateY(16px); }
 [data-reveal-delay="1"] { transition-delay: 60ms; }
 [data-reveal-delay="2"] { transition-delay: 120ms; }

@@ -19,7 +19,7 @@ export function usePageMotion(routeKey: string) {
           if (entry.isIntersecting) show(entry.target as HTMLElement)
         })
       },
-      { threshold: 0, rootMargin: "0px 0px 160px 0px" },
+      { threshold: 0, rootMargin: "0px 0px -20px 0px" },
     )
     const scan = () => {
       // Remove detached nodes when search filters or diagnosis steps change.
