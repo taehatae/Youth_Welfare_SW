@@ -18,7 +18,12 @@ export type ResultCategory = keyof typeof resultCategoryLabels
 export const resultCategoryOrder: ResultCategory[] = ["likely", "gap"]
 export const resultCategoryOf = (policy: PolicyRow): ResultCategory =>
   policy.conditions.some((c) => c.status === "미충족") ? "gap" : "likely"
-const resultReason = (policy: PolicyRow): string => {
+// 신청 가능이지만 입력값으로 비교한 조건이 하나도 없는 정책. 자격을 확인했다는 뜻이 아니라서 따로 표시한다.
+export const metCountOf = (policy: PolicyRow) =>
+  policy.counts?.passed ?? policy.confirmedConditions?.length ?? 0
+export const isUnverified = (policy: PolicyRow) =>
+  resultCategoryOf(policy) === "likely" && metCountOf(policy) === 0
+export const resultReason = (policy: PolicyRow): string => {
   if (resultCategoryOf(policy) === "gap")
     return "입력한 정보로 비교한 결과 부족한 조건이 있어요. 아래 ‘확인된 미충족 조건’을 확인하세요."
   const passed =
@@ -28,7 +33,7 @@ const resultReason = (policy: PolicyRow): string => {
     : "입력한 정보와 맞지 않는 조건이 없어요. 세부 자격 요건은 아래 추가 확인 항목을 공식 안내에서 확인하세요."
 }
 
-const fields: Record<string, string> = {
+export const conditionFields: Record<string, string> = {
   age: "나이",
   income_amount: "소득 금액",
   income_ratio: "중위소득 비율",
@@ -65,7 +70,7 @@ export default function AnalysisPolicyCard({
   const first = failed[0] ?? review[0] ?? policy.conditions[0]
   const [open, setOpen] = useState(false)
   const bodyId = useId()
-  const passed = counts?.passed ?? policy.confirmedConditions?.length ?? 0
+  const passed = metCountOf(policy)
   return (
     <article
       className="reverse-card"
@@ -79,10 +84,17 @@ export default function AnalysisPolicyCard({
           <span className="reverse-tag" data-result={resultCategoryOf(policy)}>
             {resultCategoryLabels[resultCategoryOf(policy)]}
           </span>
-          <h3>{policy.title}</h3>
+          {isUnverified(policy) && (
+            <span className="reverse-tag" data-result="unverified">
+              비교 조건 없음
+            </span>
+          )}
+          <h3>
+            <a href={"#detail/" + encodeURIComponent(policy.id)}>{policy.title}</a>
+          </h3>
           <p className="card-brief">
             {failed.length
-              ? `${fields[failed[0].field.toLowerCase()] ?? failed[0].field} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
+              ? `${conditionFields[failed[0].field.toLowerCase()] ?? failed[0].field} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
               : passed > 0
                 ? `입력값으로 비교한 조건 ${passed}개 충족`
                 : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요"}
@@ -130,7 +142,7 @@ export default function AnalysisPolicyCard({
             <ul>
               {policy.confirmedConditions.map((condition, index) => (
                 <li key={`${condition.field}-${index}`}>
-                  {fields[condition.field.toLowerCase()] ?? condition.field}: {condition.current}
+                  {conditionFields[condition.field.toLowerCase()] ?? condition.field}: {condition.current}
                   {condition.required ? ` · 기준 ${condition.required}` : ""}
                 </li>
               ))}
@@ -154,7 +166,7 @@ export default function AnalysisPolicyCard({
               {failed.length ? "확인된 미충족 조건" : "먼저 확인할 조건"}
             </strong>
             <span>
-              {fields[first.field] ?? first.field} ·{" "}
+              {conditionFields[first.field] ?? first.field} ·{" "}
               {first.required || "공식 기준 확인 필요"}
             </span>
           </p>
@@ -198,7 +210,7 @@ export default function AnalysisPolicyCard({
                   {policy.conditions.map((c, i) => (
                     <tr key={`${c.field}-${i}`}>
                       <th scope="row">
-                        {fields[c.field.toLowerCase()] ?? c.field}
+                        {conditionFields[c.field.toLowerCase()] ?? c.field}
                       </th>
                       <td>{c.current || "미확인"}</td>
                       <td>{c.required || "미제공"}</td>
