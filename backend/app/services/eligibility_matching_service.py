@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.user import User
 from app.models.welfare_eligibility_condition import (
     WelfareEligibilityCondition,
@@ -1015,6 +1016,12 @@ class EligibilityMatchingService:
             .all()
         )
 
+        if settings.use_llm_judge:
+            # 실험 기능: 정규식 파서 대신 LLM이 정책 원문과 입력값을 직접 비교한다.
+            from app.services import llm_judge_service
+            analyses = llm_judge_service.analyze_all(services, user, eligibility_conditions)
+            return self._summarize(services, analyses)
+
         needs_legacy_conditions = any(
             not ((service.target_details or "").strip() or (service.selection_criteria or "").strip())
             for service in services
@@ -1052,7 +1059,17 @@ class EligibilityMatchingService:
             )
             for service in services
         ]
+        if settings.use_structured_conditions:
+            # 검수한 구조화 조건이 있는 정책은 그 조건으로 다시 판정하고, 없으면 기존 분석을 쓴다.
+            from app.services import structured_condition_service
+            analyses = [
+                structured_condition_service.analyze(service, user, eligibility_conditions, analysis) or analysis
+                for service, analysis in zip(services, analyses)
+            ]
+        return self._summarize(services, analyses)
 
+    @staticmethod
+    def _summarize(services: list[WelfareService], analyses: list[dict]) -> dict:
         eligible = [
             item
             for item in analyses

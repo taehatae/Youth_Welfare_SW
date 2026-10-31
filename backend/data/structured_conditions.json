@@ -1,0 +1,2235 @@
+{
+ "version": 1,
+ "policies": [
+  {
+   "serv_id": "WLF00000025",
+   "name": "장애인일자리지원",
+   "source_sha256": "a48909723439fb4da59e0d9b4fe5018246e828d607546a41f939ce0631a298bd",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "미취업"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000026",
+   "name": "장애인자립자금대여",
+   "source_sha256": "7ae901f6faf95151d970b5f66f53b2d37ffbddbd495515797002825654b9a823",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 50,
+     "upper_value": 100,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 19,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000027",
+   "name": "장애인 운전교육 사업",
+   "source_sha256": "811ba915340a1b6b14bbce9be229534a8bf78460dc70e6cfad7f561865b8c21e",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00000031",
+   "name": "노후준비서비스",
+   "source_sha256": "4a79d748a5846e57fe361c00ed4e8ed8497dd4e77a7e52785577917ee12eedfa",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00000038",
+   "name": "독립유공자 제수비 지급",
+   "source_sha256": "363a90648fb220de44c6128c560b470d457c209d22dd15e2fc18f647dd051325",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000047",
+   "name": "고혈압·당뇨병 등록관리사업",
+   "source_sha256": "97e66b56296831eaadea4f8dae82e1d5a308a4cad3e66f51abd724026ccc6b77",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 30,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "거주지",
+     "profile_key": "region",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "서울특별시 성동구",
+      "광주광역시 광산구",
+      "울산광역시 중구",
+      "세종특별자치시",
+      "경기도 광명시",
+      "경기도 남양주시",
+      "경기도 안산시",
+      "경기도 부천시",
+      "경기도 하남시",
+      "강원특별자치도 동해시",
+      "강원특별자치도 홍천군",
+      "전북특별자치도 진안군",
+      "전라남도 목포시",
+      "전라남도 여수시",
+      "전라남도 장성군",
+      "경상북도 경주시",
+      "경상북도 포항시",
+      "경상남도 사천시",
+      "제주특별자치도 제주시"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000048",
+   "name": "국가유공자등대부지원",
+   "source_sha256": "e20e299596779ba6679889a07f4f8e9ec8bf729e8e89bba5ad9e3f2e6c95e131",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000052",
+   "name": "인문100년장학금",
+   "source_sha256": "d2c95922fe1aca527bd4ce11c86011b52998b97a29270560d70460e3999ff899",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000055",
+   "name": "통합문화이용권",
+   "source_sha256": "af12dccc6083a51235b3f85356cb989c6d38f3fc2b6b4d9321a75b7d8c94f394",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 6,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "한부모가족",
+     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000057",
+   "name": "공공분양",
+   "source_sha256": "eae23b51bf2e8f455d8270d33db4afcc0ccea096ae65e048924885f0d6faef7d",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "본인 명의 주택 보유",
+     "profile_key": "eligibility_conditions.owns_home",
+     "kind": "exclusion",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000058",
+   "name": "소상공인지원(융자)",
+   "source_sha256": "4a647ee18ff2527a7d4e0b06f62f5c44504a325e7dcce315da9f0cfff254e083",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "자영업"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000060",
+   "name": "청년내일저축계좌",
+   "source_sha256": "0c21226494e921df375e42fdf275bc1a42827a9d162d85b0f332afdd2dc36df0",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 15,
+     "upper_value": 39,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "본인 월소득",
+     "profile_key": "income_level",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 100000,
+     "upper_value": null,
+     "unit": "원",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 50,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000062",
+   "name": "기존주택등 매입임대주택 지원사업",
+   "source_sha256": "050e3a72fe448dfdf3b326a09d3be4f8235183d7fb09e84bd0a4fac648ff25e4",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00000063",
+   "name": "(북한이탈주민)교육비 지원",
+   "source_sha256": "3f2f7402ed6f89add5da81620eeda562f0e8496fbe14ee375767d8992912df69",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "북한이탈주민",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:NK_DEFECTOR",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000065",
+   "name": "발달장애인 공공후견지원 사업",
+   "source_sha256": "1ddd3f83713821ae3b1d885071fa1c8f92d97388ddec08645aaa27fbd321c058",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 19,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000075",
+   "name": "여성기업종합지원센터운영",
+   "source_sha256": "b278511ff331ca36af7fc222cbc9416bb8c872bd702951c7b23e86b526f1742f",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "성별",
+     "profile_key": "eligibility_conditions.gender",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "여성"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000078",
+   "name": "청소년특별지원",
+   "source_sha256": "07c3c8ec9020b57d2af2888008aabd74e25605ddd220554a6e31e8ad7ee8fa12",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 100,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000090",
+   "name": "대학의 장애학생지원센터 운영 지원",
+   "source_sha256": "e3211d9d8ec2ca6f19d6ac40ef30687f280b6c20dd15c399154b73cc7fbf364d",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000091",
+   "name": "한부모가족복지시설 지원",
+   "source_sha256": "97591a9e78d173388aaf4f73204c5d61f4de5ef176549fc8ea5448a35f5f804e",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 100,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "한부모가족",
+     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000099",
+   "name": "저소득장애인 진단서 발급비 및 검사비 지원사업",
+   "source_sha256": "ff6e94eeb19bd67f30894d357185db14e1a4f70f3597a1c770da4e58213b6b24",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000747",
+   "name": "중장기복무 제대군인 무료법률 구조지원",
+   "source_sha256": "a82d8e96bb36ef1516aa1c1635906dfa4bf46581fe809e6646487e4bea5512db",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 125,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000751",
+   "name": "청소년복지시설 운영 지원",
+   "source_sha256": "60f6552baf921bd76d0b6da5ff6f09d8f327cd47e2aef69c04c2bb4050250f07",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000781",
+   "name": "여성청소년 생리용품 지원",
+   "source_sha256": "fb3bf8d911e53f91b94092225dac0a1cd5c297f486c4942f1c0e87d002bf38e2",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "성별",
+     "profile_key": "eligibility_conditions.gender",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "여성"
+     ],
+     "or_group": ""
+    },
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "한부모가족",
+     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000812",
+   "name": "청년창업농장학금 지원",
+   "source_sha256": "ca97f1c1a3511266bd17b774169a9973b83d87fc774bf82591d5c2461a584a63",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 39,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000815",
+   "name": "(북한이탈주민)주택알선 지원",
+   "source_sha256": "12ef8b333f18ed0d1a7c20cc8c83e18e141d07bf3e952754f0510ab808a7fd67",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "북한이탈주민",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:NK_DEFECTOR",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000922",
+   "name": "여성기업 판로지원",
+   "source_sha256": "b278511ff331ca36af7fc222cbc9416bb8c872bd702951c7b23e86b526f1742f",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "성별",
+     "profile_key": "eligibility_conditions.gender",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "여성"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00000975",
+   "name": "여성창업액셀러레이팅",
+   "source_sha256": "b278511ff331ca36af7fc222cbc9416bb8c872bd702951c7b23e86b526f1742f",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "성별",
+     "profile_key": "eligibility_conditions.gender",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "여성"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001020",
+   "name": "북한이탈주민 자산형성지원제도(미래행복통장)",
+   "source_sha256": "4d4ba7f8e3a64d20c9b92d7db47c4561ff93e8ed78c61904e3a7fbc99053a33a",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "북한이탈주민",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:NK_DEFECTOR",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트",
+      "자영업",
+      "프리랜서"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001021",
+   "name": "장애아동입양 양육보조금",
+   "source_sha256": "831444864011f2570a9e1fa5177c112c2967e4c4b84bf7208a84ed36c0458be5",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001060",
+   "name": "대학생 근로장학금 지원",
+   "source_sha256": "a2a6901e7cda2eda7436398e01ca038823d9412e511578e3781be31ab91f12e3",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "국적",
+     "profile_key": "eligibility_conditions.additional_conditions.nationality",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "대한민국"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001071",
+   "name": "우수학생 국가장학금 지원",
+   "source_sha256": "d62e3d59cb1b71e3b5f75be869d1838cfaaf5bf1f4a81ba13ac9f009d36f529f",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001076",
+   "name": "서민금융 활성화 지원(햇살론youth 보증사업)",
+   "source_sha256": "480104db36a0f06204a097c76c23a65ce9edf22d9e70bbe1673e11361040344a",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 19,
+     "upper_value": 34,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "본인 연소득",
+     "profile_key": "income_level",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 35000000,
+     "upper_value": null,
+     "unit": "원",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001079",
+   "name": "주거안정 월세대출 보증",
+   "source_sha256": "3415bccd263a75c169f4227ae0dfe888be43d52406966de0f44bc594f933d445",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001096",
+   "name": "농촌출신대학생학자금융자",
+   "source_sha256": "eb8aa055cbb35d42d32f45ef7b7d60937c74561b00c0b86a60e593f593ec43e2",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001101",
+   "name": "폭력피해자 주거지원 사업",
+   "source_sha256": "59574d9c0ba405745571f59e1f2a0bef012ed6bafbd2905711182e6ca5fd26f9",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001122",
+   "name": "국가유공자 등 LPG차량 세금인상분 지원",
+   "source_sha256": "020dd2cd808a7475ddacebcb1cd5816ebeb9ef66ae9f7a17a92cab6f3f3f302b",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001132",
+   "name": "생계급여(맞춤형 급여)",
+   "source_sha256": "58f659f4a068bea6f348f71e19fe91ffaf0c913e7cbb63597033df9abd206d90",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 32,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001138",
+   "name": "자활근로(기초, 차상위)",
+   "source_sha256": "483b273d3df91fb797b7754ab72d463ab60b41444e3d1c05ed8e2532b4f5a701",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001141",
+   "name": "지역사회 청소년통합지원체계(청소년안전망)",
+   "source_sha256": "cbeebbcfc2634bc2a5236bf64df8381be59215beae259e2a081313daed64572e",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001145",
+   "name": "디지털미디어 피해 청소년 회복 지원 사업(청소년 인터넷·스마트폰 과의존 치료비 지원)",
+   "source_sha256": "eb773cf7c804ffd3389439e2cc3e7e42b5bae9cce103f9ede53f1224b63bcac8",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001146",
+   "name": "시설 퇴소청소년 자립지원수당 지급",
+   "source_sha256": "ed75317b2fac46628b92411bb35d446d3cf589eee82332729e10a3055659c140",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001149",
+   "name": "공공산림가꾸기",
+   "source_sha256": "0500b2ec915e3d89c10fa9493f66a46c1ccf2e41904b2f8b2cfb1833431d712c",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "exclusion",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001165",
+   "name": "발달장애인 주간활동서비스",
+   "source_sha256": "53b24854f2b87919934ec6a2405df29d93b72e3c82188023547c756e7f4762ce",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001172",
+   "name": "취업취약계층 고용지원 사업",
+   "source_sha256": "b1294b8028857c1063bc52a42e9dee059abd5153e8d3512d6594c01db7a56617",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001175",
+   "name": "자립준비청년 자립수당 지급",
+   "source_sha256": "238a6164144d0ab117b6c35a220cde7ab96183e44925cf9e5065d937b847933c",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001176",
+   "name": "암검진사업",
+   "source_sha256": "80f2481d70560b825234021d91b48c1fba1e1de46f7c773f437a11c68c016607",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001184",
+   "name": "암환자의료비지원",
+   "source_sha256": "48be831df2357836a971954eac92c24e3d440c1abdd0600bfe46ef437336b2b8",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00001187",
+   "name": "최저임금적용제외 근로장애인 전환지원",
+   "source_sha256": "2afdf6972093d2c2d1a2376c810eefd4c2934234e6b8cddac397badc3aeac3c4",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003173",
+   "name": "장애인스포츠강좌이용권 지원",
+   "source_sha256": "ddce1db790fa94b0de703e4f57aed14bd9c70c0b5de9fb87eedc96dbf4e834b9",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 5,
+     "upper_value": 69,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003175",
+   "name": "결혼이민자 통번역 서비스",
+   "source_sha256": "9fabdc0303cf5d19745a9e4f07bdf19090c25f91c0eabda8e5a2cc5e4564e024",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "결혼이민자·다문화가족",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:MULTICULTURAL",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003176",
+   "name": "농식품바우처",
+   "source_sha256": "0a3bd2d0d18891fb0ccad1a1c836e24668bf0bab3145fa3cbebf8d08388d080e",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003189",
+   "name": "중증장애인직업재활지원",
+   "source_sha256": "165139346190b1692a18ffd25ad3eaa1a3ba6dd528a68371bac50a2ae9a631a8",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 15,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003192",
+   "name": "다문화가족 방문교육 서비스",
+   "source_sha256": "aea3223001c9ee36bb1f862637f240861698f2f5d03f2fad892404b07199152c",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "결혼이민자·다문화가족",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:MULTICULTURAL",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003196",
+   "name": "도서민 여객선 운임지원",
+   "source_sha256": "4aba937583d0118ab1ab36a7c94b124611f1fd9b9186230b7e76db012737c527",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003199",
+   "name": "예술활동준비금 지원",
+   "source_sha256": "59feb104024a89eeb9dcb494bdb733e567538cb8ca9426a0f1e8107ccf145501",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 120,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 19,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "국적",
+     "profile_key": "eligibility_conditions.additional_conditions.nationality",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "대한민국"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003200",
+   "name": "청소년동반자프로그램 운영",
+   "source_sha256": "d68d6058674e4e5274fc30ab4fe25515d7c97c94974782831a61789440b4348d",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003204",
+   "name": "청소년상담1388 온라인상담",
+   "source_sha256": "852e10131423f98814522cb49dd6eda024e6124a8ab0712f349d78989bc14069",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003208",
+   "name": "장기복무제대군인 취업지원",
+   "source_sha256": "3e60e113b86e29b5ba53c0e10ca45e8b1acfc65c9289bde5bc8ce68123f312ec",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003231",
+   "name": "보조공학기기지원",
+   "source_sha256": "248c7e33951b0ef5c4dcd6f5e9267bf5634a8752b6809e27ecf2d3e00a808de9",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003232",
+   "name": "농업인안전보험",
+   "source_sha256": "86205c93853ac6bb1b257f69932e75c6573595386964e8214d08d0ce94d071dc",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "농업인·어업인",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:FARMER",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003234",
+   "name": "일자리창출사업",
+   "source_sha256": "c6353e282a0473971833daa2a93e4236a9f029c91a734a10af30b3621176f5e2",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003236",
+   "name": "청소년상담1388 전화상담",
+   "source_sha256": "cb60d75d68f960e45b7c697cd60f0cf507d6f84215fdbafb0195a5d0321dd1f1",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 9,
+     "upper_value": 24,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003238",
+   "name": "의료급여수급권자 일반건강검진비 지원",
+   "source_sha256": "1086c7e09e8e893c78f0f7f93993328c6ce749304f17bb7a39153e7697026459",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003240",
+   "name": "평생교육이용권 지원",
+   "source_sha256": "2fca6791af396edc83f411ba34bab41ea49496073a9066f20335991047bdb749",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "한부모가족",
+     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003245",
+   "name": "국민취업지원제도",
+   "source_sha256": "df0550c443f53b4995c7a7e8c245810930415ef2c27bc0d54f7be9b19bb5fc84",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003247",
+   "name": "재난적의료비 지원 사업",
+   "source_sha256": "96a82d03baa8c817abbdce74cac57ea582ae2056e62600a005adacdb466b6c45",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "국적",
+     "profile_key": "eligibility_conditions.additional_conditions.nationality",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "대한민국"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003249",
+   "name": "장애인연금",
+   "source_sha256": "956f402a31148f7a9f720e1a370502dd878606e30ad8cc11fb304d3dd1f97f80",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003251",
+   "name": "산림보호지원단",
+   "source_sha256": "aebc1eb8c1348dc1b7967e290e2c6f8ca85bbbc1874168cc384eb46867261f51",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003260",
+   "name": "장애인활동지원",
+   "source_sha256": "248468330bd17b3a46fd47724fe2450a4377fcf2d694dda1f6a3253f19787f6e",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003265",
+   "name": "장애수당",
+   "source_sha256": "59597191096d26bb6532c9672ddeb51b75e14483d6731e4daaff8b989022fbdc",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 18,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003268",
+   "name": "가정위탁아동 상해보험료 지원",
+   "source_sha256": "38f983ad544148601236baeae0cd2a04927ecebda7dd80061fea8151faa4083c",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003270",
+   "name": "입양·가정위탁아동 심리치료 지원",
+   "source_sha256": "2625917019f8309901862f6bcb47ed6630ebe917371960c6f05a96019ff3ff13",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003271",
+   "name": "내집마련 디딤돌 대출",
+   "source_sha256": "a19aa896d579a464d4b409e52dab755caf4a8dc6ff615d5abbe8949fabff4766",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003272",
+   "name": "의사상자지원",
+   "source_sha256": "6bb99ce4f06f6a92cd3215388a8051347a8fd42c0fa26eaba895c25aea77ba47",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00003276",
+   "name": "일반 상환 학자금대출",
+   "source_sha256": "5c04b27a0379841f30b52a648ca31415eeda2281870ec2b6cf8064274d328083",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "국적",
+     "profile_key": "eligibility_conditions.additional_conditions.nationality",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "대한민국"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003277",
+   "name": "취업 후 상환 학자금대출",
+   "source_sha256": "8315d486e4d83119a9e22d199cc3bb1abd3e747aa344af3508b55fe3004f2592",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003281",
+   "name": "국가보훈대상자 취업능력개발지원",
+   "source_sha256": "fa8997c451c0451a291032de2d759caa1b662eab27df8e1e81a8acaffe437981",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004637",
+   "name": "TV수신료 면제",
+   "source_sha256": "d681d5a6778ae7306d147ea082aa61acce94b622295e135be6850413c51a3123",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004638",
+   "name": "가스요금할인",
+   "source_sha256": "bcf5b12cebeadf9f7a425d173dd3f57bdb357526aae2ccf5ede7cdd3ff2812dd",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "자녀 수",
+     "profile_key": "eligibility_conditions.children_count",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 3,
+     "upper_value": null,
+     "unit": "명",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004639",
+   "name": "전기요금 복지할인",
+   "source_sha256": "f060c4e436e3aad57f7805da69358528463399852c9b598ef3b053c78f44fce3",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "기초생활보장 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "차상위계층",
+     "profile_key": "eligibility_conditions.additional_conditions.near_poverty_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "국가유공자·보훈대상자",
+     "profile_key": "eligibility_conditions.additional_conditions.special_targets:VETERAN",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "자녀 수",
+     "profile_key": "eligibility_conditions.children_count",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 3,
+     "upper_value": null,
+     "unit": "명",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "가구원 수",
+     "profile_key": "eligibility_conditions.household_size",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 5,
+     "upper_value": null,
+     "unit": "명",
+     "values": [],
+     "or_group": "대상1"
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004649",
+   "name": "행복주택 공급",
+   "source_sha256": "8095f491d6a93f409c9713d37e58976be9005b05de9e58c312cb2679534beaea",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00004651",
+   "name": "직업능력개발운영(훈련수당)",
+   "source_sha256": "7747bc5fb13e49a62e80606ae642f8a972dd919c63575836eb5d6571b307d803",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 15,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004655",
+   "name": "장애인취업성공패키지",
+   "source_sha256": "18fa28d4827ad62bf3c132e1c465aeaf7c656c0a8c1ae469a45a8ae8284dfb05",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004661",
+   "name": "청년월세 지원사업",
+   "source_sha256": "2e63fc3453c8792dd0bb21883c08f1ea93edab2c4694e84502cefe3b1b41759c",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 19,
+     "upper_value": 34,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "가구 소득인정액",
+     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 60,
+     "upper_value": null,
+     "unit": "%",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "본인 명의 주택 보유",
+     "profile_key": "eligibility_conditions.owns_home",
+     "kind": "exclusion",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00004663",
+   "name": "통합공공임대",
+   "source_sha256": "9e1dd8893dc63b84eacb42a9b71a7fbcd5f076e40c88e495a81cf0b5587bb92f",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00004997",
+   "name": "한국형 상병수당 시범사업",
+   "source_sha256": "c7d06145163cf420493ecc98712a59f0f51ec2a8a4d5b17c719a6d6b85559af1",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00005031",
+   "name": "발달장애인 긴급돌봄사업",
+   "source_sha256": "abec2e2ed54a4a0ae815948d6075dd89b6133982c118491c98cd48ead81df6d7",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 6,
+     "upper_value": 64,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "등록 장애인",
+     "profile_key": "eligibility_conditions.disability_status",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00005411",
+   "name": "일상돌봄 서비스 사업",
+   "source_sha256": "460332669e95042bc6c3bc253fad13cc082de6b3275c7709af0afbb77dc95f1a",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00005440",
+   "name": "대중교통비 환급 지원(모두의카드)",
+   "source_sha256": "ca8eccb39307aa356174c2086f82c755d1ca36906879832621975a3f14801e67",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 19,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00005442",
+   "name": "긴급돌봄 지원사업",
+   "source_sha256": "7a554492d840b8bcd40f1755cd0fac599f410d789bd514e654996ccae8dd3861",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00005567",
+   "name": "정신건강 심리상담 바우처사업",
+   "source_sha256": "bb5cb65d39eb4bc09e986d27e945b7e6e10d50c6d73f99712a0015d83f950157",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00006196",
+   "name": "자활성공지원금 지급·관리",
+   "source_sha256": "597da5002ed3688eae7a02a24d1ac9d6b06965493b08dee2e55874ac806be097",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00006207",
+   "name": "웹정보접근성제고",
+   "source_sha256": "733d794e97b0c6e5eecf7e146d7fdeec4895174460474316298e41fdc46c29f9",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": []
+  },
+  {
+   "serv_id": "WLF00006215",
+   "name": "청년내일채움공제",
+   "source_sha256": "3905475835c5642f637d196792b31058f290cd6f4796acf35081760e3a1017ec",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "between",
+     "value": 15,
+     "upper_value": 34,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "중소기업 재직"
+     ],
+     "or_group": ""
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006217",
+   "name": "출소(예정)자 취업지원사업(허그일자리지원)",
+   "source_sha256": "9c0d68b4e6c871dc63b3acfbbf6dbe513847ea603b66e77142391304fc9a6467",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "conditions": [
+    {
+     "field": "만 나이",
+     "profile_key": "age",
+     "kind": "requirement",
+     "operator": "gte",
+     "value": 15,
+     "upper_value": null,
+     "unit": "세",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "미취업"
+     ],
+     "or_group": ""
+    },
+    {
+     "field": "재학 여부",
+     "profile_key": "eligibility_conditions.student_status",
+     "kind": "exclusion",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "국적",
+     "profile_key": "eligibility_conditions.additional_conditions.nationality",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "대한민국"
+     ],
+     "or_group": ""
+    }
+   ]
+  }
+ ]
+}

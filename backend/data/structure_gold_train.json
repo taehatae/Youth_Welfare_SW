@@ -1,0 +1,63 @@
+{
+ "_설명": "정책별로 진단 입력값과 비교해야 하는 신청자 본인 조건의 정답. required는 반드시 있어야 하고, optional은 있어도 되고 없어도 된다. or는 그중 하나만 해당하면 되는 묶음. 나머지 조건은 '없음'(추가 확인)이어야 한다.",
+ "WLF00000025": {"name": "장애인일자리지원", "required": [
+   {"field": "만 나이", "op": "min", "value": 18},
+   {"field": "등록 장애인", "op": "is_true"},
+   {"field": "고용 상태", "op": "one_of", "values": ["미취업"]}]},
+ "WLF00000026": {"name": "장애인자립자금대여", "required": [
+   {"field": "가구 소득인정액", "op": "range", "value": 50, "upper": 100},
+   {"field": "만 나이", "op": "min", "value": 19},
+   {"field": "등록 장애인", "op": "is_true"}]},
+ "WLF00000060": {"name": "청년내일저축계좌", "required": [
+   {"field": "만 나이", "op": "range", "value": 15, "upper": 39},
+   {"field": "본인 월소득", "op": "min", "value": 100000},
+   {"field": "가구 소득인정액", "op": "max", "value": 50}]},
+ "WLF00000063": {"name": "(북한이탈주민)교육비 지원", "required": [
+   {"field": "북한이탈주민", "op": "is_true"}]},
+ "WLF00000091": {"name": "한부모가족복지시설 지원", "required": [
+   {"field": "가구 소득인정액", "op": "max", "value": 100},
+   {"field": "한부모가족", "op": "is_true"}],
+  "optional": [{"field": "본인 명의 주택 보유", "op": "is_true", "kind": "exclusion"}]},
+ "WLF00000815": {"name": "(북한이탈주민)주택알선 지원", "required": [
+   {"field": "북한이탈주민", "op": "is_true"}]},
+ "WLF00001076": {"name": "햇살론youth", "required": [
+   {"field": "만 나이", "op": "range", "value": 19, "upper": 34},
+   {"field": "본인 연소득", "op": "max", "value": 35000000}],
+  "optional": [{"field": "만 나이", "op": "max", "value": 34}]},
+ "WLF00001079": {"name": "주거안정 월세대출 보증", "required": []},
+ "WLF00001132": {"name": "생계급여", "required": [
+   {"field": "가구 소득인정액", "op": "max", "value": 32}],
+  "optional": [{"field": "기초생활보장 수급자", "op": "is_true"}]},
+ "WLF00001138": {"name": "자활근로", "required": [], "or": [[
+   {"field": "기초생활보장 수급자", "op": "is_true"},
+   {"field": "차상위계층", "op": "is_true"}]]},
+ "WLF00001149": {"name": "공공산림가꾸기", "required": [
+   {"field": "만 나이", "op": "min", "value": 18},
+   {"field": "재학 여부", "op": "is_true", "kind": "exclusion"}],
+  "optional": [{"field": "고용 상태", "op": "one_of", "values": ["미취업"]}]},
+ "WLF00001172": {"name": "취업취약계층 고용지원", "required": [],
+  "optional": [{"field": "고용 상태", "op": "one_of", "values": ["미취업"]}]},
+ "WLF00003176": {"name": "농식품바우처", "required": [
+   {"field": "기초생활보장 수급자", "op": "is_true"}],
+  "optional": [{"field": "가구 소득인정액", "op": "max", "value": 32}]},
+ "WLF00003189": {"name": "중증장애인직업재활지원", "required": [
+   {"field": "만 나이", "op": "min", "value": 15},
+   {"field": "등록 장애인", "op": "is_true"}]},
+ "WLF00003260": {"name": "장애인활동지원", "required": [
+   {"field": "등록 장애인", "op": "is_true"}],
+  "optional": [{"field": "만 나이", "op": "range", "value": 6, "upper": 64},
+               {"field": "만 나이", "op": "min", "value": 6}]},
+ "WLF00003271": {"name": "내집마련 디딤돌 대출", "required": [],
+  "optional": [{"field": "본인 명의 주택 보유", "op": "is_true", "kind": "exclusion"}]},
+ "WLF00003276": {"name": "일반 상환 학자금대출", "required": [
+   {"field": "재학 여부", "op": "is_true"},
+   {"field": "국적", "op": "one_of", "values": ["대한민국"]}]},
+ "WLF00004637": {"name": "TV수신료 면제", "required": [], "or": [[
+   {"field": "기초생활보장 수급자", "op": "is_true"},
+   {"field": "등록 장애인", "op": "is_true"},
+   {"field": "국가유공자·보훈대상자", "op": "is_true"}]]},
+ "WLF00005440": {"name": "대중교통비 환급", "required": [
+   {"field": "만 나이", "op": "min", "value": 19}],
+  "optional": [{"field": "국적", "op": "one_of", "values": ["대한민국"]}]},
+ "WLF00005442": {"name": "긴급돌봄 지원사업", "required": []}
+}

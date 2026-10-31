@@ -1,0 +1,711 @@
+{
+ "_설명": "나머지 45개 정책을 원문만 읽고 정리한 정답지(클로드 작성). 형식은 훈련·검증 정답지와 같고, 거주지(one_of: '시도 시군구' 또는 '시도')와 성별(one_of)을 추가로 쓴다.",
+ "WLF00000031": {
+  "name": "노후준비서비스",
+  "required": []
+ },
+ "WLF00000047": {
+  "name": "고혈압·당뇨병 등록관리사업",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 30
+   },
+   {
+    "field": "거주지",
+    "op": "one_of",
+    "values": [
+     "서울특별시 성동구",
+     "광주광역시 광산구",
+     "울산광역시 중구",
+     "세종특별자치시",
+     "경기도 광명시",
+     "경기도 남양주시",
+     "경기도 안산시",
+     "경기도 부천시",
+     "경기도 하남시",
+     "강원특별자치도 동해시",
+     "강원특별자치도 홍천군",
+     "전북특별자치도 진안군",
+     "전라남도 목포시",
+     "전라남도 여수시",
+     "전라남도 장성군",
+     "경상북도 경주시",
+     "경상북도 포항시",
+     "경상남도 사천시",
+     "제주특별자치도 제주시"
+    ]
+   }
+  ]
+ },
+ "WLF00000048": {
+  "name": "국가유공자등대부지원",
+  "required": [
+   {
+    "field": "국가유공자·보훈대상자",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00000052": {
+  "name": "인문100년장학금",
+  "required": [
+   {
+    "field": "재학 여부",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00000055": {
+  "name": "통합문화이용권",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 6
+   }
+  ],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    },
+    {
+     "field": "한부모가족",
+     "op": "is_true"
+    }
+   ]
+  ]
+ },
+ "WLF00000057": {
+  "name": "공공분양",
+  "required": [
+   {
+    "field": "본인 명의 주택 보유",
+    "op": "is_true",
+    "kind": "exclusion"
+   }
+  ]
+ },
+ "WLF00000058": {
+  "name": "소상공인지원(융자)",
+  "required": [
+   {
+    "field": "고용 상태",
+    "op": "one_of",
+    "values": [
+     "자영업"
+    ]
+   }
+  ]
+ },
+ "WLF00000075": {
+  "name": "여성기업종합지원센터운영",
+  "required": [
+   {
+    "field": "성별",
+    "op": "one_of",
+    "values": [
+     "여성"
+    ]
+   }
+  ]
+ },
+ "WLF00000078": {
+  "name": "청소년특별지원",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 24
+   },
+   {
+    "field": "가구 소득인정액",
+    "op": "max",
+    "value": 100
+   }
+  ]
+ },
+ "WLF00000090": {
+  "name": "대학의 장애학생지원센터 운영 지원",
+  "required": [
+   {
+    "field": "재학 여부",
+    "op": "is_true"
+   },
+   {
+    "field": "등록 장애인",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00000099": {
+  "name": "저소득장애인 진단서 발급비 및 검사비 지원",
+  "required": [],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    }
+   ]
+  ]
+ },
+ "WLF00000747": {
+  "name": "중장기복무 제대군인 무료법률 구조지원",
+  "required": [
+   {
+    "field": "가구 소득인정액",
+    "op": "max",
+    "value": 125
+   }
+  ]
+ },
+ "WLF00000781": {
+  "name": "여성청소년 생리용품 지원",
+  "required": [
+   {
+    "field": "성별",
+    "op": "one_of",
+    "values": [
+     "여성"
+    ]
+   },
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 24
+   }
+  ],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    },
+    {
+     "field": "한부모가족",
+     "op": "is_true"
+    }
+   ]
+  ]
+ },
+ "WLF00000812": {
+  "name": "청년창업농장학금",
+  "required": [
+   {
+    "field": "재학 여부",
+    "op": "is_true"
+   },
+   {
+    "field": "만 나이",
+    "op": "max",
+    "value": 39
+   }
+  ]
+ },
+ "WLF00001020": {
+  "name": "북한이탈주민 자산형성지원제도(미래행복통장)",
+  "required": [
+   {
+    "field": "북한이탈주민",
+    "op": "is_true"
+   },
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 18
+   },
+   {
+    "field": "고용 상태",
+    "op": "one_of",
+    "values": [
+     "재직",
+     "중소기업 재직",
+     "아르바이트",
+     "자영업",
+     "프리랜서"
+    ]
+   }
+  ]
+ },
+ "WLF00001021": {
+  "name": "장애아동입양 양육보조금",
+  "required": []
+ },
+ "WLF00001060": {
+  "name": "대학생 근로장학금",
+  "required": [
+   {
+    "field": "재학 여부",
+    "op": "is_true"
+   },
+   {
+    "field": "국적",
+    "op": "one_of",
+    "values": [
+     "대한민국"
+    ]
+   }
+  ]
+ },
+ "WLF00001096": {
+  "name": "농촌출신대학생학자금융자",
+  "required": [
+   {
+    "field": "재학 여부",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00001101": {
+  "name": "폭력피해자 주거지원",
+  "required": []
+ },
+ "WLF00001141": {
+  "name": "청소년안전망",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 24
+   }
+  ]
+ },
+ "WLF00001145": {
+  "name": "디지털미디어 피해 청소년 회복 지원",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "max",
+    "value": 18
+   }
+  ]
+ },
+ "WLF00001176": {
+  "name": "암검진사업",
+  "required": [],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 20
+   }
+  ]
+ },
+ "WLF00001184": {
+  "name": "암환자의료비지원",
+  "required": []
+ },
+ "WLF00001187": {
+  "name": "최저임금적용제외 근로장애인 전환지원",
+  "required": [
+   {
+    "field": "등록 장애인",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00003173": {
+  "name": "장애인스포츠강좌이용권",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 5,
+    "upper": 69
+   },
+   {
+    "field": "등록 장애인",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00003175": {
+  "name": "결혼이민자 통번역 서비스",
+  "required": [
+   {
+    "field": "결혼이민자·다문화가족",
+    "op": "is_true"
+   }
+  ],
+  "alternatives": [
+   {
+    "required": []
+   }
+  ]
+ },
+ "WLF00003192": {
+  "name": "다문화가족 방문교육 서비스",
+  "required": [
+   {
+    "field": "결혼이민자·다문화가족",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00003196": {
+  "name": "도서민 여객선 운임지원",
+  "required": []
+ },
+ "WLF00003204": {
+  "name": "청소년상담1388 온라인상담",
+  "required": [],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 24
+   }
+  ]
+ },
+ "WLF00003232": {
+  "name": "농업인안전보험",
+  "required": [
+   {
+    "field": "농업인·어업인",
+    "op": "is_true"
+   }
+  ],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 15,
+    "upper": 87
+   }
+  ]
+ },
+ "WLF00003234": {
+  "name": "일자리창출사업",
+  "required": []
+ },
+ "WLF00003236": {
+  "name": "청소년상담1388 전화상담",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 24
+   }
+  ]
+ },
+ "WLF00003238": {
+  "name": "의료급여수급권자 일반건강검진비",
+  "required": [
+   {
+    "field": "기초생활보장 수급자",
+    "op": "is_true"
+   }
+  ],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 20,
+    "upper": 64
+   }
+  ]
+ },
+ "WLF00003245": {
+  "name": "국민취업지원제도",
+  "required": [],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 15,
+    "upper": 69
+   },
+   {
+    "field": "고용 상태",
+    "op": "one_of",
+    "values": [
+     "미취업"
+    ]
+   }
+  ]
+ },
+ "WLF00003251": {
+  "name": "산림보호지원단",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 18
+   }
+  ],
+  "optional": [
+   {
+    "field": "재학 여부",
+    "op": "is_true",
+    "kind": "exclusion"
+   }
+  ]
+ },
+ "WLF00003265": {
+  "name": "장애수당",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 18
+   },
+   {
+    "field": "등록 장애인",
+    "op": "is_true"
+   }
+  ],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    }
+   ]
+  ]
+ },
+ "WLF00004638": {
+  "name": "가스요금할인",
+  "required": [],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    },
+    {
+     "field": "등록 장애인",
+     "op": "is_true"
+    },
+    {
+     "field": "국가유공자·보훈대상자",
+     "op": "is_true"
+    },
+    {
+     "field": "자녀 수",
+     "op": "min",
+     "value": 3
+    }
+   ]
+  ],
+  "alternatives": [
+   {
+    "required": [],
+    "or": [
+     [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      },
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      },
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      },
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true"
+      }
+     ]
+    ]
+   },
+   {
+    "required": []
+   }
+  ]
+ },
+ "WLF00004639": {
+  "name": "전기요금 복지할인",
+  "required": [],
+  "or": [
+   [
+    {
+     "field": "기초생활보장 수급자",
+     "op": "is_true"
+    },
+    {
+     "field": "차상위계층",
+     "op": "is_true"
+    },
+    {
+     "field": "등록 장애인",
+     "op": "is_true"
+    },
+    {
+     "field": "국가유공자·보훈대상자",
+     "op": "is_true"
+    },
+    {
+     "field": "자녀 수",
+     "op": "min",
+     "value": 3
+    },
+    {
+     "field": "가구원 수",
+     "op": "min",
+     "value": 5
+    }
+   ]
+  ],
+  "alternatives": [
+   {
+    "required": [],
+    "or": [
+     [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      },
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      },
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      },
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true"
+      }
+     ]
+    ]
+   },
+   {
+    "required": []
+   }
+  ]
+ },
+ "WLF00004997": {
+  "name": "한국형 상병수당 시범사업",
+  "required": [],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 15,
+    "upper": 64
+   },
+   {
+    "field": "국적",
+    "op": "one_of",
+    "values": [
+     "대한민국"
+    ]
+   }
+  ]
+ },
+ "WLF00005031": {
+  "name": "발달장애인 긴급돌봄사업",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 6,
+    "upper": 64
+   },
+   {
+    "field": "등록 장애인",
+    "op": "is_true"
+   }
+  ]
+ },
+ "WLF00005411": {
+  "name": "일상돌봄 서비스 사업",
+  "required": [],
+  "optional": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 9,
+    "upper": 64
+   }
+  ]
+ },
+ "WLF00005567": {
+  "name": "정신건강 심리상담 바우처",
+  "required": []
+ },
+ "WLF00006207": {
+  "name": "웹정보접근성제고",
+  "required": []
+ },
+ "WLF00006215": {
+  "name": "청년내일채움공제",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "range",
+    "value": 15,
+    "upper": 34
+   },
+   {
+    "field": "고용 상태",
+    "op": "one_of",
+    "values": [
+     "중소기업 재직"
+    ]
+   }
+  ]
+ },
+ "WLF00006217": {
+  "name": "출소(예정)자 취업지원(허그일자리)",
+  "required": [
+   {
+    "field": "만 나이",
+    "op": "min",
+    "value": 15
+   },
+   {
+    "field": "고용 상태",
+    "op": "one_of",
+    "values": [
+     "미취업"
+    ]
+   },
+   {
+    "field": "재학 여부",
+    "op": "is_true",
+    "kind": "exclusion"
+   },
+   {
+    "field": "국적",
+    "op": "one_of",
+    "values": [
+     "대한민국"
+    ]
+   }
+  ]
+ }
+}
