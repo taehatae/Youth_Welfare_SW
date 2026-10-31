@@ -12,7 +12,7 @@ import DashboardPage from "../features/dashboard/DashboardPage"
 import { currentAccount, diagnoseAccount, refreshAccount, loadAccountState, signOut, setApiAccount, toggleAccountPolicy, ApiError, type Account, type AccountState } from "../services/welfareApi"
 import { emptySession } from "../services/analysisSession"
 import type { UserProfileInput } from "../types/welfareApi"
-import { type PolicyRow, type SavedPolicy, type TrackingStatus } from "../services/policyResults"
+import { policyResults, type PolicyRow, type SavedPolicy, type TrackingStatus } from "../services/policyResults"
 import { updateAccountPolicy } from "../services/welfareApi"
 import { profileToDraft } from "../services/profileSummary"
 import { usePageMotion } from "../hooks/usePageMotion"
@@ -220,7 +220,7 @@ export default function App() {
       </section> : <>
         {page === "home" && <HomePage setPage={setPage} />}
         {page === "explorer" && <PolicyExplorerPage />}
-        {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} />}
+        {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} checkedAt={session.diagnosis?.checkedAt} myResult={session.diagnosis ? policyResults(session.diagnosis).find(row => row.id === selectedPolicy) : undefined} />}
         {page === "diagnosis" && <DiagnosisPage draft={session.draft} setDraft={draft => setSession(s => ({ ...s, draft }))} step={session.step} setStep={step => setSession(s => ({ ...s, step }))} setPage={setPage} onComplete={completeDiagnosis} busy={busy} />}
         {page === "result" && <ResultPage snapshot={session.diagnosis} previous={session.previousDiagnosis} setPage={setPage} busy={busy} savedPolicies={savedPolicies} toggleSaved={toggleSaved} onViewProfile={() => setProfileRequest({ snapshot: "diagnosis" })} onEdit={step => setProfileRequest({ snapshot: "diagnosis", step })} />}
         {page === "dashboard" && <DashboardPage onViewProfile={() => setProfileRequest({ snapshot: "current" })} onEdit={step => setProfileRequest({ snapshot: "current", step: step ?? 0 })} savedPolicies={savedPolicies} updateSaved={updateSaved} session={session} setPage={setPage} refresh={refresh} busy={busy} error={refreshError} />}

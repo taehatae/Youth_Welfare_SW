@@ -1,6 +1,8 @@
 import { useState } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
+  isUnverified,
+  metCountOf,
   resultCategoryOf,
   resultCategoryLabels,
   resultCategoryOrder,
@@ -20,8 +22,7 @@ import "./reverse.css"
 
 type Filter = "all" | ResultCategory | "saved" | "changed"
 // 같은 분류 안에서는 입력값과 대조해 충족한 조건이 많은 정책을 먼저 보여준다.
-const metCount = (policy: PolicyRow) =>
-  policy.counts?.passed ?? policy.confirmedConditions?.length ?? 0
+const metCount = metCountOf
 export default function ResultPage({
   snapshot,
   previous,
@@ -82,6 +83,7 @@ export default function ResultPage({
       rows.filter((p) => resultCategoryOf(p) === category).length,
     ]),
   ) as Record<ResultCategory, number>
+  const unverifiedCount = rows.filter(isUnverified).length
   const filtered = rows.filter(
     (p) =>
       (filter === "all" ||
@@ -151,6 +153,13 @@ export default function ResultPage({
             </span>
           ))}
         </div>
+        {unverifiedCount > 0 && (
+          <p className="analysis-unverified">
+            신청 가능 {counts.likely}건 중 <strong>{unverifiedCount}건</strong>은
+            입력한 정보로 비교할 수 있는 조건이 없어 ‘비교 조건 없음’으로 표시했어요.
+            이 정책들은 공식 안내에서 세부 자격을 꼭 확인해주세요.
+          </p>
+        )}
       </PageHeading>
       <AnalysisChanges
         key={snapshot.checkedAt}
