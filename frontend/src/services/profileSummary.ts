@@ -5,7 +5,9 @@ import {
   HOUSING,
   INCOME,
   MARRIAGE,
+  NATIONALITY,
   QUALIFICATIONS,
+  SPECIAL_TARGETS,
   YES_NO,
   EMPTY_DRAFT,
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -131,6 +133,7 @@ export function profileSummary(profile: UserProfileInput | null) {
       items: [
         ["나이", `만 ${profile.age}세`],
         ["성별", label(GENDER, p.gender)],
+        ["국적", label(NATIONALITY, extra.nationality ?? "KOREAN")],
       ],
     },
     { title: "거주 지역", items: [["거주지", profile.region]] },
@@ -168,6 +171,12 @@ export function profileSummary(profile: UserProfileInput | null) {
     {
       title: "추가 조건",
       items: [
+        [
+          "해당 대상",
+          Array.isArray(extra.special_targets) && extra.special_targets.length
+            ? extra.special_targets.map((v) => label(SPECIAL_TARGETS, v)).join(", ")
+            : "해당 없음",
+        ],
         ["재학 여부", label(YES_NO, p.student_status)],
         ["장애 여부", label(YES_NO, p.disability_status)],
         ["혼인", label(MARRIAGE, p.marital_status)],
@@ -241,6 +250,11 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
           ? "YES"
           : "UNKNOWN",
     qualifications: [...(p.qualifications ?? [])],
+    nationality:
+      typeof extra.nationality === "string" ? extra.nationality : "KOREAN",
+    specialTargets: Array.isArray(extra.special_targets)
+      ? extra.special_targets.filter((v): v is string => typeof v === "string")
+      : [],
     additionalEligibility: additional,
   }
 }

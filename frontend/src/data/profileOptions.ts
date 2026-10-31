@@ -58,6 +58,19 @@ export const MARRIAGE: Option[] = [
   ["UNKNOWN", "미확인"],
 ]
 
+export const NATIONALITY: Option[] = [
+  ["KOREAN", "대한민국 국민"],
+  ["FOREIGN", "외국인 (외국인등록번호 보유)"],
+]
+
+// 청년 정책에서 자주 대상이 되는 특정 집단. 해당하는 것만 고른다.
+export const SPECIAL_TARGETS: Option[] = [
+  ["VETERAN", "국가유공자·보훈대상자 (본인 또는 자녀)"],
+  ["NK_DEFECTOR", "북한이탈주민"],
+  ["MULTICULTURAL", "결혼이민자·다문화가족"],
+  ["FARMER", "농업인·어업인 (본인 또는 가구)"],
+]
+
 // 초기 선택 목록. 목록 밖 자격은 코드 OTHER로만 보존하고 자동 충족 판정에 쓰지 않는다.
 
 export const QUALIFICATIONS: Option[] = [
@@ -103,6 +116,9 @@ export interface ProfileDraft {
   childrenCount: string
   qualificationStatus: string
   qualifications: string[]
+  // 나중에 추가된 항목이라 예전에 저장된 진행 상태에는 없을 수 있다.
+  nationality?: string
+  specialTargets?: string[]
   additionalEligibility?: AdditionalEligibilityDraft
 }
 
@@ -320,6 +336,8 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         registered_address_district: extra.registeredAddressDistrict || null,
         registered_residence_start_month:
           extra.registeredResidenceStartMonth || null,
+        nationality: d.nationality || "KOREAN",
+        special_targets: d.specialTargets ?? [],
       },
     },
   }
@@ -337,6 +355,18 @@ export function isDraft(value: unknown): value is ProfileDraft {
     return false
 
   if (d.additionalEligibility && !isAdditionalEligibilityDraft(d.additionalEligibility))
+    return false
+
+  if (d.nationality !== undefined && !NATIONALITY.some(([v]) => v === d.nationality))
+    return false
+
+  if (
+    d.specialTargets !== undefined &&
+    !(
+      Array.isArray(d.specialTargets) &&
+      d.specialTargets.every((v) => SPECIAL_TARGETS.some(([id]) => id === v))
+    )
+  )
     return false
 
   if (

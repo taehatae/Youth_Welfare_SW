@@ -18,7 +18,9 @@ import {
   HOUSING,
   INCOME,
   MARRIAGE,
+  NATIONALITY,
   QUALIFICATIONS,
+  SPECIAL_TARGETS,
   YES_NO,
   incomeWon,
   numberOptions,
@@ -268,7 +270,10 @@ export default function DiagnosisPage({
   )
 
   const field = (
-    key: Exclude<keyof ProfileDraft, "qualifications" | "additionalEligibility">,
+    key: Exclude<
+      keyof ProfileDraft,
+      "qualifications" | "additionalEligibility" | "specialTargets"
+    >,
 
     label: string,
 
@@ -284,7 +289,7 @@ export default function DiagnosisPage({
       name={key}
       label={label}
       options={options}
-      value={draft[key]}
+      value={draft[key] ?? (key === "nationality" ? "KOREAN" : "")}
       onChange={(value) => update(key, value)}
       hint={hint}
       required={required}
@@ -639,6 +644,36 @@ export default function DiagnosisPage({
           )}
           {step === 5 && (
             <>
+              {field("nationality", "국적", NATIONALITY)}
+              <fieldset className="space-y-2">
+                <legend className="mb-2 text-sm font-semibold">
+                  해당하는 대상 (해당하는 것만 선택)
+                </legend>
+                {SPECIAL_TARGETS.map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(draft.specialTargets ?? []).includes(value)}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          specialTargets: e.target.checked
+                            ? [...(draft.specialTargets ?? []), value]
+                            : (draft.specialTargets ?? []).filter((v) => v !== value),
+                        })
+                      }
+                      className="h-4 w-4 accent-blue-700"
+                    />
+                    {label}
+                  </label>
+                ))}
+                <p className="text-sm text-slate-500">
+                  해당 없으면 선택하지 않아도 돼요.
+                </p>
+              </fieldset>
               {field("student", "현재 재학 여부", YES_NO)}
               {field("disability", "등록 장애인 여부", YES_NO)}
               {field("maritalStatus", "혼인 상태", MARRIAGE)}
