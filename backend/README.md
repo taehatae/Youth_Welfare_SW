@@ -136,3 +136,40 @@ python -m scripts.backup_database restore --source .\backups\youth_welfare-YYYYM
 ```
 
 명령은 SQLite `integrity_check`와 사용자 테이블별 행 수를 검사해 출력합니다. 복원 검증은 별도의 새 파일로 수행하고, 실제 운영 DB를 대상으로 복원하지 마세요. 실행 전에 대상 경로와 원본 경로가 의도한 로컬 파일인지 직접 확인하고, 백업 파일을 안전한 위치에 보관하세요.
+
+## 팀원에게 정책 데이터만 전달하기
+
+각자의 SQLite DB는 Git으로 공유하지 않습니다. 아래 도구는 `welfare_services`와 `welfare_eligibility_conditions`의 허용 필드만 JSON으로 전달합니다. 사용자·계정·세션·추가 프로필·동기화 배치·API 호출 한도 기록은 포함하지 않습니다. 조건의 로컬 `id`는 가져오는 DB에서 새로 생성됩니다.
+
+저장소의 [`data/welfare-policies.json`](data/welfare-policies.json)에는 전달 시점의 **정책 152건과 저장 자격조건 1,749건**이 포함되어 있습니다. 정책 원문·지원 내용·연락처·관련 법령 및 저장된 조건 메타데이터를 함께 전달합니다. 별도 API 호출이나 서비스 키 없이 가져올 수 있습니다. 코드를 받는 것만으로 로컬 DB가 바뀌지는 않으며 아래 가져오기 명령을 실행해야 합니다.
+
+두 사람 모두 같은 백엔드 코드와 기존 테이블이 준비되어 있어야 합니다. 명령은 가상환경을 활성화한 뒤 **`backend/`에서** 실행합니다. 파일명 날짜는 실제 전달 날짜로 바꾸세요.
+
+### 보내는 사람
+
+```powershell
+python -B -m scripts.policy_data export --database .\youth_welfare.db --output .\policy-data-YYYYMMDD.json
+python -B -m scripts.policy_data inspect --source .\policy-data-YYYYMMDD.json
+```
+
+검사가 성공한 JSON 파일만 팀원에게 전달합니다. 전체 DB, 백업, `.env`는 전달하지 마세요. 내보내기는 DB를 읽기 전용으로 열며, 기존 출력 파일을 덮어쓰지 않습니다. 파일에는 정책 원문과 저장된 파싱 결과가 포함됩니다. Git에 올릴 경우에도 JSON 내용과 변경 내역을 먼저 검토하세요.
+
+### 받는 사람
+
+도구와 JSON이 포함된 코드를 받은 뒤, 서버와 동기화 작업을 종료합니다. 로컬 DB가 없다면 개발 환경 설정 후 앱을 한 번 실행해 기존 테이블을 생성하고 서버를 종료하세요. 기존 DB는 삭제하지 마세요. `backend/`에서 저장소에 포함된 파일 검사 및 **미리보기**를 실행합니다.
+
+```powershell
+python -B -m scripts.policy_data inspect --source .\data\welfare-policies.json
+python -B -m scripts.policy_data import --database .\youth_welfare.db --source .\data\welfare-policies.json
+```
+
+`service_count`, `condition_count`, `new_services`, `updated_services`를 확인한 다음 실제 반영합니다. `backups/` 폴더를 먼저 준비하고, **아직 존재하지 않는 고유한 백업 파일명**을 지정하세요.
+
+```powershell
+New-Item -ItemType Directory -Force .\backups | Out-Null
+python -B -m scripts.policy_data import --database .\youth_welfare.db --source .\data\welfare-policies.json --apply --backup .\backups\before-policy-import-YYYYMMDD-HHmmss.db
+```
+
+`--apply`가 없으면 DB를 변경하지 않습니다. 실제 반영은 SQLite Online Backup API로 기존 DB를 백업한 뒤, 서비스 ID로 갱신하고 **전달된 서비스의 저장 조건만 교체**합니다. 파일에 없는 정책과 기존 사용자·계정·동기화 데이터는 보존합니다. 외래 키·무결성·가져온 내용 검증이 실패하면 전체 가져오기를 롤백합니다. 자동 테이블 생성이나 마이그레이션은 하지 않습니다.
+
+백업에는 개인 데이터가 포함되므로 로컬에서 안전하게 보관하세요. 체크섬은 파일 손상 검사이며 발신자 인증을 대신하지 않습니다. 신뢰할 수 있는 정책 파일만 사용하세요. 이 방식은 전달 시점의 정책 복사이며 실시간 공유가 아닙니다. 정책이 같아도 사용자 프로필이 다르면 진단 결과는 달라집니다. 향후 스키마가 바뀌면 같은 코드 버전에서 다시 내보내기·가져오기를 확인해야 합니다.
