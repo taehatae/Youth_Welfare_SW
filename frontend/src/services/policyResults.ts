@@ -1,6 +1,7 @@
 import type { Snapshot } from "./analysisSession"
 
 import type {
+  EligibilityPathAnalysis,
   RecommendationStatus,
   UserProfileInput,
 } from "../types/welfareApi"
@@ -44,6 +45,14 @@ export interface PolicyRow {
     current: string
     required: string
   }[]
+
+  paths?: EligibilityPathAnalysis[]
+
+  matchedPathId?: string | null
+
+  blockedByCommon?: string[]
+
+  preferences?: string[]
 }
 
 export const trackingLabels = {
@@ -112,6 +121,11 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
         required: c.required_value,
       })),
 
+      paths: p.eligibility_paths ?? [],
+      matchedPathId: p.matched_path_id ?? null,
+      blockedByCommon: p.blocked_by_common ?? [],
+      preferences: p.preferences ?? [],
+
       url: p.detail_url,
       description: (p.notes ?? []).join(" "),
 
@@ -162,6 +176,10 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
         "이 저장된 결과에는 추천 분류 정보가 없습니다. 상세 조건을 확인해 주세요.",
       recommendationUncertainty: existing?.recommendationUncertainty,
       confirmedConditions: existing?.confirmedConditions ?? [],
+      paths: existing?.paths,
+      matchedPathId: existing?.matchedPathId,
+      blockedByCommon: existing?.blockedByCommon,
+      preferences: existing?.preferences,
       url: p.detail_url || existing?.url,
       description: p.support_amount,
       counts: existing?.counts,
@@ -188,6 +206,10 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
         "이 저장된 결과에는 추천 분류 정보가 없습니다. 상세 조건을 확인해 주세요.",
       recommendationUncertainty: existing?.recommendationUncertainty,
       confirmedConditions: existing?.confirmedConditions ?? [],
+      paths: existing?.paths,
+      matchedPathId: existing?.matchedPathId,
+      blockedByCommon: existing?.blockedByCommon,
+      preferences: existing?.preferences,
       url: existing?.url,
       description: existing?.description ?? "",
       counts: existing?.counts,

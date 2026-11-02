@@ -135,9 +135,48 @@ export interface PolicyAnalysis {
 
   confirmed_conditions?: ConditionAnalysis[]
 
+  eligibility_paths?: EligibilityPathAnalysis[]
+
+  matched_path_id?: string | null
+
+  blocked_by_common?: string[]
+
+  preferences?: string[]
+
   notes: string[]
 
   detail_url: string
+}
+
+export interface EligibilityPathCondition {
+  condition_type: string
+
+  status: "passed" | "failed" | "needs_review"
+
+  current_value: string
+
+  required_value: string
+
+  evidence: string
+
+  // 모든 경로에 공통인 조건(이전 결과에는 없음)
+  common?: boolean
+}
+
+export interface EligibilityPathAnalysis {
+  path_id: string
+
+  label: string
+
+  kind: string
+
+  priority: number | null
+
+  status: "eligible" | "needs_review" | "ineligible"
+
+  conditions: EligibilityPathCondition[]
+
+  checks: string[]
 }
 
 export type RecommendationStatus =

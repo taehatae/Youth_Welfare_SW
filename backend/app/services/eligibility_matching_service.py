@@ -990,6 +990,11 @@ class EligibilityMatchingService:
             RecommendationDecisionService.classify(service, conditions, observations), semantic)
         return {
             "semantic_analysis": semantic,
+            # 자격 경로 판정이 덮어쓰는 칸. 기존 분석에서는 비어 있다.
+            "eligibility_paths": [],
+            "matched_path_id": None,
+            "blocked_by_common": [],
+            "preferences": [],
             "policy_id": service.serv_id,
             "title": service.serv_name,
             "status": status,
@@ -1064,6 +1069,15 @@ class EligibilityMatchingService:
             from app.services import structured_condition_service
             analyses = [
                 structured_condition_service.analyze(service, user, eligibility_conditions, analysis) or analysis
+                for service, analysis in zip(services, analyses)
+            ]
+        if settings.use_eligibility_paths:
+            # 검수한 자격 경로가 있는 정책은 경로로 판정한다(가능/확인 필요/불가).
+            from app.services import eligibility_path_service
+            records = eligibility_path_service.load(db)
+            analyses = [
+                eligibility_path_service.analyze(service, user, eligibility_conditions, records.get(service.serv_id),
+                                                 analysis) or analysis
                 for service, analysis in zip(services, analyses)
             ]
         return self._summarize(services, analyses)

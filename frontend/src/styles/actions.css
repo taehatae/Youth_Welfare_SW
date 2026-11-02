@@ -8,6 +8,10 @@
   --result-gap-ink: #b42323;
   --result-gap-soft: #fdecec;
   --result-gap-line: #f3c2c2;
+  --result-review: #d98a1a;
+  --result-review-ink: #8a5300;
+  --result-review-soft: #fff4e0;
+  --result-review-line: #f1d49c;
   --saved: #e0457b;
   --saved-ink: #c2185b;
   --saved-soft: #fdebf3;
@@ -16,6 +20,26 @@
 
 .reverse-tag[data-result="likely"] { background: var(--result-likely-soft); color: var(--result-likely-ink); font-weight: 700; }
 .reverse-tag[data-result="gap"] { background: var(--result-gap-soft); color: var(--result-gap-ink); font-weight: 700; }
+.reverse-tag[data-result="review"] { background: var(--result-review-soft); color: var(--result-review-ink); font-weight: 700; }
+.reverse-card[data-result="review"] > header { border-left: 4px solid var(--result-review); }
+.reverse-card[data-result="review"] .card-brief { color: var(--result-review-ink); font-weight: 600; }
+.analysis-filters button[data-category="review"] { color: var(--result-review-ink); border-color: var(--result-review-line); background: var(--result-review-soft); }
+.analysis-filters button[data-category="review"][aria-pressed="true"] { background: var(--result-review); border-color: var(--result-review); color: #fff; }
+.analysis-summary span[data-category="review"] { color: var(--result-review-ink); background: var(--result-review-soft); border-color: var(--result-review-line); font-weight: 650; }
+.workspace-saved-verdict strong[data-result="review"] { color: var(--result-review-ink); }
+.my-policy-result[data-result="review"] { border-left-color: var(--result-review); }
+.policy-path-list, .policy-path-conditions, .policy-path-checks ul { margin: 6px 0 0; padding: 0; list-style: none; }
+.policy-path-list > li { padding: 8px 0; border-top: 1px solid #e3eaf2; }
+.policy-path-list > li:first-child { border-top: 0; }
+.policy-path-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-weight: 650; }
+.policy-path-main { color: #536580; font-size: 12px; }
+.policy-path-conditions li { font-size: 13px; line-height: 1.6; padding-left: 2px; }
+.policy-path-conditions li[data-status="passed"] > span { color: var(--result-likely-ink); font-weight: 700; }
+.policy-path-conditions li[data-status="failed"] > span { color: var(--result-gap-ink); font-weight: 700; }
+.policy-path-conditions li[data-status="needs_review"] > span { color: var(--result-review-ink); font-weight: 700; }
+.policy-path-checks { color: #6b7c93; font-size: 12.5px; margin-top: 4px; }
+.policy-path-checks li { line-height: 1.6; }
+.policy-path-preferences { margin: 8px 0 0; color: #6b7c93; font-size: 13px; }
 .reverse-card[data-result="likely"] > header { border-left: 4px solid var(--result-likely); }
 .reverse-card[data-result="gap"] > header { border-left: 4px solid var(--result-gap); }
 

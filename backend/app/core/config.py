@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # 검수를 마친 구조화 조건(data/structured_conditions.json)으로 입력값과 정책 자격을 비교한다.
     use_structured_conditions: bool = False
 
+    # 자격 경로(data/eligibility_paths.json → DB)로 판정한다. 구조화 조건보다 우선한다.
+    use_eligibility_paths: bool = False
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

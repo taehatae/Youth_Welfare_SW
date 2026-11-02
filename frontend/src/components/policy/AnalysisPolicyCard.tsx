@@ -12,18 +12,61 @@ export const statusLabels = {
 // 입력값으로 비교할 수 없는 조건은 판정에 쓰지 않고 '추가 확인'으로만 안내한다.
 export const resultCategoryLabels = {
   likely: "신청 가능",
+  review: "확인 필요",
   gap: "신청 불가",
 } as const
 export type ResultCategory = keyof typeof resultCategoryLabels
-export const resultCategoryOrder: ResultCategory[] = ["likely", "gap"]
+export const resultCategoryOrder: ResultCategory[] = ["likely", "review", "gap"]
+const pathStatusCategory = (
+  status: "eligible" | "needs_review" | "ineligible",
+): ResultCategory =>
+  status === "eligible" ? "likely" : status === "needs_review" ? "review" : "gap"
+// 자격 경로 데이터가 있으면 경로 기준 3분류를, 없는 예전 저장 결과는 기존 2분류 규칙을 쓴다.
 export const resultCategoryOf = (policy: PolicyRow): ResultCategory =>
-  policy.conditions.some((c) => c.status === "미충족") ? "gap" : "likely"
+  policy.paths?.length
+    ? pathStatusCategory(policy.status)
+    : policy.conditions.some((c) => c.status === "미충족")
+      ? "gap"
+      : "likely"
 // 신청 가능이지만 입력값으로 비교한 조건이 하나도 없는 정책. 자격을 확인했다는 뜻이 아니라서 따로 표시한다.
 export const metCountOf = (policy: PolicyRow) =>
   policy.counts?.passed ?? policy.confirmedConditions?.length ?? 0
 export const isUnverified = (policy: PolicyRow) =>
-  resultCategoryOf(policy) === "likely" && metCountOf(policy) === 0
+  !policy.paths?.length &&
+  resultCategoryOf(policy) === "likely" &&
+  metCountOf(policy) === 0
+const pathBrief = (policy: PolicyRow): string | null => {
+  const paths = policy.paths ?? []
+  if (paths.length < 2) return null
+  const path = paths.find((p) => p.path_id === policy.matchedPathId) ?? paths[0]
+  if (policy.status === "eligible") return `'${path.label}' 경로로 신청 가능`
+  if (policy.status === "needs_review") {
+    const items = path.conditions
+      .filter((c) => c.status === "needs_review")
+      .map((c) => c.condition_type)
+    return `'${path.label}' 경로 확인 필요 · ${items.length ? items.join(", ") : "공식 안내 확인"}`
+  }
+  if (policy.blockedByCommon?.length)
+    return `공통 조건 미충족: ${policy.blockedByCommon.join(", ")}`
+  const failedTypes = path.conditions
+    .filter((c) => c.status === "failed")
+    .map((c) => c.condition_type)
+  return `가장 가까운 경로 '${path.label}': ${failedTypes.join(", ")} 부족`
+}
+const pathMarks = { passed: "✓", failed: "✕", needs_review: "?" } as const
+type PathCondition = NonNullable<PolicyRow["paths"]>[number]["conditions"][number]
+// 기준 문구(required_value)에 조건 이름이 이미 들어 있어 이름을 따로 쓰지 않는다.
+const PathConditionLine = ({ c }: { c: PathCondition }) => (
+  <li data-status={c.status}>
+    <span aria-label={pathMarkLabels[c.status]}>{pathMarks[c.status]}</span>{" "}
+    {c.required_value || c.condition_type}
+    <small> · 내 정보 {c.current_value || "미입력"}</small>
+  </li>
+)
+const pathMarkLabels = { passed: "충족", failed: "미충족", needs_review: "확인 필요" } as const
 export const resultReason = (policy: PolicyRow): string => {
+  if (policy.paths?.length && policy.recommendationReason)
+    return policy.recommendationReason
   if (resultCategoryOf(policy) === "gap")
     return "입력한 정보로 비교한 결과 부족한 조건이 있어요. 아래 ‘확인된 미충족 조건’을 확인하세요."
   const passed =
@@ -82,6 +125,12 @@ export default function AnalysisPolicyCard({
   const [open, setOpen] = useState(false)
   const bodyId = useId()
   const passed = metCountOf(policy)
+  const allPaths = policy.paths ?? []
+  // 이전 결과에는 common 표시가 없어 모든 경로에 같은 조건이 있어도 공통으로 묶지 않는다.
+  const commonConditions = allPaths[0]?.conditions.filter((c) => c.common) ?? []
+  const commonChecks = (allPaths[0]?.checks ?? []).filter((check) =>
+    allPaths.every((p) => p.checks.includes(check)),
+  )
   return (
     <article
       className="reverse-card"
@@ -104,11 +153,12 @@ export default function AnalysisPolicyCard({
             <a href={"#detail/" + encodeURIComponent(policy.id)}>{policy.title}</a>
           </h3>
           <p className="card-brief">
-            {failed.length
+            {pathBrief(policy) ??
+              (failed.length
               ? `${fieldName(failed[0].field)}${isOrGroup(failed[0].field) ? " (이 중 하나만 해당하면 돼요)" : ""} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
               : passed > 0
                 ? `입력값으로 비교한 조건 ${passed}개 충족`
-                : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요"}
+                : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요")}
           </p>
           {counts && (
             <div className="condition-counts compact" aria-label="조건 비교 요약">
@@ -144,6 +194,76 @@ export default function AnalysisPolicyCard({
           <strong>판정 이유</strong>
           <span>{resultReason(policy)}</span>
         </p>
+        {(policy.paths?.length ?? 0) > 1 && (
+          <div className="policy-key-reason policy-paths" aria-label="자격 경로">
+            <strong>자격 경로</strong>
+            <p className="policy-path-note">아래 경로 중 하나만 맞으면 신청할 수 있어요.</p>
+            {commonConditions.length > 0 && (
+              <div className="policy-path-checks">
+                <small>모든 경로 공통 조건</small>
+                <ul className="policy-path-conditions">
+                  {commonConditions.map((c, i) => (
+                    <PathConditionLine key={i} c={c} />
+                  ))}
+                </ul>
+              </div>
+            )}
+            {commonChecks.length > 0 && (
+              <div className="policy-path-checks">
+                <small>모든 경로 공통 확인 사항</small>
+                <ul>
+                  {commonChecks.map((check, i) => (
+                    <li key={i}>{check}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <ul className="policy-path-list">
+              {policy.paths!.map((path) => {
+                const own = path.conditions.filter((c) => !c.common)
+                const checks = path.checks.filter((check) => !commonChecks.includes(check))
+                return (
+                <li key={path.path_id}>
+                  <p className="policy-path-head">
+                    <span>{path.label}</span>
+                    <span
+                      className="reverse-tag"
+                      data-result={pathStatusCategory(path.status)}
+                    >
+                      {resultCategoryLabels[pathStatusCategory(path.status)]}
+                    </span>
+                    {path.path_id === policy.matchedPathId && (
+                      <small className="policy-path-main">대표</small>
+                    )}
+                  </p>
+                  {own.length > 0 && (
+                    <ul className="policy-path-conditions">
+                      {own.map((c, i) => (
+                        <PathConditionLine key={i} c={c} />
+                      ))}
+                    </ul>
+                  )}
+                  {checks.length > 0 && (
+                    <div className="policy-path-checks">
+                      <small>확인 사항</small>
+                      <ul>
+                        {checks.map((check, i) => (
+                          <li key={i}>{check}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+        {!!policy.preferences?.length && (
+          <p className="policy-path-preferences">
+            <strong>우대 사항</strong> {policy.preferences.join(", ")}
+          </p>
+        )}
         {policy.recommendationUncertainty && (
           <p className="reverse-alert">{policy.recommendationUncertainty}</p>
         )}
