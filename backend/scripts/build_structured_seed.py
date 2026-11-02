@@ -39,9 +39,19 @@ PROFILE_KEYS = {
     "북한이탈주민": "eligibility_conditions.additional_conditions.special_targets:NK_DEFECTOR",
     "결혼이민자·다문화가족": "eligibility_conditions.additional_conditions.special_targets:MULTICULTURAL",
     "농업인·어업인": "eligibility_conditions.additional_conditions.special_targets:FARMER",
+    "생계급여 수급자": "eligibility_conditions.additional_conditions.basic_benefit_types:LIVELIHOOD",
+    "의료급여 수급자": "eligibility_conditions.additional_conditions.basic_benefit_types:MEDICAL",
+    "주거급여 수급자": "eligibility_conditions.additional_conditions.basic_benefit_types:HOUSING",
+    "교육급여 수급자": "eligibility_conditions.additional_conditions.basic_benefit_types:EDUCATION",
+    "가구 총재산": "eligibility_conditions.additional_conditions.asset_amount_won",
+    "도시근로자 월평균소득 대비 가구소득": "eligibility_conditions.additional_conditions.household_monthly_income_won",
+    "혼인 상태": "eligibility_conditions.marital_status",
+    "세대원 전원 무주택": "eligibility_conditions.additional_conditions.household_homeless",
+    "자립준비청년": "eligibility_conditions.additional_conditions.protection_ended",
 }
 OPERATORS = {"min": "gte", "max": "lte", "range": "between", "one_of": "one_of", "is_true": "is_true"}
-UNITS = {"만 나이": "세", "본인 월소득": "원", "본인 연소득": "원", "가구 소득인정액": "%", "가구원 수": "명", "자녀 수": "명"}
+UNITS = {"만 나이": "세", "본인 월소득": "원", "본인 연소득": "원", "가구 소득인정액": "%", "가구원 수": "명", "자녀 수": "명",
+         "가구 총재산": "원", "도시근로자 월평균소득 대비 가구소득": "%"}
 
 # 검증용 정답지를 만든 뒤 성별을 입력 항목에 추가하면서 보완한 정책.
 OVERRIDES = {

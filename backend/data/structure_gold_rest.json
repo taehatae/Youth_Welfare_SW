@@ -90,6 +90,10 @@
     "field": "본인 명의 주택 보유",
     "op": "is_true",
     "kind": "exclusion"
+   },
+   {
+    "field": "세대원 전원 무주택",
+    "op": "is_true"
    }
   ]
  },
@@ -413,7 +417,7 @@
   "name": "의료급여수급권자 일반건강검진비",
   "required": [
    {
-    "field": "기초생활보장 수급자",
+    "field": "의료급여 수급자",
     "op": "is_true"
    }
   ],

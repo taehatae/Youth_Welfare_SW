@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from app.services.median_income_reference import median_income_amount
+from app.services.urban_worker_income_reference import urban_worker_income_amount
 
 SEED_PATH = Path(__file__).resolve().parents[2] / "data" / "structured_conditions.json"
 
@@ -23,6 +24,13 @@ SPECIAL_TARGETS = {
     "국가유공자·보훈대상자": "VETERAN", "북한이탈주민": "NK_DEFECTOR",
     "결혼이민자·다문화가족": "MULTICULTURAL", "농업인·어업인": "FARMER",
 }
+BENEFIT_TYPES = {"생계급여 수급자": "LIVELIHOOD", "의료급여 수급자": "MEDICAL", "주거급여 수급자": "HOUSING",
+                 "교육급여 수급자": "EDUCATION"}
+MARRIAGE_LABELS = {"SINGLE": "미혼", "MARRIED": "기혼", "DIVORCED": "이혼", "WIDOWED": "사별"}
+# 예전 입력의 재산 구간(원). 금액을 모를 때 구간 전체가 기준 안/밖인지로만 판정한다.
+ASSET_RANGES = {"UNDER_100M": (0, 99_999_999), "100M_200M": (100_000_000, 199_999_999),
+                "200M_300M": (200_000_000, 299_999_999), "300M_500M": (300_000_000, 499_999_999),
+                "OVER_500M": (500_000_000, None)}
 # 기존 분석에서 가져와 추가 확인으로 보여줄 원문 조건. 나이는 시드가 대신하므로 뺀다.
 LEGACY_REVIEW_TYPES = {"other", "target_group", "employment", "income_ratio", "income_amount", "region",
                        "external_review"}
@@ -56,6 +64,14 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
     median = median_income_amount(date.today().year, household_size) if household_size else None
     targets = extra.get("special_targets")
     nationality = extra.get("nationality")
+    benefit = _yes_no(extra.get("basic_benefit_status"))
+    benefit_types = extra.get("basic_benefit_types") if isinstance(extra.get("basic_benefit_types"), list) else []
+    asset = extra.get("asset_amount_won")
+    household_income = extra.get("household_monthly_income_won")
+    urban = urban_worker_income_amount(date.today().year, household_size)
+    owns_home = _yes_no(p.get("owns_home"))
+    homeless = _yes_no(extra.get("household_homeless"))
+    protected, ended = _yes_no(extra.get("child_welfare_protection_experience")), _yes_no(extra.get("protection_ended"))
     values = {
         "만 나이": user.age,
         "거주지": user.region or None,
@@ -74,7 +90,18 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
         "기초생활보장 수급자": _yes_no(extra.get("basic_benefit_status")),
         "차상위계층": _yes_no(extra.get("near_poverty_status")),
         "한부모가족": _yes_no(extra.get("single_parent_support_status")),
+        "가구 총재산": int(asset) if asset not in (None, "") else ASSET_RANGES.get(p.get("asset_range")),
+        # 도시근로자 비율은 가구 월소득과 가구원 수를 모두 입력했을 때만 계산한다.
+        "도시근로자 월평균소득 대비 가구소득": round(int(household_income) / urban * 100, 1)
+        if household_income not in (None, "") and urban else None,
+        "혼인 상태": MARRIAGE_LABELS.get(p.get("marital_status")),
+        # 본인 명의 주택이 있으면 세대 전원 무주택일 수 없다.
+        "세대원 전원 무주택": False if owns_home is True else homeless,
+        "자립준비청년": False if protected is False or ended is False else True if protected and ended else None,
     }
+    for field, code in BENEFIT_TYPES.items():
+        # 수급자가 아니면 모든 급여에 해당하지 않고, 수급자라도 급여 종류를 고르지 않았으면 알 수 없다.
+        values[field] = False if benefit is False else (code in benefit_types) if benefit and benefit_types else None
     for field, code in SPECIAL_TARGETS.items():
         values[field] = (code in targets) if isinstance(targets, list) else None
     return values
@@ -85,6 +112,8 @@ def matches(condition: dict, value: Any) -> bool | None:
     if value is None:
         return None
     operator = condition["operator"]
+    if isinstance(value, tuple):
+        return _matches_range(condition, value)
     if operator == "is_true":
         hit = bool(value)
     elif operator == "one_of":
@@ -99,12 +128,27 @@ def matches(condition: dict, value: Any) -> bool | None:
     return not hit if condition["kind"] == "exclusion" else hit
 
 
+def _matches_range(condition: dict, value: tuple) -> bool | None:
+    """값을 (최소, 최대) 구간으로만 아는 경우: 구간 전체가 기준 안이면 충족, 전체가 밖이면 미충족."""
+    low, high = value
+    lower = condition["value"] if condition["operator"] in ("gte", "between") else None
+    upper = condition["upper_value"] if condition["operator"] == "between" else condition["value"]         if condition["operator"] == "lte" else None
+    inside = (lower is None or low >= lower) and (upper is None or (high is not None and high <= upper))
+    outside = (lower is not None and high is not None and high < lower) or (upper is not None and low > upper)
+    hit = True if inside else False if outside else None
+    if hit is None:
+        return None
+    return not hit if condition["kind"] == "exclusion" else hit
+
+
 def describe(condition: dict) -> str:
     field, operator, unit = condition["field"], condition["operator"], condition["unit"]
     value, upper = condition["value"], condition["upper_value"]
     number = lambda x: f"{x / 10000:,.0f}만원" if unit == "원" else f"{x:g}{unit}"
     if field == "가구 소득인정액":
         number = lambda x: f"기준 중위소득 {x:g}%"
+    if field == "도시근로자 월평균소득 대비 가구소득":
+        number = lambda x: f"{x:g}%"
     if operator == "gte":
         return f"{field} {number(value)} 이상"
     if operator == "lte":
@@ -121,6 +165,13 @@ def show(field: str, value: Any) -> str:
         return "미입력"
     if isinstance(value, bool):
         return "예" if value else "아니오"
+    if isinstance(value, tuple):
+        low, high = value
+        return f"{low / 10000:,.0f}만원 이상" if high is None else f"{low / 10000:,.0f}만~{(high + 1) / 10000:,.0f}만원 미만"
+    if field == "가구 총재산":
+        return f"{value / 10000:,.0f}만원"
+    if field == "도시근로자 월평균소득 대비 가구소득":
+        return f"{value:g}%"
     if field == "만 나이":
         return f"{value}세"
     if field in ("본인 월소득", "본인 연소득"):

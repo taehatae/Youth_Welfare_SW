@@ -33,6 +33,14 @@ export const resultReason = (policy: PolicyRow): string => {
     : "입력한 정보와 맞지 않는 조건이 없어요. 세부 자격 요건은 아래 추가 확인 항목을 공식 안내에서 확인하세요."
 }
 
+const isOrGroup = (field: string) => field.includes(" 또는 ")
+const fieldName = (field: string) =>
+  isOrGroup(field) ? field : (conditionFields[field.toLowerCase()] ?? field)
+const OrNote = ({ field }: { field: string }) =>
+  isOrGroup(field) ? (
+    <small className="text-slate-500"> (이 중 하나만 해당하면 돼요)</small>
+  ) : null
+
 export const conditionFields: Record<string, string> = {
   age: "나이",
   income_amount: "소득 금액",
@@ -97,7 +105,7 @@ export default function AnalysisPolicyCard({
           </h3>
           <p className="card-brief">
             {failed.length
-              ? `${conditionFields[failed[0].field.toLowerCase()] ?? failed[0].field} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
+              ? `${fieldName(failed[0].field)}${isOrGroup(failed[0].field) ? " (이 중 하나만 해당하면 돼요)" : ""} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
               : passed > 0
                 ? `입력값으로 비교한 조건 ${passed}개 충족`
                 : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요"}
@@ -145,7 +153,7 @@ export default function AnalysisPolicyCard({
             <ul>
               {policy.confirmedConditions.map((condition, index) => (
                 <li key={`${condition.field}-${index}`}>
-                  {conditionFields[condition.field.toLowerCase()] ?? condition.field}: {condition.current}
+                  {fieldName(condition.field)}<OrNote field={condition.field} />: {condition.current}
                   {condition.required ? ` · 기준 ${condition.required}` : ""}
                 </li>
               ))}
@@ -169,7 +177,8 @@ export default function AnalysisPolicyCard({
               {failed.length ? "확인된 미충족 조건" : "먼저 확인할 조건"}
             </strong>
             <span>
-              {conditionFields[first.field] ?? first.field} ·{" "}
+              {isOrGroup(first.field) ? first.field : (conditionFields[first.field] ?? first.field)}
+              <OrNote field={first.field} /> ·{" "}
               {first.required || "공식 기준 확인 필요"}
             </span>
           </p>
@@ -213,7 +222,8 @@ export default function AnalysisPolicyCard({
                   {policy.conditions.map((c, i) => (
                     <tr key={`${c.field}-${i}`}>
                       <th scope="row">
-                        {conditionFields[c.field.toLowerCase()] ?? c.field}
+                        {fieldName(c.field)}
+                        <OrNote field={c.field} />
                       </th>
                       <td>{c.current || "미확인"}</td>
                       <td>{c.required || "미제공"}</td>

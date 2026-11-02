@@ -67,9 +67,30 @@ def test_changed_source_or_unknown_policy_falls_back(monkeypatch):
 def test_seed_covers_every_policy_with_valid_fields():
     policies = structured.load_policies()
     assert len(policies) >= 95
-    fields = {"만 나이", "거주지", "성별", "본인 월소득", "본인 연소득", "가구 소득인정액", "가구원 수", "자녀 수",
-              "고용 상태", "재학 여부", "등록 장애인", "본인 명의 주택 보유", "국적", "기초생활보장 수급자",
-              "차상위계층", "한부모가족", *structured.SPECIAL_TARGETS}
+    fields = set(structured.user_values(USER, PROFILE))
     for policy in policies.values():
         for c in policy["conditions"]:
             assert c["field"] in fields and c["operator"] in {"gte", "lte", "between", "one_of", "is_true"}
+
+
+def test_benefit_types_asset_range_and_homeless(monkeypatch):
+    seed(monkeypatch, [condition("생계급여 수급자", "is_true", or_group="대상1"),
+                       condition("의료급여 수급자", "is_true", or_group="대상1"),
+                       condition("가구 총재산", "lte", 122_000_000, unit="원"),
+                       condition("세대원 전원 무주택", "is_true")])
+    extra = {**PROFILE["additional_conditions"], "basic_benefit_status": "YES", "basic_benefit_types": ["MEDICAL"],
+             "household_homeless": "YES"}
+    # 재산 구간(1억~2억)이 기준(1.22억)에 걸치면 판정하지 않는다.
+    result = structured.analyze(SERVICE, USER, {**PROFILE, "asset_range": "100M_200M", "additional_conditions": extra})
+    assert result["passed_conditions"] == 2 and result["review_conditions"][0]["condition_type"] == "가구 총재산"
+    result = structured.analyze(SERVICE, USER, {**PROFILE, "additional_conditions": {**extra, "asset_amount_won": 150_000_000}})
+    assert result["gap_conditions"][0]["condition_type"] == "가구 총재산"
+    # 수급자가 아니면 급여 종류와 상관없이 미충족, 본인 주택이 있으면 세대 무주택도 아니다.
+    result = structured.analyze(SERVICE, USER, {**PROFILE, "owns_home": True, "asset_range": "UNDER_100M"})
+    assert {r["condition_type"] for r in result["gap_conditions"]} == {"생계급여 수급자 또는 의료급여 수급자", "세대원 전원 무주택"}
+
+
+def test_urban_worker_income_ratio(monkeypatch):
+    seed(monkeypatch, [condition("도시근로자 월평균소득 대비 가구소득", "lte", 100, unit="%")])
+    extra = {**PROFILE["additional_conditions"], "household_monthly_income_won": 4_000_000}
+    assert structured.analyze(SERVICE, USER, {**PROFILE, "additional_conditions": extra})["status"] == "ineligible"

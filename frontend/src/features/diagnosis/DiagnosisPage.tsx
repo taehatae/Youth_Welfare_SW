@@ -11,8 +11,8 @@ import type { UserProfileInput } from "../../types/welfareApi"
 import { REGIONS } from "../../data/regions"
 
 import {
-  ASSETS,
   EMPTY_ADDITIONAL_ELIGIBILITY,
+  householdIncomeManwon,
   EMPLOYMENT,
   GENDER,
   HOUSING,
@@ -303,11 +303,42 @@ export default function DiagnosisPage({
       name={`additional-${key}`}
       label={label}
       options={YES_NO_UNKNOWN_OPTIONS}
-      value={additional[key]}
+      value={additional[key] ?? ""}
       onChange={(value) => updateAdditional(key, value)}
       hint={hint}
       showUnanswered
     />
+  )
+
+  const manwonInput = (
+    key: "assetAmountManwon" | "householdMonthlyIncomeManwon",
+    label: string,
+    hint: string,
+    value: string,
+  ) => (
+    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+      {label}
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          placeholder="예: 5000"
+          value={value}
+          onChange={(event) => {
+            const next = { ...additional, [key]: event.target.value }
+            if (key === "householdMonthlyIncomeManwon")
+              next.householdMonthlyIncomeWon = ""
+            setDraft({ ...draft, additionalEligibility: next })
+            setError("")
+          }}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+        />
+        <span aria-hidden="true" className="font-normal">만원</span>
+      </div>
+      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+    </label>
   )
 
   const field = (
@@ -657,6 +688,12 @@ export default function DiagnosisPage({
 
                 "정책에서 사용하는 가구 범위는 다를 수 있어요.",
               )}
+              {manwonInput(
+                "householdMonthlyIncomeManwon",
+                "가구 전체 월소득 (만원)",
+                "가구원 모두의 세전 월소득 합계예요. 공공임대(도시근로자 월평균소득 기준)와 비교할 때 써요.",
+                householdIncomeManwon(additional),
+              )}
               {field("housing", "현재 주거 형태", HOUSING, undefined, true)}
               {field(
                 "ownsHome",
@@ -667,14 +704,16 @@ export default function DiagnosisPage({
 
                 "현재 거주 형태와 별개로 다른 곳에 보유한 주택도 포함합니다.",
               )}
-              {field(
-                "asset",
-
-                "본인 총재산 구간",
-
-                ASSETS,
-
-                "부채 차감 전 부동산·금융재산 등의 합계입니다. 정책별 산정액과는 다를 수 있어요.",
+              {additionalSelect(
+                "householdHomeless",
+                "세대원 전원 무주택 여부",
+                "주민등록상 세대원 모두 주택을 갖고 있지 않으면 '해당'이에요. 공공임대·주택 대출 정책에서 많이 봐요.",
+              )}
+              {manwonInput(
+                "assetAmountManwon",
+                "가구 총재산 (만원)",
+                "함께 사는 가구원의 부동산·예금·자동차·전월세 보증금 등을 합한 금액이에요. 모르면 비워두세요.",
+                additional.assetAmountManwon ?? "",
               )}
             </>
           )}
@@ -843,22 +882,6 @@ export default function DiagnosisPage({
                     <legend className="px-1 font-semibold">
                       가구 소득 정보
                     </legend>
-                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                      가구 전체 월소득 (원, 선택)
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={additional.householdMonthlyIncomeWon}
-                        onChange={(event) =>
-                          updateAdditional(
-                            "householdMonthlyIncomeWon",
-                            event.target.value,
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                      />
-                    </label>
                     {additionalSelect(
                       "householdIncomeRecognitionKnown",
 

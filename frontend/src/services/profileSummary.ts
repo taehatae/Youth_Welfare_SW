@@ -33,12 +33,6 @@ const extraFields = [
     "status",
   ],
   [
-    "householdMonthlyIncomeWon",
-    "household_monthly_income_won",
-    "가구 월소득",
-    "money",
-  ],
-  [
     "householdIncomeRecognitionKnown",
     "household_income_recognition_known",
     "소득인정액 확인 여부",
@@ -102,6 +96,16 @@ const extraFields = [
     "text",
   ],
 ] as const
+function manwonLabel(won: JsonValue | undefined) {
+  if (typeof won !== "number") return "미입력"
+  const manwon = Math.round(won / 10000)
+  const eok = Math.floor(manwon / 10000)
+  const rest = manwon % 10000
+  if (!eok) return `${manwon.toLocaleString("ko-KR")}만원`
+  return rest
+    ? `${eok}억 ${rest.toLocaleString("ko-KR")}만원`
+    : `${eok}억원`
+}
 const benefits: Record<string, string> = {
   LIVELIHOOD: "생계",
   MEDICAL: "의료",
@@ -153,7 +157,21 @@ export function profileSummary(profile: UserProfileInput | null) {
           "주택 보유",
           p.owns_home == null ? "미확인" : p.owns_home ? "보유" : "미보유",
         ],
-        ["재산", label(ASSETS, p.asset_range)],
+        [
+          "가구 총재산",
+          typeof extra.asset_amount_won === "number"
+            ? manwonLabel(extra.asset_amount_won)
+            : p.asset_range
+              ? label(ASSETS, p.asset_range)
+              : "미입력",
+        ],
+        [
+          "세대 전원 무주택",
+          extra.household_homeless == null
+            ? "미확인"
+            : label(YES_NO, extra.household_homeless),
+        ],
+        ["가구 월소득", manwonLabel(extra.household_monthly_income_won)],
       ],
     },
     {
@@ -219,6 +237,16 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
         : []
     else additional[draftKey] = value == null ? "" : String(value)
   }
+  additional.assetAmountManwon =
+    typeof extra.asset_amount_won === "number"
+      ? String(Math.round(extra.asset_amount_won / 10000))
+      : ""
+  additional.householdMonthlyIncomeManwon =
+    typeof extra.household_monthly_income_won === "number"
+      ? String(Math.round(extra.household_monthly_income_won / 10000))
+      : ""
+  additional.householdHomeless =
+    typeof extra.household_homeless === "string" ? extra.household_homeless : ""
   return {
     ...EMPTY_DRAFT,
     age: String(profile.age),

@@ -284,6 +284,17 @@
      "unit": "",
      "values": [],
      "or_group": ""
+    },
+    {
+     "field": "세대원 전원 무주택",
+     "profile_key": "eligibility_conditions.additional_conditions.household_homeless",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
     }
    ]
   },
@@ -502,19 +513,19 @@
    "reviewed_at": "2026-10-31",
    "conditions": [
     {
-     "field": "가구 소득인정액",
-     "profile_key": "eligibility_conditions.additional_conditions.recognized_household_income_won",
+     "field": "한부모가족",
+     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
      "kind": "requirement",
-     "operator": "lte",
-     "value": 100,
+     "operator": "is_true",
+     "value": null,
      "upper_value": null,
-     "unit": "%",
+     "unit": "",
      "values": [],
      "or_group": ""
     },
     {
-     "field": "한부모가족",
-     "profile_key": "eligibility_conditions.additional_conditions.single_parent_support_status",
+     "field": "세대원 전원 무주택",
+     "profile_key": "eligibility_conditions.additional_conditions.household_homeless",
      "kind": "requirement",
      "operator": "is_true",
      "value": null,
@@ -1068,6 +1079,30 @@
      "unit": "",
      "values": [],
      "or_group": ""
+    },
+    {
+     "field": "고용 상태",
+     "profile_key": "employment_status",
+     "kind": "requirement",
+     "operator": "one_of",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [
+      "미취업"
+     ],
+     "or_group": "대상1"
+    },
+    {
+     "field": "본인 월소득",
+     "profile_key": "income_level",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 0,
+     "upper_value": null,
+     "unit": "원",
+     "values": [],
+     "or_group": "대상1"
     }
    ]
   },
@@ -1116,7 +1151,19 @@
    "source_sha256": "238a6164144d0ab117b6c35a220cde7ab96183e44925cf9e5065d937b847933c",
    "reviewed_by": "claude",
    "reviewed_at": "2026-10-31",
-   "conditions": []
+   "conditions": [
+    {
+     "field": "자립준비청년",
+     "profile_key": "eligibility_conditions.additional_conditions.protection_ended",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
   },
   {
    "serv_id": "WLF00001176",
@@ -1213,8 +1260,8 @@
    "reviewed_at": "2026-10-31",
    "conditions": [
     {
-     "field": "기초생활보장 수급자",
-     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "field": "생계급여 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_types:LIVELIHOOD",
      "kind": "requirement",
      "operator": "is_true",
      "value": null,
@@ -1428,8 +1475,8 @@
    "reviewed_at": "2026-10-31",
    "conditions": [
     {
-     "field": "기초생활보장 수급자",
-     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "field": "의료급여 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_types:MEDICAL",
      "kind": "requirement",
      "operator": "is_true",
      "value": null,
@@ -1669,7 +1716,19 @@
    "source_sha256": "a19aa896d579a464d4b409e52dab755caf4a8dc6ff615d5abbe8949fabff4766",
    "reviewed_by": "claude",
    "reviewed_at": "2026-10-31",
-   "conditions": []
+   "conditions": [
+    {
+     "field": "세대원 전원 무주택",
+     "profile_key": "eligibility_conditions.additional_conditions.household_homeless",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": ""
+    }
+   ]
   },
   {
    "serv_id": "WLF00003272",
@@ -1760,8 +1819,19 @@
    "reviewed_at": "2026-10-31",
    "conditions": [
     {
-     "field": "기초생활보장 수급자",
-     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_status",
+     "field": "생계급여 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_types:LIVELIHOOD",
+     "kind": "requirement",
+     "operator": "is_true",
+     "value": null,
+     "upper_value": null,
+     "unit": "",
+     "values": [],
+     "or_group": "대상1"
+    },
+    {
+     "field": "의료급여 수급자",
+     "profile_key": "eligibility_conditions.additional_conditions.basic_benefit_types:MEDICAL",
      "kind": "requirement",
      "operator": "is_true",
      "value": null,
@@ -2029,6 +2099,17 @@
      "value": null,
      "upper_value": null,
      "unit": "",
+     "values": [],
+     "or_group": ""
+    },
+    {
+     "field": "가구 총재산",
+     "profile_key": "eligibility_conditions.additional_conditions.asset_amount_won",
+     "kind": "requirement",
+     "operator": "lte",
+     "value": 122000000,
+     "upper_value": null,
+     "unit": "원",
      "values": [],
      "or_group": ""
     }

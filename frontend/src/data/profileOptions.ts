@@ -127,7 +127,11 @@ export interface AdditionalEligibilityDraft {
   basicBenefitTypes: string[]
   nearPovertyStatus: string
   singleParentSupportStatus: string
+  // 예전 저장본은 원 단위로 저장했다. 새 입력은 householdMonthlyIncomeManwon을 쓴다.
   householdMonthlyIncomeWon: string
+  householdMonthlyIncomeManwon?: string
+  assetAmountManwon?: string
+  householdHomeless?: string
   householdIncomeRecognitionKnown: string
   recognizedHouseholdIncomeWon: string
   householdBasicBenefitStatus: string
@@ -149,6 +153,9 @@ export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
   nearPovertyStatus: "",
   singleParentSupportStatus: "",
   householdMonthlyIncomeWon: "",
+  householdMonthlyIncomeManwon: "",
+  assetAmountManwon: "",
+  householdHomeless: "",
   householdIncomeRecognitionKnown: "",
   recognizedHouseholdIncomeWon: "",
   householdBasicBenefitStatus: "",
@@ -185,6 +192,25 @@ export const EMPTY_DRAFT: ProfileDraft = {
   qualifications: [],
 }
 
+// 가구 월소득(만원). 예전 원 단위 저장값은 만원으로 환산한다.
+export function householdIncomeManwon(
+  additional: Partial<AdditionalEligibilityDraft>,
+): string {
+  if (additional.householdMonthlyIncomeManwon)
+    return additional.householdMonthlyIncomeManwon
+  const won = additional.householdMonthlyIncomeWon
+  if (won && /^\d+$/.test(won)) return String(Math.round(Number(won) / 10000))
+  return ""
+}
+
+export function assetRangeFromManwon(manwon: number): string {
+  if (manwon < 10000) return "UNDER_100M"
+  if (manwon < 20000) return "100M_200M"
+  if (manwon < 30000) return "200M_300M"
+  if (manwon < 50000) return "300M_500M"
+  return "OVER_500M"
+}
+
 export const incomeWon = (draft: ProfileDraft) =>
   (Number(draft.incomeMajor) * 100 + Number(draft.incomeMinor)) * 10000
 
@@ -210,6 +236,17 @@ export function stepError(d: ProfileDraft, step: number): string {
 
   if (step === 3 && d.housing === "OWNED" && d.ownsHome === "NO")
     return "자가 거주와 주택 미보유가 함께 선택되어 있어요. 주택 보유 여부를 확인해주세요."
+
+  if (step === 3 && d.additionalEligibility) {
+    const a = d.additionalEligibility
+    const amounts = [a.assetAmountManwon ?? "", a.householdMonthlyIncomeManwon ?? ""]
+    if (
+      amounts.some(
+        (v) => v !== "" && (!/^\d+$/.test(v) || !Number.isSafeInteger(Number(v) * 10000)),
+      )
+    )
+      return "총재산과 가구 월소득은 0 이상의 정수(만원)로 입력해주세요."
+  }
 
   if (step === 4 && !EMPLOYMENT.some(([v]) => v === d.employment))
     return "현재 고용 상태를 선택해주세요."
@@ -266,6 +303,9 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
     ...d.additionalEligibility,
   }
   const optionalNumber = (value: string) => value === "" ? null : Number(value)
+  const assetAmount =
+    (extra.assetAmountManwon ?? "") === "" ? null : Number(extra.assetAmountManwon)
+  const incomeManwon = householdIncomeManwon(extra)
 
   return {
     age: Number(d.age),
@@ -281,7 +321,7 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
 
       income_type:
         d.incomeType as UserProfileInput["eligibility_conditions"]["income_type"],
-      asset_range: d.asset || null,
+      asset_range: assetAmount != null ? assetRangeFromManwon(assetAmount) : d.asset || null,
 
       housing_type: d.housing,
       owns_home: d.ownsHome === "UNKNOWN" ? null : d.ownsHome === "YES",
@@ -307,9 +347,10 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
             : null,
         near_poverty_status: extra.nearPovertyStatus || null,
         single_parent_support_status: extra.singleParentSupportStatus || null,
-        household_monthly_income_won: optionalNumber(
-          extra.householdMonthlyIncomeWon,
-        ),
+        household_monthly_income_won:
+          incomeManwon === "" ? null : Number(incomeManwon) * 10000,
+        asset_amount_won: assetAmount == null ? null : assetAmount * 10000,
+        household_homeless: extra.householdHomeless || null,
         household_income_recognition_known:
           extra.householdIncomeRecognitionKnown || null,
         recognized_household_income_won:
@@ -414,6 +455,13 @@ export function isDraft(value: unknown): value is ProfileDraft {
   )
 }
 
+// 나중에 추가된 항목이라 예전 저장본에는 없을 수 있다. 없으면 ""로 취급한다.
+const optionalAdditionalKeys = [
+  "householdMonthlyIncomeManwon",
+  "assetAmountManwon",
+  "householdHomeless",
+]
+
 function isAdditionalEligibilityDraft(
   value: unknown,
 ): value is AdditionalEligibilityDraft {
@@ -430,10 +478,13 @@ function isAdditionalEligibilityDraft(
     "jobSeekRegistration",
     "employmentSupportProgram",
     "selfSufficiencyProgramStatus",
+    "householdHomeless",
   ]
   return (
     Object.keys(EMPTY_ADDITIONAL_ELIGIBILITY).every((key) =>
-      key === "basicBenefitTypes"
+      optionalAdditionalKeys.includes(key) && additional[key] === undefined
+        ? true
+        : key === "basicBenefitTypes"
         ? Array.isArray(additional[key]) &&
           (additional[key] as unknown[]).every(
             (item) =>
@@ -443,7 +494,9 @@ function isAdditionalEligibilityDraft(
         : typeof additional[key] === "string",
     ) &&
     statusKeys.every((key) =>
-      ["", "YES", "NO", "UNKNOWN"].includes(additional[key] as string),
+      optionalAdditionalKeys.includes(key) && additional[key] === undefined
+        ? true
+        : ["", "YES", "NO", "UNKNOWN"].includes(additional[key] as string),
     ) &&
     (additional.registeredAddressSido === "" ||
       (typeof additional.registeredAddressSido === "string" &&
