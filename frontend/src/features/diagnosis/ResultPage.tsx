@@ -45,7 +45,8 @@ export default function ResultPage({
   const [filter, setFilter] = useState<Filter>("all")
   const [search, setSearch] = useState("")
   const [query, setQuery] = useState("")
-  const [reviewedOnly, setReviewedOnly] = useState(false)
+  // 지금은 원문 기준으로 자격 경로를 검수한 정책만 기본으로 보여준다(체크를 끄면 전체).
+  const [reviewedOnly, setReviewedOnly] = useState(true)
   if (!snapshot)
     return (
       <section className="reverse-page">
@@ -69,7 +70,9 @@ export default function ResultPage({
   const { analysis } = snapshot
   const allRows = policyResults(snapshot)
   const reviewedCount = allRows.filter((p) => p.pathReview === "reviewed").length
-  const rows = allRows.filter((p) => !reviewedOnly || p.pathReview === "reviewed").sort(
+  // 검수 정보가 없는 이전 결과는 필터 없이 전체를 보여준다.
+  const onlyReviewed = reviewedOnly && reviewedCount > 0
+  const rows = allRows.filter((p) => !onlyReviewed || p.pathReview === "reviewed").sort(
     (a, b) =>
       resultCategoryOrder.indexOf(resultCategoryOf(a)) -
         resultCategoryOrder.indexOf(resultCategoryOf(b)) ||
@@ -148,7 +151,7 @@ export default function ResultPage({
       >
         <div className="analysis-summary" aria-label="전체 분석 요약">
           <strong>
-            총 {analysis.matched.evaluated_count ?? rows.length}건 분석
+            총 {onlyReviewed ? rows.length : (analysis.matched.evaluated_count ?? rows.length)}건 분석
           </strong>
           {resultCategoryOrder.map((category) => (
             <span key={category} data-category={category}>
