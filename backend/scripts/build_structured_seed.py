@@ -86,7 +86,7 @@ def main() -> int:
         "select serv_id, serv_name, target_details, selection_criteria from welfare_services")}
     missing = sorted(set(services) - set(answers))
     if missing:
-        raise SystemExit(f"검수되지 않은 정책이 있어요: {', '.join(missing)}")
+        print(f"검수되지 않은 정책 {len(missing)}개는 시드에서 빼고 기존 분석을 씁니다.")
 
     policies = []
     for serv_id in sorted(answers):

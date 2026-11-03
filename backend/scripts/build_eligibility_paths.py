@@ -43,12 +43,13 @@ def main() -> int:
     db = sqlite3.connect(f"file:{DATA.parent / 'youth_welfare.db'}?mode=ro", uri=True)
     services = {r[0]: r[1:] for r in db.execute(
         "select serv_id, serv_name, target_details, selection_criteria from welfare_services")}
+    # 아직 정리하지 않은 정책은 시드에서 빼고(진단은 기존 분석으로 대체) 목록만 알려준다.
     missing = sorted(set(services) - set(gold) - set(reviewed))
     if missing:
-        raise SystemExit(f"경로가 없는 정책이 있어요: {', '.join(missing)}")
+        print(f"경로를 아직 정리하지 않은 정책 {len(missing)}개는 기존 분석을 씁니다.")
 
     policies = []
-    for serv_id in sorted(services):
+    for serv_id in sorted(set(services) - set(missing)):
         name, target, selection = services[serv_id]
         source = "\n".join(t for t in (target, selection) if t and t.strip())
         if serv_id in reviewed:
