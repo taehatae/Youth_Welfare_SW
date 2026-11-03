@@ -159,4 +159,6 @@ def analyze(service, user, profile: dict | None, record: PolicyEligibility | Non
         "matched_path_id": best["path_id"],
         "blocked_by_common": list(dict.fromkeys(r["condition_type"] for r in blocked)),
         "preferences": record.preferences or [],
+        # 원문을 다시 읽고 경로로 정리한 정책(reviewed)과 기존 정답지에서 옮긴 정책(converted)을 구분한다.
+        "path_review": "converted" if record.drafted_by == "converted" else "reviewed",
     }

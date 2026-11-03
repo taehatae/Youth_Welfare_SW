@@ -143,6 +143,8 @@ export interface PolicyAnalysis {
 
   preferences?: string[]
 
+  path_review?: "reviewed" | "converted" | null
+
   notes: string[]
 
   detail_url: string

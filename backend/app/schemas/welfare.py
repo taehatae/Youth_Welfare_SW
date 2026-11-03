@@ -110,6 +110,7 @@ class EligibilityAnalysis(BaseModel):
     matched_path_id: str | None = None
     blocked_by_common: list[str] = Field(default_factory=list)
     preferences: list[str] = Field(default_factory=list)
+    path_review: Literal["reviewed", "converted"] | None = None
 
 
 class MatchedPoliciesResponse(BaseModel):

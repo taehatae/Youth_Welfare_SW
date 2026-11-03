@@ -26,6 +26,7 @@ SPECIAL_TARGETS = {
 }
 BENEFIT_TYPES = {"생계급여 수급자": "LIVELIHOOD", "의료급여 수급자": "MEDICAL", "주거급여 수급자": "HOUSING",
                  "교육급여 수급자": "EDUCATION"}
+HOUSING_LABELS = {"OWNED": "자가", "JEONSE": "전세", "MONTHLY": "월세", "FREE": "무상 거주", "OTHER": "기타"}
 MARRIAGE_LABELS = {"SINGLE": "미혼", "MARRIED": "기혼", "DIVORCED": "이혼", "WIDOWED": "사별"}
 # 예전 입력의 재산 구간(원). 금액을 모를 때 구간 전체가 기준 안/밖인지로만 판정한다.
 ASSET_RANGES = {"UNDER_100M": (0, 99_999_999), "100M_200M": (100_000_000, 199_999_999),
@@ -95,6 +96,9 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
         "도시근로자 월평균소득 대비 가구소득": round(int(household_income) / urban * 100, 1)
         if household_income not in (None, "") and urban else None,
         "혼인 상태": MARRIAGE_LABELS.get(p.get("marital_status")),
+        "주거 형태": HOUSING_LABELS.get(p.get("housing_type")),
+        # 1인 가구면 부모와 따로 산다. 가구원이 더 있으면 배우자·자녀일 수도 있어 알 수 없다.
+        "부모와 따로 거주": True if household_size == 1 else None,
         # 본인 명의 주택이 있으면 세대 전원 무주택일 수 없다.
         "세대원 전원 무주택": False if owns_home is True else homeless,
         "자립준비청년": False if protected is False or ended is False else True if protected and ended else None,

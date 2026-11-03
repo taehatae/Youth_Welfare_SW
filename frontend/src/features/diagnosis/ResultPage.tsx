@@ -45,6 +45,7 @@ export default function ResultPage({
   const [filter, setFilter] = useState<Filter>("all")
   const [search, setSearch] = useState("")
   const [query, setQuery] = useState("")
+  const [reviewedOnly, setReviewedOnly] = useState(false)
   if (!snapshot)
     return (
       <section className="reverse-page">
@@ -66,7 +67,9 @@ export default function ResultPage({
       </section>
     )
   const { analysis } = snapshot
-  const rows = [...policyResults(snapshot)].sort(
+  const allRows = policyResults(snapshot)
+  const reviewedCount = allRows.filter((p) => p.pathReview === "reviewed").length
+  const rows = allRows.filter((p) => !reviewedOnly || p.pathReview === "reviewed").sort(
     (a, b) =>
       resultCategoryOrder.indexOf(resultCategoryOf(a)) -
         resultCategoryOrder.indexOf(resultCategoryOf(b)) ||
@@ -115,7 +118,7 @@ export default function ResultPage({
           {
             id: "changed" as const,
             label: "추가·변경 정책",
-            count: changedIds.size,
+            count: rows.filter((p) => changedIds.has(p.id)).length,
           },
         ]
       : []),
@@ -258,6 +261,16 @@ export default function ResultPage({
               확인할 수 있어요.
             </p>
           </form>
+          {reviewedCount > 0 && (
+            <label className="reviewed-only-toggle">
+              <input
+                type="checkbox"
+                checked={reviewedOnly}
+                onChange={(event) => setReviewedOnly(event.target.checked)}
+              />
+              원문 기준으로 자격 경로를 검수한 정책만 보기 ({reviewedCount}개)
+            </label>
+          )}
           <div className="analysis-filters" aria-label="분석 결과 필터">
             {filters.map((item) => (
               <button

@@ -53,6 +53,9 @@ export interface PolicyRow {
   blockedByCommon?: string[]
 
   preferences?: string[]
+
+  // 원문 기준으로 경로를 정리·검수한 정책이면 reviewed
+  pathReview?: "reviewed" | "converted"
 }
 
 export const trackingLabels = {
@@ -125,6 +128,7 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
       matchedPathId: p.matched_path_id ?? null,
       blockedByCommon: p.blocked_by_common ?? [],
       preferences: p.preferences ?? [],
+      pathReview: p.path_review ?? undefined,
 
       url: p.detail_url,
       description: (p.notes ?? []).join(" "),
@@ -180,6 +184,7 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
       matchedPathId: existing?.matchedPathId,
       blockedByCommon: existing?.blockedByCommon,
       preferences: existing?.preferences,
+      pathReview: existing?.pathReview,
       url: p.detail_url || existing?.url,
       description: p.support_amount,
       counts: existing?.counts,
@@ -210,6 +215,7 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
       matchedPathId: existing?.matchedPathId,
       blockedByCommon: existing?.blockedByCommon,
       preferences: existing?.preferences,
+      pathReview: existing?.pathReview,
       url: existing?.url,
       description: existing?.description ?? "",
       counts: existing?.counts,

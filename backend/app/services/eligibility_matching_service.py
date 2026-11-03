@@ -995,6 +995,7 @@ class EligibilityMatchingService:
             "matched_path_id": None,
             "blocked_by_common": [],
             "preferences": [],
+            "path_review": None,
             "policy_id": service.serv_id,
             "title": service.serv_name,
             "status": status,
