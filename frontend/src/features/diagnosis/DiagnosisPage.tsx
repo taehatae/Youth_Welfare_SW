@@ -770,7 +770,12 @@ export default function DiagnosisPage({
                   해당 없으면 선택하지 않아도 돼요.
                 </p>
               </fieldset>
-              {field("student", "현재 재학 여부", YES_NO)}
+              {field(
+                "student",
+                "현재 재학 여부",
+                YES_NO,
+                "입학 예정이거나 다음 학기 복학 예정이어도 '해당'을 선택해주세요.",
+              )}
               {field("disability", "등록 장애인 여부", YES_NO)}
               {field("maritalStatus", "혼인 상태", MARRIAGE)}
               {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
