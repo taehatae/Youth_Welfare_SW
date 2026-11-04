@@ -53,17 +53,6 @@ const pathBrief = (policy: PolicyRow): string | null => {
     .map((c) => c.condition_type)
   return `가장 가까운 경로 '${path.label}': ${failedTypes.join(", ")} 부족`
 }
-const pathMarks = { passed: "✓", failed: "✕", needs_review: "?" } as const
-type PathCondition = NonNullable<PolicyRow["paths"]>[number]["conditions"][number]
-// 기준 문구(required_value)에 조건 이름이 이미 들어 있어 이름을 따로 쓰지 않는다.
-const PathConditionLine = ({ c }: { c: PathCondition }) => (
-  <li data-status={c.status}>
-    <span aria-label={pathMarkLabels[c.status]}>{pathMarks[c.status]}</span>{" "}
-    {c.required_value || c.condition_type}
-    <small> · 내 정보 {c.current_value || "미입력"}</small>
-  </li>
-)
-const pathMarkLabels = { passed: "충족", failed: "미충족", needs_review: "확인 필요" } as const
 export const resultReason = (policy: PolicyRow): string => {
   if (policy.paths?.length && policy.recommendationReason)
     return policy.recommendationReason
@@ -120,17 +109,9 @@ export default function AnalysisPolicyCard({
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
   const failed = policy.conditions.filter((c) => c.status === "미충족")
-  const review = policy.conditions.filter((c) => c.status === "추가 확인")
-  const first = failed[0] ?? review[0] ?? policy.conditions[0]
   const [open, setOpen] = useState(false)
   const bodyId = useId()
   const passed = metCountOf(policy)
-  const allPaths = policy.paths ?? []
-  // 이전 결과에는 common 표시가 없어 모든 경로에 같은 조건이 있어도 공통으로 묶지 않는다.
-  const commonConditions = allPaths[0]?.conditions.filter((c) => c.common) ?? []
-  const commonChecks = (allPaths[0]?.checks ?? []).filter((check) =>
-    allPaths.every((p) => p.checks.includes(check)),
-  )
   return (
     <article
       className="reverse-card"
@@ -189,129 +170,11 @@ export default function AnalysisPolicyCard({
         </div>
       </header>
       <div id={bodyId} hidden={!open}>
-      <div className="policy-overview">
-        <p className="policy-key-reason">
-          <strong>판정 이유</strong>
-          <span>{resultReason(policy)}</span>
+      {savedAt && (
+        <p className="comparison-time">
+          저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
         </p>
-        {(policy.paths?.length ?? 0) > 1 && (
-          <div className="policy-key-reason policy-paths" aria-label="자격 경로">
-            <strong>자격 경로</strong>
-            <p className="policy-path-note">아래 경로 중 하나만 맞으면 신청할 수 있어요.</p>
-            {commonConditions.length > 0 && (
-              <div className="policy-path-checks">
-                <small>모든 경로 공통 조건</small>
-                <ul className="policy-path-conditions">
-                  {commonConditions.map((c, i) => (
-                    <PathConditionLine key={i} c={c} />
-                  ))}
-                </ul>
-              </div>
-            )}
-            {commonChecks.length > 0 && (
-              <div className="policy-path-checks">
-                <small>모든 경로 공통 확인 사항</small>
-                <ul>
-                  {commonChecks.map((check, i) => (
-                    <li key={i}>{check}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            <ul className="policy-path-list">
-              {policy.paths!.map((path) => {
-                const own = path.conditions.filter((c) => !c.common)
-                const checks = path.checks.filter((check) => !commonChecks.includes(check))
-                return (
-                <li key={path.path_id}>
-                  <p className="policy-path-head">
-                    <span>{path.label}</span>
-                    <span
-                      className="reverse-tag"
-                      data-result={pathStatusCategory(path.status)}
-                    >
-                      {resultCategoryLabels[pathStatusCategory(path.status)]}
-                    </span>
-                    {path.path_id === policy.matchedPathId && (
-                      <small className="policy-path-main">대표</small>
-                    )}
-                  </p>
-                  {own.length > 0 && (
-                    <ul className="policy-path-conditions">
-                      {own.map((c, i) => (
-                        <PathConditionLine key={i} c={c} />
-                      ))}
-                    </ul>
-                  )}
-                  {checks.length > 0 && (
-                    <div className="policy-path-checks">
-                      <small>확인 사항</small>
-                      <ul>
-                        {checks.map((check, i) => (
-                          <li key={i}>{check}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </li>
-                )
-              })}
-            </ul>
-          </div>
-        )}
-        {!!policy.preferences?.length && (
-          <p className="policy-path-preferences">
-            <strong>우대 사항</strong> {policy.preferences.join(", ")}
-          </p>
-        )}
-        {policy.recommendationUncertainty && (
-          <p className="reverse-alert">{policy.recommendationUncertainty}</p>
-        )}
-        {!!policy.confirmedConditions?.length && (
-          <div className="policy-key-reason" aria-label="확인된 조건">
-            <strong>자동 비교로 확인된 조건</strong>
-            <ul>
-              {policy.confirmedConditions.map((condition, index) => (
-                <li key={`${condition.field}-${index}`}>
-                  {fieldName(condition.field)}<OrNote field={condition.field} />: {condition.current}
-                  {condition.required ? ` · 기준 ${condition.required}` : ""}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {counts ? (
-          <p className="policy-evaluation-note">
-            {counts.evaluated === 0
-              ? "판정 정보 부족 · 자동 비교할 수 있는 조건이 없어요."
-              : `자동 비교한 조건 ${counts.evaluated}개 중 ${counts.passed}개를 충족했어요. 전체 수급 자격의 확정을 뜻하지 않아요.`}
-          </p>
-        ) : (
-          <p className="policy-evaluation-note">
-            조건별 집계가 제공되지 않은 결과예요.
-          </p>
-        )}
-        {first && (
-          <p className="policy-key-reason">
-            <strong>
-              {failed.length ? "확인된 미충족 조건" : "먼저 확인할 조건"}
-            </strong>
-            <span>
-              {isOrGroup(first.field) ? first.field : (conditionFields[first.field] ?? first.field)}
-              <OrNote field={first.field} /> ·{" "}
-              {first.required || "공식 기준 확인 필요"}
-            </span>
-          </p>
-        )}
-        {policy.description && (
-          <p className="policy-description">{policy.description}</p>
-        )}
-        {savedAt && (
-          <p className="comparison-time">
-            저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
-          </p>
-        )}
-      </div>
+      )}
       {policy.conditions.length > 0 ? (
         <details className="motion-details policy-condition-details">
           <summary>
