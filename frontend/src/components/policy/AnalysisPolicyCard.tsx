@@ -95,6 +95,16 @@ const conditionTabs: [ConditionTab, string][] = [
   ["failed", "미충족"],
   ["review", "추가 확인"],
 ]
+type ConditionItem = { field: string; current: string; required: string; guide?: string }
+const isCheck = (c: ConditionItem) => c.field === "확인 사항"
+// 추가 확인은 '입력하면 비교할 수 있는 조건'과 '공식 안내에서 확인할 사항'을 나눠 보여준다.
+const groupsOf = (tab: ConditionTab, rows: ConditionItem[]): [string, ConditionItem[]][] =>
+  tab === "review"
+    ? ([
+        ["정보를 입력하면 비교할 수 있어요", rows.filter((c) => !isCheck(c))],
+        ["공식 안내에서 확인해야 해요", rows.filter(isCheck)],
+      ] as [string, ConditionItem[]][]).filter(([, group]) => group.length > 0)
+    : [["", rows]]
 export default function AnalysisPolicyCard({
   policy,
   saved,
@@ -120,7 +130,7 @@ export default function AnalysisPolicyCard({
   const [tab, setTab] = useState<ConditionTab | null>(null)
   const panelId = useId()
   const passed = metCountOf(policy)
-  const items: Record<ConditionTab, { field: string; current: string; required: string; guide?: string }[]> = {
+  const items: Record<ConditionTab, ConditionItem[]> = {
     passed: confirmed,
     failed,
     review,
@@ -191,43 +201,59 @@ export default function AnalysisPolicyCard({
         {tab && (
           <>
             <p className="condition-panel-title">
-              {conditionTabs.find(([kind]) => kind === tab)![1]} 조건
+              {conditionTabs.find(([kind]) => kind === tab)![1]} 조건 <b>{shown.length}</b>
             </p>
             {shown.length ? (
-              <ul>
-                {shown.map((c, i) => (
-                  <li key={`${c.field}-${i}`}>
-                    {c.field === "확인 사항" ? (
-                      // 입력값으로 비교할 수 없는 확인 사항은 기준 문장만 보여준다.
-                      <strong>{c.required || c.guide || "공식 안내에서 확인해주세요."}</strong>
-                    ) : (
-                      <strong>
-                        {fieldName(c.field)}
-                        <OrNote field={c.field} />
-                      </strong>
+              groupsOf(tab, shown).map(([title, rows]) => (
+                <section key={title || "all"} className="condition-group">
+                  {title && (
+                    <p className="condition-group-title">
+                      {title} <b>{rows.length}</b>
+                    </p>
+                  )}
+                  <ul>
+                    {rows.map((c, i) =>
+                      isCheck(c) ? (
+                        // 입력값으로 비교할 수 없는 확인 사항은 기준 문장만 한 칸에 보여준다.
+                        <li key={`check-${i}`} className="condition-item" data-check>
+                          <span className="condition-no" aria-hidden="true">{i + 1}</span>
+                          <p>{c.required || c.guide || "공식 안내에서 확인해주세요."}</p>
+                        </li>
+                      ) : (
+                        <li key={`${c.field}-${i}`} className="condition-item">
+                          <strong>
+                            {fieldName(c.field)}
+                            <OrNote field={c.field} />
+                          </strong>
+                          <dl>
+                            {/* 저장된 결과는 내 정보가 '프로필 보호 중'으로 가려져 있어 기준만 보여준다. */}
+                            {c.current && c.current !== "프로필 보호 중" && (
+                              <div>
+                                <dt>내 정보</dt>
+                                <dd>{c.current}</dd>
+                              </div>
+                            )}
+                            <div>
+                              <dt>기준</dt>
+                              <dd>{c.required || "공식 안내에서 확인해주세요."}</dd>
+                            </div>
+                          </dl>
+                          {tab !== "passed" && onEdit && c.field !== "external_review" && (
+                            <button
+                              className="condition-edit"
+                              type="button"
+                              disabled={busy}
+                              onClick={() => onEdit(conditionStep(c.field))}
+                            >
+                              관련 입력 확인 →
+                            </button>
+                          )}
+                        </li>
+                      ),
                     )}
-                    {c.field === "확인 사항" ? null : (
-                      <span>
-                        {/* 저장된 결과는 내 정보가 '프로필 보호 중'으로 가려져 있어 기준만 보여준다. */}
-                        {[
-                          c.current && c.current !== "프로필 보호 중" ? `내 정보 ${c.current}` : "",
-                          c.required ? `기준 ${c.required}` : "",
-                        ].filter(Boolean).join(" · ") || "공식 안내에서 확인해주세요."}
-                      </span>
-                    )}
-                    {tab !== "passed" && onEdit && !["external_review", "확인 사항"].includes(c.field) && (
-                      <button
-                        className="condition-edit"
-                        type="button"
-                        disabled={busy}
-                        onClick={() => onEdit(conditionStep(c.field))}
-                      >
-                        관련 입력 확인 →
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
+                  </ul>
+                </section>
+              ))
             ) : (
               <p className="reverse-card-note">이 결과에는 조건별 상세 내역이 없어요.</p>
             )}

@@ -264,10 +264,19 @@
 .condition-panel[data-kind="passed"] { background: #f3faf6; border-color: #cce7da; }
 .condition-panel[data-kind="failed"] { background: #fff7f3; border-color: #f2d4c5; }
 .condition-panel[data-kind="review"] { background: #fffbf0; border-color: #eadbb5; }
-.condition-panel-title { font-size: 12px; font-weight: 700; color: #3a4b63; margin-bottom: 8px; }
+.condition-panel-title { font-size: 13px; font-weight: 700; color: #1f2d44; margin-bottom: 12px; }
+.condition-panel-title b, .condition-group-title b { margin-left: 4px; }
+.condition-group + .condition-group { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2d3a8; }
+.condition-group-title { font-size: 12px; font-weight: 700; color: #6b5420; margin-bottom: 8px; }
 .condition-panel ul { display: grid; gap: 8px; }
-.condition-panel li { display: grid; gap: 2px; font-size: 13px; line-height: 1.6; }
-.condition-panel li strong { font-weight: 650; color: #1f2d44; }
-.condition-panel li span { color: #4b5d78; overflow-wrap: anywhere; }
-.condition-panel li .condition-edit { justify-self: start; }
+.condition-item { display: grid; gap: 6px; padding: 12px 14px; background: #fff; border: 1px solid #e3e9f2; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+.condition-item > strong { font-weight: 700; color: #1f2d44; }
+.condition-item dl { display: grid; gap: 2px; }
+.condition-item dl > div { display: grid; grid-template-columns: 52px 1fr; gap: 8px; }
+.condition-item dt { color: #7a8aa1; font-size: 12px; }
+.condition-item dd { color: #33445e; overflow-wrap: anywhere; }
+.condition-item[data-check] { grid-template-columns: 22px 1fr; align-items: start; gap: 10px; }
+.condition-item[data-check] p { color: #33445e; overflow-wrap: anywhere; }
+.condition-no { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: #f6ecd2; color: #785716; font-size: 11px; font-weight: 700; }
+.condition-item .condition-edit { justify-self: start; }
 @media (max-width: 760px) { .condition-panel { margin: 0 16px 14px; } }
