@@ -131,6 +131,7 @@ export interface AdditionalEligibilityDraft {
   householdMonthlyIncomeWon: string
   householdMonthlyIncomeManwon?: string
   assetAmountManwon?: string
+  personalAssetManwon?: string
   householdHomeless?: string
   householdIncomeRecognitionKnown: string
   recognizedHouseholdIncomeWon: string
@@ -155,6 +156,7 @@ export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
   householdMonthlyIncomeWon: "",
   householdMonthlyIncomeManwon: "",
   assetAmountManwon: "",
+  personalAssetManwon: "",
   householdHomeless: "",
   householdIncomeRecognitionKnown: "",
   recognizedHouseholdIncomeWon: "",
@@ -239,7 +241,7 @@ export function stepError(d: ProfileDraft, step: number): string {
 
   if (step === 3 && d.additionalEligibility) {
     const a = d.additionalEligibility
-    const amounts = [a.assetAmountManwon ?? "", a.householdMonthlyIncomeManwon ?? ""]
+    const amounts = [a.assetAmountManwon ?? "", a.personalAssetManwon ?? "", a.householdMonthlyIncomeManwon ?? ""]
     if (
       amounts.some(
         (v) => v !== "" && (!/^\d+$/.test(v) || !Number.isSafeInteger(Number(v) * 10000)),
@@ -306,6 +308,8 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
   const assetAmount =
     (extra.assetAmountManwon ?? "") === "" ? null : Number(extra.assetAmountManwon)
   const incomeManwon = householdIncomeManwon(extra)
+  const personalAsset =
+    (extra.personalAssetManwon ?? "") === "" ? null : Number(extra.personalAssetManwon)
 
   return {
     age: Number(d.age),
@@ -350,6 +354,7 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         household_monthly_income_won:
           incomeManwon === "" ? null : Number(incomeManwon) * 10000,
         asset_amount_won: assetAmount == null ? null : assetAmount * 10000,
+        personal_asset_amount_won: personalAsset == null ? null : personalAsset * 10000,
         household_homeless: extra.householdHomeless || null,
         household_income_recognition_known:
           extra.householdIncomeRecognitionKnown || null,
@@ -459,6 +464,7 @@ export function isDraft(value: unknown): value is ProfileDraft {
 const optionalAdditionalKeys = [
   "householdMonthlyIncomeManwon",
   "assetAmountManwon",
+  "personalAssetManwon",
   "householdHomeless",
 ]
 

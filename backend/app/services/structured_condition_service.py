@@ -68,6 +68,8 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
     benefit = _yes_no(extra.get("basic_benefit_status"))
     benefit_types = extra.get("basic_benefit_types") if isinstance(extra.get("basic_benefit_types"), list) else []
     asset = extra.get("asset_amount_won")
+    household_asset = int(asset) if asset not in (None, "") else ASSET_RANGES.get(p.get("asset_range"))
+    own_asset = extra.get("personal_asset_amount_won")
     household_income = extra.get("household_monthly_income_won")
     urban = urban_worker_income_amount(date.today().year, household_size)
     owns_home = _yes_no(p.get("owns_home"))
@@ -91,7 +93,9 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
         "기초생활보장 수급자": _yes_no(extra.get("basic_benefit_status")),
         "차상위계층": _yes_no(extra.get("near_poverty_status")),
         "한부모가족": _yes_no(extra.get("single_parent_support_status")),
-        "가구 총재산": int(asset) if asset not in (None, "") else ASSET_RANGES.get(p.get("asset_range")),
+        "가구 총재산": household_asset,
+        # 본인 명의 재산. 1인 가구면 가구 총재산과 같고, 가구원이 더 있는데 입력하지 않았으면 알 수 없다.
+        "본인 총재산": int(own_asset) if own_asset not in (None, "") else household_asset if household_size == 1 else None,
         # 도시근로자 비율은 가구 월소득과 가구원 수를 모두 입력했을 때만 계산한다.
         "도시근로자 월평균소득 대비 가구소득": round(int(household_income) / urban * 100, 1)
         if household_income not in (None, "") and urban else None,
@@ -172,7 +176,7 @@ def show(field: str, value: Any) -> str:
     if isinstance(value, tuple):
         low, high = value
         return f"{low / 10000:,.0f}만원 이상" if high is None else f"{low / 10000:,.0f}만~{(high + 1) / 10000:,.0f}만원 미만"
-    if field == "가구 총재산":
+    if field in ("가구 총재산", "본인 총재산"):
         return f"{value / 10000:,.0f}만원"
     if field == "도시근로자 월평균소득 대비 가구소득":
         return f"{value:g}%"

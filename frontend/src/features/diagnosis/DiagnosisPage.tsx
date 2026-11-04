@@ -311,7 +311,7 @@ export default function DiagnosisPage({
   )
 
   const manwonInput = (
-    key: "assetAmountManwon" | "householdMonthlyIncomeManwon",
+    key: "assetAmountManwon" | "personalAssetManwon" | "householdMonthlyIncomeManwon",
     label: string,
     hint: string,
     value: string,
@@ -714,6 +714,12 @@ export default function DiagnosisPage({
                 "가구 총재산 (만원)",
                 "함께 사는 가구원의 부동산·예금·자동차·전월세 보증금 등을 합한 금액이에요. 모르면 비워두세요.",
                 additional.assetAmountManwon ?? "",
+              )}
+              {manwonInput(
+                "personalAssetManwon",
+                "본인 명의 재산 (만원)",
+                "부모 등과 함께 산다면 가구 재산과 별도로 본인 명의 재산만 적어주세요. 1인 가구면 비워둬도 돼요.",
+                additional.personalAssetManwon ?? "",
               )}
             </>
           )}

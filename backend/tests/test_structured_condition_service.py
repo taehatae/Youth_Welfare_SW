@@ -94,3 +94,12 @@ def test_urban_worker_income_ratio(monkeypatch):
     seed(monkeypatch, [condition("도시근로자 월평균소득 대비 가구소득", "lte", 100, unit="%")])
     extra = {**PROFILE["additional_conditions"], "household_monthly_income_won": 4_000_000}
     assert structured.analyze(SERVICE, USER, {**PROFILE, "additional_conditions": extra})["status"] == "ineligible"
+
+
+def test_personal_asset_falls_back_to_household_asset_only_for_one_person_household():
+    user = SimpleNamespace(age=25, region=None, income_level=None, employment_status=None)
+    values = lambda profile: structured.user_values(user, profile)["본인 총재산"]
+    extra = {"asset_amount_won": 500_000_000}
+    assert values({"household_size": 3, "additional_conditions": extra}) is None
+    assert values({"household_size": 1, "additional_conditions": extra}) == 500_000_000
+    assert values({"household_size": 3, "additional_conditions": {**extra, "personal_asset_amount_won": 30_000_000}}) == 30_000_000

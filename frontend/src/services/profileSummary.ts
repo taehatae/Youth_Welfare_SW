@@ -166,6 +166,12 @@ export function profileSummary(profile: UserProfileInput | null) {
               : "미입력",
         ],
         [
+          "본인 명의 재산",
+          typeof extra.personal_asset_amount_won === "number"
+            ? manwonLabel(extra.personal_asset_amount_won)
+            : "미입력",
+        ],
+        [
           "세대 전원 무주택",
           extra.household_homeless == null
             ? "미확인"
@@ -240,6 +246,10 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
   additional.assetAmountManwon =
     typeof extra.asset_amount_won === "number"
       ? String(Math.round(extra.asset_amount_won / 10000))
+      : ""
+  additional.personalAssetManwon =
+    typeof extra.personal_asset_amount_won === "number"
+      ? String(Math.round(extra.personal_asset_amount_won / 10000))
       : ""
   additional.householdMonthlyIncomeManwon =
     typeof extra.household_monthly_income_won === "number"
