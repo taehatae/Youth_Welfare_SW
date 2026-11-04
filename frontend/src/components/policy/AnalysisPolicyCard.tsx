@@ -89,6 +89,12 @@ export const conditionFields: Record<string, string> = {
   external_review: "기관 심사",
   informational: "안내 사항",
 }
+type ConditionTab = "passed" | "failed" | "review"
+const conditionTabs: [ConditionTab, string][] = [
+  ["passed", "충족"],
+  ["failed", "미충족"],
+  ["review", "추가 확인"],
+]
 export default function AnalysisPolicyCard({
   policy,
   saved,
@@ -109,16 +115,24 @@ export default function AnalysisPolicyCard({
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
   const failed = policy.conditions.filter((c) => c.status === "미충족")
-  const [open, setOpen] = useState(false)
-  const bodyId = useId()
+  const review = policy.conditions.filter((c) => c.status === "추가 확인")
+  const confirmed = policy.confirmedConditions ?? []
+  const [tab, setTab] = useState<ConditionTab | null>(null)
+  const panelId = useId()
   const passed = metCountOf(policy)
+  const items: Record<ConditionTab, { field: string; current: string; required: string; guide?: string }[]> = {
+    passed: confirmed,
+    failed,
+    review,
+  }
+  const shown = tab ? items[tab] : []
   return (
     <article
       className="reverse-card"
       data-reveal
       data-reveal-delay={index % 3}
       data-result={resultCategoryOf(policy)}
-      data-open={open}
+      data-open={tab !== null}
     >
       <header>
         <div className="card-heading">
@@ -142,10 +156,23 @@ export default function AnalysisPolicyCard({
                 : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요")}
           </p>
           {counts && (
-            <div className="condition-counts compact" aria-label="조건 비교 요약">
-              <span data-kind="passed">충족 <b>{counts.passed}</b></span>
-              <span data-kind="failed">미충족 <b>{counts.failed}</b></span>
-              <span data-kind="review">추가 확인 <b>{counts.review}</b></span>
+            <div className="condition-counts compact" role="group" aria-label="조건 비교 요약">
+              {conditionTabs.map(([kind, label]) => {
+                const count = kind === "passed" ? counts.passed : kind === "failed" ? counts.failed : counts.review
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    data-kind={kind}
+                    aria-pressed={tab === kind}
+                    aria-controls={panelId}
+                    disabled={count === 0}
+                    onClick={() => setTab(tab === kind ? null : kind)}
+                  >
+                    {label} <b>{count}</b>
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -158,88 +185,59 @@ export default function AnalysisPolicyCard({
           >
             {saved ? "★ 저장됨" : "☆ 관심 저장"}
           </button>
-          <button
-            className="card-toggle"
-            type="button"
-            aria-expanded={open}
-            aria-controls={bodyId}
-            onClick={() => setOpen(!open)}
-          >
-            {open ? "접기" : "자세히"} <span aria-hidden="true">{open ? "▴" : "▾"}</span>
-          </button>
         </div>
       </header>
-      <div id={bodyId} hidden={!open}>
-      {savedAt && (
-        <p className="comparison-time">
-          저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
-        </p>
-      )}
-      {policy.conditions.length > 0 ? (
-        <details className="motion-details policy-condition-details">
-          <summary>
-            조건과 확인 방법 자세히 보기 <span aria-hidden="true">＋</span>
-          </summary>
-          <div className="details-body">
-            <div
-              className="condition-table-scroll"
-              role="region"
-              aria-label={`${policy.title} 조건 비교`}
-              tabIndex={0}
-            >
-              <table className="condition-table">
-                <caption>
-                  미충족·추가 확인 조건 — 충족한 조건의 상세 내역은 서버에서
-                  제공되지 않습니다.
-                </caption>
-                <thead>
-                  <tr>
-                    <th scope="col">조건</th>
-                    <th scope="col">내 조건</th>
-                    <th scope="col">정책 기준</th>
-                    <th scope="col">비교 결과</th>
-                    <th scope="col">확인 안내</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {policy.conditions.map((c, i) => (
-                    <tr key={`${c.field}-${i}`}>
-                      <th scope="row">
+      <div id={panelId} hidden={tab === null} className="condition-panel" data-kind={tab ?? undefined}>
+        {tab && (
+          <>
+            <p className="condition-panel-title">
+              {conditionTabs.find(([kind]) => kind === tab)![1]} 조건
+            </p>
+            {shown.length ? (
+              <ul>
+                {shown.map((c, i) => (
+                  <li key={`${c.field}-${i}`}>
+                    {c.field === "확인 사항" ? (
+                      // 입력값으로 비교할 수 없는 확인 사항은 기준 문장만 보여준다.
+                      <strong>{c.required || c.guide || "공식 안내에서 확인해주세요."}</strong>
+                    ) : (
+                      <strong>
                         {fieldName(c.field)}
                         <OrNote field={c.field} />
-                      </th>
-                      <td>{c.current || "미확인"}</td>
-                      <td>{c.required || "미제공"}</td>
-                      <td>
-                        <span className="reverse-tag">{c.status}</span>
-                      </td>
-                      <td>
-                        {c.guide || "정책의 상세 조건을 확인해주세요."}
-                        {onEdit && c.field !== "external_review" && (
-                          <button
-                            className="condition-edit"
-                            type="button"
-                            disabled={busy}
-                            onClick={() => onEdit(conditionStep(c.field))}
-                          >
-                            관련 입력 확인 →
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </details>
-      ) : (
-        <p className="reverse-card-note">
-          {counts?.evaluated
-            ? "충족한 조건의 상세 내역은 제공되지 않아요. 세부 기준은 공식 공고에서 확인해주세요."
-            : "서버가 제공한 조건별 비교 정보가 없습니다."}
-        </p>
-      )}
+                      </strong>
+                    )}
+                    {c.field === "확인 사항" ? null : (
+                      <span>
+                        {/* 저장된 결과는 내 정보가 '프로필 보호 중'으로 가려져 있어 기준만 보여준다. */}
+                        {[
+                          c.current && c.current !== "프로필 보호 중" ? `내 정보 ${c.current}` : "",
+                          c.required ? `기준 ${c.required}` : "",
+                        ].filter(Boolean).join(" · ") || "공식 안내에서 확인해주세요."}
+                      </span>
+                    )}
+                    {tab !== "passed" && onEdit && !["external_review", "확인 사항"].includes(c.field) && (
+                      <button
+                        className="condition-edit"
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onEdit(conditionStep(c.field))}
+                      >
+                        관련 입력 확인 →
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="reverse-card-note">이 결과에는 조건별 상세 내역이 없어요.</p>
+            )}
+            {savedAt && (
+              <p className="comparison-time">
+                저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
+              </p>
+            )}
+          </>
+        )}
       </div>
       <footer className="policy-card-actions">
         {url ? (
