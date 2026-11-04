@@ -16,6 +16,7 @@ GOLD_FILES = ["structure_gold_train.json", "structure_gold_val.json", "structure
 REVIEWED = DATA / "eligibility_paths_reviewed.json"
 OUT = DATA / "eligibility_paths.json"
 SNAPSHOT = DATA / "welfare-policies.json"
+BATCH_DATES = {1: "2026-11-02", 2: "2026-11-04"}
 OPS = {"min": "gte", "max": "lte", "range": "between", "one_of": "one_of", "is_true": "is_true"}
 
 
@@ -54,9 +55,11 @@ def main() -> int:
         source = "\n".join(t for t in (target, selection) if t and t.strip())
         if serv_id in reviewed:
             body = {k: v for k, v in reviewed[serv_id].items() if k not in ("serv_id", "name", "batch")}
-            meta = ({"drafted_by": "claude", "reviewed_by": "human(2차)", "reviewed_at": "2026-11-04"}
-                    if reviewed[serv_id].get("batch") == 2 else
-                    {"drafted_by": "claude", "reviewed_by": "claude+human(1차)", "reviewed_at": "2026-11-02"})
+            # 차수(batch)가 없는 정책은 1차 검수본이다. 차수별 검수일은 BATCH_DATES에 추가한다.
+            batch = reviewed[serv_id].get("batch", 1)
+            meta = {"drafted_by": "claude",
+                    "reviewed_by": "claude+human(1차)" if batch == 1 else f"human({batch}차)",
+                    "reviewed_at": reviewed[serv_id].get("reviewed_at") or BATCH_DATES.get(batch, "")}
         else:
             body = from_gold(gold[serv_id])
             meta = {"drafted_by": "converted", "reviewed_by": "claude", "reviewed_at": "2026-10-31"}
