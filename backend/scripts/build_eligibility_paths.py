@@ -9,13 +9,13 @@
 import hashlib
 import itertools
 import json
-import sqlite3
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "data"
 GOLD_FILES = ["structure_gold_train.json", "structure_gold_val.json", "structure_gold_rest.json"]
 REVIEWED = DATA / "eligibility_paths_reviewed.json"
 OUT = DATA / "eligibility_paths.json"
+SNAPSHOT = DATA / "welfare-policies.json"
 OPS = {"min": "gte", "max": "lte", "range": "between", "one_of": "one_of", "is_true": "is_true"}
 
 
@@ -40,9 +40,9 @@ def main() -> int:
         gold.update({k: v for k, v in json.loads((DATA / name).read_text(encoding="utf-8")).items()
                      if not k.startswith("_")})
     reviewed = {p["serv_id"]: p for p in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]}
-    db = sqlite3.connect(f"file:{DATA.parent / 'youth_welfare.db'}?mode=ro", uri=True)
-    services = {r[0]: r[1:] for r in db.execute(
-        "select serv_id, serv_name, target_details, selection_criteria from welfare_services")}
+    # 정책 원문은 dev와 같은 스냅샷(data/welfare-policies.json)에서 읽는다(로컬 DB가 비어 있어도 된다).
+    services = {s["serv_id"]: (s["serv_name"], s["target_details"], s["selection_criteria"])
+                for s in json.loads(SNAPSHOT.read_text(encoding="utf-8"))["data"]["welfare_services"]}
     # 아직 정리하지 않은 정책은 시드에서 빼고(진단은 기존 분석으로 대체) 목록만 알려준다.
     missing = sorted(set(services) - set(gold) - set(reviewed))
     if missing:
@@ -53,8 +53,10 @@ def main() -> int:
         name, target, selection = services[serv_id]
         source = "\n".join(t for t in (target, selection) if t and t.strip())
         if serv_id in reviewed:
-            body = {k: v for k, v in reviewed[serv_id].items() if k not in ("serv_id", "name")}
-            meta = {"drafted_by": "claude", "reviewed_by": "claude+human(1차)", "reviewed_at": "2026-11-02"}
+            body = {k: v for k, v in reviewed[serv_id].items() if k not in ("serv_id", "name", "batch")}
+            meta = ({"drafted_by": "claude", "reviewed_by": "human(2차)", "reviewed_at": "2026-11-04"}
+                    if reviewed[serv_id].get("batch") == 2 else
+                    {"drafted_by": "claude", "reviewed_by": "claude+human(1차)", "reviewed_at": "2026-11-02"})
         else:
             body = from_gold(gold[serv_id])
             meta = {"drafted_by": "converted", "reviewed_by": "claude", "reviewed_at": "2026-10-31"}

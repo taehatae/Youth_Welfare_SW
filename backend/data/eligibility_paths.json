@@ -468,31 +468,38 @@
    "name": "청년내일저축계좌",
    "source_sha256": "0c21226494e921df375e42fdf275bc1a42827a9d162d85b0f332afdd2dc36df0",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "common": [
     {
      "field": "만 나이",
      "op": "between",
      "value": 15,
-     "upper": 39
+     "upper": 39,
+     "evidence": "신청 당시 만 15세~ 39세"
     },
     {
      "field": "본인 월소득",
      "op": "gte",
-     "value": 100000
+     "value": 100000,
+     "evidence": "근로,사업소득이 월10만원 이상 발생"
     },
     {
      "field": "가구 소득인정액",
      "op": "lte",
-     "value": 50
+     "value": 50,
+     "evidence": "소득인정액 기준 중위소득 50% 이하"
     }
+   ],
+   "common_checks": [
+    "월 10만원 이상 소득이 근로·사업소득일 것(그 밖의 소득은 제외)",
+    "신청 월의 전월에 만 15세가 된 사람 ~ 신청 월에 만 40세가 되는 사람까지 가입 가능"
    ],
    "paths": [
     {
      "id": "기본",
-     "label": "기본",
+     "label": "근로·사업소득이 있는 저소득 청년",
      "kind": "기본",
      "conditions": []
     }
@@ -1227,29 +1234,44 @@
    "name": "대학생 근로장학금 지원",
    "source_sha256": "a2a6901e7cda2eda7436398e01ca038823d9412e511578e3781be31ab91f12e3",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "common": [
     {
      "field": "재학 여부",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "사업 참여대학의 재학생을 대상으로 합니다. (입학예정자 포함)"
     },
     {
      "field": "국적",
      "op": "one_of",
      "values": [
       "대한민국"
-     ]
+     ],
+     "evidence": "대한민국 국적을 소지한"
     }
+   ],
+   "common_checks": [
+    "사업 참여대학 재학생일 것",
+    "직전학기 성적 C0(70점) 이상"
    ],
    "paths": [
     {
      "id": "기본",
-     "label": "기본",
+     "label": "학자금 지원 9구간 이하 대학생",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": [
+      "학자금 지원 9구간 이하(부모·배우자 포함 가구 소득인정액 기준)"
+     ]
     }
+   ],
+   "preferences": [
+    "학자금 지원 4구간 이하(기초생활수급자·차상위 포함) 1순위, 5~6구간 2순위, 7~9구간 3순위",
+    "장애인, 다자녀가정 자녀, 다문화·탈북가정 자녀, 국가보훈대상자 우선선발",
+    "부모 중 장애인·중증환자가 있는 학생, 학업·육아 병행 학생 우선선발",
+    "자립준비청년, 청소년 쉼터 퇴소 학생, 가족돌봄청년 우선선발"
    ]
   },
   {
@@ -1275,28 +1297,92 @@
    "name": "서민금융 활성화 지원(햇살론youth 보증사업)",
    "source_sha256": "480104db36a0f06204a097c76c23a65ce9edf22d9e70bbe1673e11361040344a",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "common": [
     {
      "field": "만 나이",
      "op": "between",
      "value": 19,
-     "upper": 34
+     "upper": 34,
+     "evidence": "만 19세 이상 ~ 34세 이하"
     },
     {
      "field": "본인 연소득",
      "op": "lte",
-     "value": 35000000
+     "value": 35000000,
+     "evidence": "연소득 3,500만원 이하"
     }
+   ],
+   "common_checks": [
+    "채무조정 중이면 6개월 이상 성실 상환했을 것"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
-     "kind": "기본",
-     "conditions": []
+     "id": "대학생",
+     "label": "취업준비생(대학(원)생·학점은행제)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "재학 여부",
+       "op": "is_true",
+       "evidence": "취업준비생(대학(원)생, 학점은행제"
+      }
+     ]
+    },
+    {
+     "id": "미취업",
+     "label": "취업준비생(미취업 청년)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "고용 상태",
+       "op": "one_of",
+       "values": [
+        "미취업",
+        "아르바이트"
+       ],
+       "evidence": "미취업청년"
+      }
+     ]
+    },
+    {
+     "id": "사회초년생",
+     "label": "사회초년생(중소기업 재직 1년 이하)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "고용 상태",
+       "op": "one_of",
+       "values": [
+        "재직",
+        "중소기업 재직"
+       ],
+       "evidence": "사회초년생(중소기업 1년 이하 재직자)"
+      }
+     ],
+     "checks": [
+      "중소기업 재직 기간 1년 이하일 것"
+     ]
+    },
+    {
+     "id": "개인사업자",
+     "label": "개인사업자(창업 1년 이내)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "고용 상태",
+       "op": "one_of",
+       "values": [
+        "자영업"
+       ],
+       "evidence": "개인사업자(창업 1년 인내인 자)"
+      }
+     ],
+     "checks": [
+      "창업한 지 1년 이내일 것"
+     ]
     }
    ]
   },
@@ -1305,16 +1391,29 @@
    "name": "주거안정 월세대출 보증",
    "source_sha256": "3415bccd263a75c169f4227ae0dfe888be43d52406966de0f44bc594f933d445",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
-   "common": [],
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
+   "common_checks": [
+    "주택도시기금 주거안정 월세대출 대상자일 것",
+    "보증금 1억원 이하·월세 60만원 이하 월세계약",
+    "보증 제한 대상(구상채무 미회수, 보증사고, 신용관리정보 보유, 대출 연체 등)이 아닐 것"
+   ],
    "paths": [
     {
      "id": "기본",
-     "label": "기본",
+     "label": "월세계약을 맺은 월세대출 대상자",
      "kind": "기본",
-     "conditions": []
+     "conditions": [
+      {
+       "field": "주거 형태",
+       "op": "one_of",
+       "values": [
+        "월세"
+       ],
+       "evidence": "월세 60만원 이하인 월세계약을 체결한"
+      }
+     ]
     }
    ]
   },
@@ -1617,21 +1716,27 @@
    "name": "자립준비청년 자립수당 지급",
    "source_sha256": "238a6164144d0ab117b6c35a220cde7ab96183e44925cf9e5065d937b847933c",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "common": [
     {
      "field": "자립준비청년",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "아동복지시설*, 가정위탁 보호종료 5년 이내 자립준비청년"
     }
    ],
    "paths": [
     {
      "id": "기본",
-     "label": "기본",
+     "label": "보호종료 5년 이내 자립준비청년",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": [
+      "보호종료 5년 이내일 것",
+      "보호종료일 기준 과거 2년 이상 연속 보호(아동복지심의위원회 심의·의결 시 예외)",
+      "만 18세 이후 만기·연장 보호종료('18년 8월 이후) 또는 만 15세 이후 조기 종료로 만 18세가 된 때부터 5년 이내"
+     ]
     }
    ]
   },
@@ -2150,16 +2255,94 @@
    "name": "국민취업지원제도",
    "source_sha256": "df0550c443f53b4995c7a7e8c245810930415ef2c27bc0d54f7be9b19bb5fc84",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
-   "common": [],
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
+   "common_checks": [
+    "저소득 구직자·청년·경력단절여성 등 취업 취약계층일 것"
+   ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
-     "kind": "기본",
-     "conditions": []
+     "id": "1유형-청년",
+     "label": "Ⅰ유형(15~34세 청년)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "between",
+       "value": 15,
+       "upper": 34,
+       "evidence": "15~34세 청년은 중위소득 120% 이하, 재산 5억원 이하"
+      },
+      {
+       "field": "가구 소득인정액",
+       "op": "lte",
+       "value": 120,
+       "evidence": "15~34세 청년은 중위소득 120% 이하"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 500000000,
+       "evidence": "재산 5억원 이하"
+      }
+     ]
+    },
+    {
+     "id": "1유형-일반",
+     "label": "Ⅰ유형(15~69세)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "between",
+       "value": 15,
+       "upper": 69,
+       "evidence": "15~69세 구직자 중"
+      },
+      {
+       "field": "가구 소득인정액",
+       "op": "lte",
+       "value": 60,
+       "evidence": "중위소득 60% 이하"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 400000000,
+       "evidence": "재산 4억원 이하인 사람"
+      }
+     ]
+    },
+    {
+     "id": "2유형-청년",
+     "label": "Ⅱ유형(15~34세 청년, 소득 무관)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "between",
+       "value": 15,
+       "upper": 34,
+       "evidence": "15~34세 청년은 소득요건 없음"
+      }
+     ]
+    },
+    {
+     "id": "2유형-일반",
+     "label": "Ⅱ유형(중위소득 100% 이하)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "가구 소득인정액",
+       "op": "lte",
+       "value": 100,
+       "evidence": "Ⅰ유형에 해당되지 않는 기준 중위소득 100% 이하인 사람"
+      }
+     ],
+     "checks": [
+      "원문에 Ⅱ유형 나이 기준이 없음(실제 사업은 15~69세)"
+     ]
     }
    ]
   },
@@ -2485,21 +2668,69 @@
    "name": "취업 후 상환 학자금대출",
    "source_sha256": "8315d486e4d83119a9e22d199cc3bb1abd3e747aa344af3508b55fe3004f2592",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "common": [
     {
      "field": "재학 여부",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "국내 고등교육기관의 학부생, 대학원생"
     }
+   ],
+   "common_checks": [
+    "교육부·한국장학재단 협약 대학일 것",
+    "학부생은 직전학기 12학점 이상 이수(신입생·장애인 제외)"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "학부",
+     "label": "학부생(만 35세 이하)",
      "kind": "기본",
-     "conditions": []
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "lte",
+       "value": 35,
+       "evidence": "만 35세 이하 학생(소득구간 제한 없음)"
+      }
+     ],
+     "checks": [
+      "생활비 대출은 학자금 지원 8구간 이하(기준중위소득 200% 이하) 또는 9구간 긴급생계곤란자(다자녀·자립준비청년은 소득 무관)"
+     ]
+    },
+    {
+     "id": "학부-선취업",
+     "label": "학부생(선취업 후진학자, 만 45세 이하)",
+     "kind": "예외",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "lte",
+       "value": 45,
+       "evidence": "선취업 후진학자 등은 만 45세 이하"
+      }
+     ],
+     "checks": [
+      "선취업 후진학자 등에 해당할 것"
+     ]
+    },
+    {
+     "id": "대학원",
+     "label": "대학원생(만 40세 이하)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "lte",
+       "value": 40,
+       "evidence": "만 40세 이하 학생(소득구간 제한 없음)"
+      }
+     ],
+     "checks": [
+      "대학원생일 것",
+      "생활비 대출은 학자금 지원 6구간 이하(기준중위소득 130% 이하)"
+     ]
     }
    ]
   },
@@ -2587,65 +2818,93 @@
    "name": "가스요금할인",
    "source_sha256": "bcf5b12cebeadf9f7a425d173dd3f57bdb357526aae2ccf5ede7cdd3ff2812dd",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
-   "common": [],
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "paths": [
     {
-     "id": "기초생활보장 수급자",
-     "label": "기초생활보장 수급자",
+     "id": "기초생활수급",
+     "label": "기초생활수급자",
      "kind": "기본",
      "conditions": [
       {
        "field": "기초생활보장 수급자",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "기초생활수급자 (생계급여, 주거급여, 의료급여, 교육급여)"
       }
      ]
     },
     {
-     "id": "차상위계층",
+     "id": "차상위",
      "label": "차상위계층",
      "kind": "기본",
      "conditions": [
       {
        "field": "차상위계층",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "차상위계층(중위소득 50%이하)"
       }
      ]
     },
     {
-     "id": "등록 장애인",
-     "label": "등록 장애인",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "등록 장애인",
-       "op": "is_true"
-      }
-     ]
-    },
-    {
-     "id": "국가유공자·보훈대상자",
-     "label": "국가유공자·보훈대상자",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "국가유공자·보훈대상자",
-       "op": "is_true"
-      }
-     ]
-    },
-    {
-     "id": "자녀 수",
-     "label": "자녀 수",
+     "id": "다자녀",
+     "label": "다자녀가구(자녀 3명 이상)",
      "kind": "기본",
      "conditions": [
       {
        "field": "자녀 수",
        "op": "gte",
-       "value": 3
+       "value": 3,
+       "evidence": "자녀가 3명 이상이거나 손자녀가 3명 이상인 가구"
       }
+     ],
+     "checks": [
+      "손자녀 3명 이상, 위탁아동과 합쳐 3명 이상인 가구도 해당"
+     ]
+    },
+    {
+     "id": "중증장애인",
+     "label": "중증장애인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true",
+       "evidence": "장애인 중에서 장애의 정도가 심한 장애인"
+      }
+     ],
+     "checks": [
+      "장애의 정도가 심한 장애인(중증)일 것"
+     ]
+    },
+    {
+     "id": "상이유공자",
+     "label": "국가유공자·5.18 유공자 1~3급 상이자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true",
+       "evidence": "국가유공자 1~3급 또는 5·18 유공자 1~3급 판정을 받은 사람"
+      }
+     ],
+     "checks": [
+      "1~3급 상이자일 것"
+     ]
+    },
+    {
+     "id": "독립유공자",
+     "label": "독립유공자·선순위 유족",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true",
+       "evidence": "독립유공자 또는 그 유족 중 선순위자"
+      }
+     ],
+     "checks": [
+      "독립유공자 본인 또는 선순위 유족일 것"
      ]
     }
    ]
@@ -2655,77 +2914,109 @@
    "name": "전기요금 복지할인",
    "source_sha256": "f060c4e436e3aad57f7805da69358528463399852c9b598ef3b053c78f44fce3",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
-   "common": [],
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
    "paths": [
     {
-     "id": "기초생활보장 수급자",
-     "label": "기초생활보장 수급자",
+     "id": "기초생활수급",
+     "label": "기초생활수급자",
      "kind": "기본",
      "conditions": [
       {
        "field": "기초생활보장 수급자",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "생계급여, 의료급여, 주거급여, 교육급여 수급자"
       }
      ]
     },
     {
-     "id": "차상위계층",
+     "id": "차상위",
      "label": "차상위계층",
      "kind": "기본",
      "conditions": [
       {
        "field": "차상위계층",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "(차상위계층) 「국민기초생활보장법」에서 정한 차상위계층"
       }
+     ],
+     "checks": [
+      "차상위 중 원문에 적힌 대상(희귀난치질환 본인부담 경감, 장애(아동)수당, 한부모가족 등)일 것"
      ]
     },
     {
-     "id": "등록 장애인",
-     "label": "등록 장애인",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "등록 장애인",
-       "op": "is_true"
-      }
-     ]
-    },
-    {
-     "id": "국가유공자·보훈대상자",
-     "label": "국가유공자·보훈대상자",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "국가유공자·보훈대상자",
-       "op": "is_true"
-      }
-     ]
-    },
-    {
-     "id": "자녀 수",
-     "label": "자녀 수",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "자녀 수",
-       "op": "gte",
-       "value": 3
-      }
-     ]
-    },
-    {
-     "id": "가구원 수",
-     "label": "가구원 수",
+     "id": "대가족",
+     "label": "대가족(가구원 5인 이상)",
      "kind": "기본",
      "conditions": [
       {
        "field": "가구원 수",
        "op": "gte",
-       "value": 5
+       "value": 5,
+       "evidence": "가구원수가 5인 이상인 가구"
       }
+     ]
+    },
+    {
+     "id": "다자녀",
+     "label": "다자녀가구(자녀 3인 이상)",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "자녀 수",
+       "op": "gte",
+       "value": 3,
+       "evidence": "가구원 중 자녀가 3인 이상인 가구"
+      }
+     ],
+     "checks": [
+      "주민등록표상 세대주와의 관계가 자(子) 3인 또는 손(孫) 3인으로 표시될 것"
+     ]
+    },
+    {
+     "id": "장애인",
+     "label": "장애인(심한 장애, 구 1~3급)",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true",
+       "evidence": "(장애인) 「장애인복지법」에 의한 1~3급 장애인"
+      }
+     ],
+     "checks": [
+      "장애의 정도가 심한 장애인(구 1~3급)일 것"
+     ]
+    },
+    {
+     "id": "상이유공자",
+     "label": "1~3급 상이유공자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true",
+       "evidence": "1~3급상이자"
+      }
+     ],
+     "checks": [
+      "1~3급 상이자일 것"
+     ]
+    },
+    {
+     "id": "독립유공자",
+     "label": "독립유공자·유족 1인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true",
+       "evidence": "(독립유공자) 「독립유공자 예우에 관한 법률」에 의한 독립유공자"
+      }
+     ],
+     "checks": [
+      "독립유공자 본인 또는 권리를 이전받은 유족 1인일 것"
      ]
     }
    ]
@@ -2735,16 +3026,305 @@
    "name": "행복주택 공급",
    "source_sha256": "8095f491d6a93f409c9713d37e58976be9005b05de9e58c312cb2679534beaea",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
-   "common": [],
+   "drafted_by": "claude",
+   "reviewed_by": "human(2차)",
+   "reviewed_at": "2026-11-04",
+   "common": [
+    {
+     "field": "본인 명의 주택 보유",
+     "op": "is_true",
+     "kind": "exclusion",
+     "evidence": "미혼인 무주택자 ... 무주택세대 구성원"
+    }
+   ],
+   "common_checks": [],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
-     "kind": "기본",
-     "conditions": []
+     "id": "대학생-재학",
+     "label": "대학생(재학·입복학 예정)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "미혼"
+       ],
+       "evidence": "미혼인 무주택자로서"
+      }
+     ],
+     "checks": [
+      "대학에 재학 중이거나 다음 학기에 입·복학 예정일 것",
+      "본인·부모 합계소득이 도시근로자 월평균소득 120%(1인)·110%(2인)·100%(3인 이상) 이하",
+      "본인 총자산 1억원 이하, 자동차 미소유"
+     ]
+    },
+    {
+     "id": "대학생-고교졸업",
+     "label": "대학생 유형(고교 졸업·중퇴 2년 이내)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "미혼"
+       ],
+       "evidence": "미혼인 무주택자로서"
+      }
+     ],
+     "checks": [
+      "고등학교를 졸업·중퇴한 지 2년 이내일 것",
+      "본인·부모 합계소득이 도시근로자 월평균소득 120%(1인)·110%(2인)·100%(3인 이상) 이하",
+      "본인 총자산 1억원 이하, 자동차 미소유"
+     ]
+    },
+    {
+     "id": "청년-나이",
+     "label": "청년(19~39세)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "미혼"
+       ],
+       "evidence": "미혼인 무주택자로서"
+      },
+      {
+       "field": "만 나이",
+       "op": "between",
+       "value": 19,
+       "upper": 39,
+       "evidence": "19~39세에 속하거나"
+      }
+     ],
+     "checks": [
+      "세대소득(세대주가 아닌 세대원은 본인소득)이 도시근로자 월평균소득 120%(1인)·110%(2인)·100%(3인 이상) 이하",
+      "세대(세대원은 본인) 총자산 2억 7,300만원 이하, 자동차 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "청년-취업초기",
+     "label": "청년(취업 5년 이내·퇴직 1년 이내 구직급여 자격자·예술인)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "미혼"
+       ],
+       "evidence": "미혼인 무주택자로서"
+      }
+     ],
+     "checks": [
+      "소득이 있는 업무 5년 이내, 퇴직 1년 이내 구직급여 수급 자격자 또는 예술인일 것",
+      "세대소득(세대주가 아닌 세대원은 본인소득)이 도시근로자 월평균소득 120%(1인)·110%(2인)·100%(3인 이상) 이하",
+      "세대(세대원은 본인) 총자산 2억 7,300만원 이하, 자동차 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "신혼부부",
+     "label": "신혼부부",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "기혼"
+       ],
+       "evidence": "(신혼부부) 무주택세대 구성원으로서 혼인기간 7년"
+      },
+      {
+       "field": "세대원 전원 무주택",
+       "op": "is_true",
+       "evidence": "무주택세대 구성원으로서"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "혼인기간 7년 이내 또는 6세 이하 자녀가 있을 것",
+      "가구 형태별 소득 기준: 맞벌이 2인 130%, 1인·맞벌이 3인 이상 120%, 외벌이 2인 110%, 외벌이 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "예비신혼부부",
+     "label": "예비 신혼부부",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "혼인 상태",
+       "op": "one_of",
+       "values": [
+        "미혼",
+        "이혼",
+        "사별"
+       ],
+       "evidence": "(예비 신혼부부) 혼인을 계획중이며"
+      }
+     ],
+     "checks": [
+      "혼인으로 구성될 세대의 구성원 모두 무주택일 것",
+      "혼인으로 구성될 세대 기준 소득·총자산(3억 4,500만원)·자동차가액(3,708만원) 충족"
+     ]
+    },
+    {
+     "id": "한부모가족",
+     "label": "한부모가족(6세 이하 자녀)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "한부모가족",
+       "op": "is_true",
+       "evidence": "(한부모가족) 6세이하(태아포함)의 자녀를 둔 무주택세대구성원"
+      },
+      {
+       "field": "세대원 전원 무주택",
+       "op": "is_true",
+       "evidence": "무주택세대구성원"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "6세 이하(태아 포함) 자녀가 있을 것",
+      "가구 형태별 소득 기준(도시근로자 월평균소득 대비): 맞벌이 2인 130%, 1인·맞벌이 3인 이상 120%, 외벌이 2인 110%, 외벌이 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "주거급여",
+     "label": "주거급여 수급자",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "주거급여 수급자",
+       "op": "is_true",
+       "evidence": "무주택 세대구성원으로서 주거급여수급 대상자"
+      },
+      {
+       "field": "세대원 전원 무주택",
+       "op": "is_true",
+       "evidence": "무주택 세대구성원으로서"
+      }
+     ],
+     "checks": [
+      "세대소득이 기준 중위소득 45% 이하(원문 기준)"
+     ]
+    },
+    {
+     "id": "고령자",
+     "label": "고령자(65세 이상)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "gte",
+       "value": 65,
+       "evidence": "65세 이상인 사람"
+      },
+      {
+       "field": "세대원 전원 무주택",
+       "op": "is_true",
+       "evidence": "무주택세대 구성원으로서 65세 이상인 사람"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "가구원 수별 소득 기준: 1인 120%, 2인 110%, 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "산업단지",
+     "label": "산업단지 근로자",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "인근(연접 시·군 포함) 산업단지 입주기업 등에 재직 또는 1년 이상 근무(예정)일 것",
+      "기혼이면 세대원 전원 무주택",
+      "가구 형태별 소득 기준: 맞벌이 2인 130%, 1인·맞벌이 3인 이상 120%, 외벌이 2인 110%, 외벌이 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "창업·지역전략",
+     "label": "창업인·지역전략산업 종사자(19~39세)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "between",
+       "value": 19,
+       "upper": 39,
+       "evidence": "창업인,예비창업인(19~39세)"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "해당 지방자치단체장이 인정하는 (예비)창업인 또는 지역전략산업 종사자일 것",
+      "기혼이면 세대원 전원 무주택",
+      "가구 형태별 소득 기준(도시근로자 월평균소득 대비): 맞벌이 2인 130%, 1인·맞벌이 3인 이상 120%, 외벌이 2인 110%, 외벌이 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
+    },
+    {
+     "id": "중소기업",
+     "label": "중소기업 근무자(중소기업전용주택)",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "고용 상태",
+       "op": "one_of",
+       "values": [
+        "재직",
+        "중소기업 재직"
+       ],
+       "evidence": "중소기업에 근무하는"
+      },
+      {
+       "field": "가구 총재산",
+       "op": "lte",
+       "value": 345000000,
+       "evidence": "세대내 총자산 3억 4,500만원"
+      }
+     ],
+     "checks": [
+      "중소기업 근무 청년(19~39세)·신혼부부·한부모가족, 또는 미성년 자녀 포함 3인 이상 세대로 중소기업 총 5년 이상 근무",
+      "기혼이면 세대원 전원 무주택",
+      "가구 형태별 소득 기준(도시근로자 월평균소득 대비): 맞벌이 2인 130%, 1인·맞벌이 3인 이상 120%, 외벌이 2인 110%, 외벌이 3인 이상 100%",
+      "자동차가액 3,708만원 이하"
+     ]
     }
    ]
   },
