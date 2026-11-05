@@ -4,6 +4,7 @@
 누를 때마다 채점 결과 파일(초안 옆 *_review.json)에 바로 저장한다.
 
     python scripts/review_server.py data/eligibility_paths_batch2_draft.json   # http://localhost:8765
+    python scripts/review_server.py data/eligibility_paths_fix1_draft.json 8766  # 포트 지정
 """
 import json
 import sys
@@ -69,13 +70,14 @@ def make_handler(draft_path: Path, result_path: Path):
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 1:
+    if len(argv) not in (1, 2):
         print(__doc__)
         return 1
     draft_path = Path(argv[0]).resolve()
+    port = int(argv[1]) if len(argv) == 2 else PORT  # 화면 두 개를 함께 띄울 때 포트를 따로 준다
     result_path = draft_path.with_name(draft_path.stem.replace("_draft", "") + "_review.json")
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), make_handler(draft_path, result_path))
-    print(f"검수 화면: http://localhost:{PORT}  (결과 저장 → {result_path.name})")
+    server = ThreadingHTTPServer(("127.0.0.1", port), make_handler(draft_path, result_path))
+    print(f"검수 화면: http://localhost:{port}  (결과 저장 → {result_path.name})")
     server.serve_forever()
     return 0
 

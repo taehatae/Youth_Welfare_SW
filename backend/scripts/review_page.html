@@ -10,8 +10,9 @@
     --accent: #2563eb; --ok: #15803d; --ok-bg: #dcfce7; --bad: #dc2626; --bad-bg: #fee2e2; --mark: #fef08a;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.6 "Pretendard", "Malgun Gothic", system-ui, sans-serif; color: var(--text); background: var(--bg); }
-  header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  /* 화면 전체를 쓰고, 원문과 판단 목록이 각자 따로 스크롤된다. */
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font: 15px/1.6 "Pretendard", "Malgun Gothic", system-ui, sans-serif; color: var(--text); background: var(--bg); }
+  header { flex: none; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; }
   .top { display: flex; align-items: center; gap: 10px; }
   .top h1 { font-size: 17px; margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .top button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
@@ -20,11 +21,12 @@
   .pills button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 700; }
   .pills button.active { outline: 2px solid var(--accent); outline-offset: 1px; }
   .saved { color: var(--muted); font-size: 12px; }
-  main { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 16px 40px; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
+  .judge { min-height: 0; overflow: auto; padding-bottom: 24px; }
   .box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
   .box h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 10px; letter-spacing: .02em; }
-  .source { position: sticky; top: 104px; align-self: start; max-height: calc(100vh - 124px); overflow: auto; }
+  .source { min-height: 0; overflow: auto; }
   .source pre { white-space: pre-wrap; font: inherit; font-size: 15.5px; line-height: 1.75; margin: 0; }
   mark { background: var(--mark); border-radius: 3px; padding: 0 1px; }
   .group { margin-bottom: 14px; }
@@ -34,6 +36,10 @@
   .item.bad { background: #fff6f6; border-color: #f5b5b5; }
   .item .text { font-size: 15px; }
   .item .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; margin-right: 6px; }
+  /* 이전 차수에서 이미 검수한 항목: 흐리게 보여 새 항목에 집중하게 한다(다시 누르면 바꿀 수 있음). */
+  .item.prior { opacity: .55; }
+  .item.prior:hover { opacity: 1; }
+  .item .tag.prior { color: var(--ok); border-color: #a7e3bd; }
   .grade { display: flex; gap: 6px; }
   .grade button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 5px 12px; font: inherit; font-size: 14px; cursor: pointer; }
   .grade .o.on { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 700; }
@@ -60,7 +66,7 @@
 </header>
 <main>
   <div class="box source"><h2>원문</h2><div id="source"></div></div>
-  <div>
+  <div class="judge" id="judge">
     <div class="box">
       <h2>LLM 판단 — 하나씩 맞음 / 틀림</h2>
       <div id="items"></div>
@@ -162,8 +168,8 @@ function renderItems(policy) {
   $("items").innerHTML = itemsOf(policy).map((g) => `<div class="group"><div class="group-title">${esc(g.title)}</div>
     ${g.items.map((it) => {
       const st = itemState(policy, it.key);
-      return `<div class="item ${st.ok === true ? "ok" : st.ok === false ? "bad" : ""}" data-key="${esc(it.key)}" data-ev="${esc(it.evidence)}">
-        <div class="text">${it.tag ? `<span class="tag">${it.tag}</span>` : ""}${esc(it.text)}</div>
+      return `<div class="item ${st.ok === true ? "ok" : st.ok === false ? "bad" : ""} ${st.prior ? "prior" : ""}" data-key="${esc(it.key)}" data-ev="${esc(it.evidence)}">
+        <div class="text">${st.prior ? `<span class="tag prior">기존 검수</span>` : ""}${it.tag ? `<span class="tag">${it.tag}</span>` : ""}${esc(it.text)}</div>
         <div class="grade"><button class="o ${st.ok === true ? "on" : ""}">맞음</button><button class="x ${st.ok === false ? "on" : ""}">틀림</button></div>
         ${st.ok === false ? `<textarea rows="2" placeholder="어떻게 고쳐야 하나요?">${esc(st.note)}</textarea>` : ""}
       </div>`;
@@ -171,9 +177,9 @@ function renderItems(policy) {
 
   $("items").querySelectorAll(".item").forEach((el) => {
     const st = itemState(policy, el.dataset.key);
-    el.querySelector(".o").onclick = () => { st.ok = st.ok === true ? null : true; save(); renderItems(policy); };
+    el.querySelector(".o").onclick = () => { delete st.prior; st.ok = st.ok === true ? null : true; save(); renderItems(policy); };
     el.querySelector(".x").onclick = () => {
-      st.ok = st.ok === false ? null : false; save(); renderItems(policy);
+      delete st.prior; st.ok = st.ok === false ? null : false; save(); renderItems(policy);
       if (st.ok === false) $("items").querySelector(`.item[data-key="${CSS.escape(el.dataset.key)}"] textarea`)?.focus();
     };
     const note = el.querySelector("textarea");
@@ -192,7 +198,7 @@ function show(i) {
   const policy = data.policies[current];
   $("missing").value = state(policy).missing;
   renderSource(policy, ""); renderItems(policy); renderHeader();
-  window.scrollTo(0, 0);
+  $("judge").scrollTop = 0; document.querySelector(".source").scrollTop = 0;
   try { localStorage.setItem("review-current", current); } catch {}
 }
 
