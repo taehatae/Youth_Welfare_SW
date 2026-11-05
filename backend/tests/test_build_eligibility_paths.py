@@ -38,6 +38,20 @@ def test_merge_stamps_hash_and_keeps_batch_of_existing_policy():
     assert (b["batch"], b["source_sha256"]) == (3, source_hash("원문B", None))
 
 
+def test_data_files_have_no_duplicate_policies():
+    from collections import Counter
+    from scripts.build_eligibility_paths import DATA, GOLD_FILES, OUT
+
+    gold = Counter(k for name in GOLD_FILES for k in json.loads((DATA / name).read_text(encoding="utf-8")) if not k.startswith("_"))
+    assert [k for k, n in gold.items() if n > 1] == []  # 한 정책은 정답지 파일 하나에만 있다
+    reviewed = Counter(p["serv_id"] for p in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"])
+    assert [k for k, n in reviewed.items() if n > 1] == []
+    seed = [p["serv_id"] for p in json.loads(OUT.read_text(encoding="utf-8"))["policies"]]
+    services = load_services()
+    assert len(seed) == len(set(seed)) and set(seed) == set(services)  # 152개 정책이 시드에 정확히 한 번씩
+    assert set(gold) == set(services)  # 모든 정책에 정답지가 있다(검수본이 있으면 검수본이 우선)
+
+
 def test_every_reviewed_policy_matches_current_source():
     services = load_services()
     for policy in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]:

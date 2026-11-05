@@ -112,6 +112,27 @@ def test_seed_from_file_round_trip(tmp_path):
     db.close()
 
 
+def test_seed_reload_removes_policies_dropped_from_seed(tmp_path):
+    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    db = sessionmaker(bind=engine)()
+    for sid in ("A", "B"):
+        db.add(WelfareService(serv_id=sid, serv_name=sid, target_details="원문", selection_criteria=""))
+    db.commit()
+    item = lambda sid: {"serv_id": sid, "source_sha256": "x", "status": "reviewed",
+                        "paths": [{"id": "기본", "label": "기본", "conditions": [{"field": "만 나이", "op": "gte", "value": 18}]}]}
+    seed = tmp_path / "paths.json"
+    seed.write_text(json.dumps({"version": 2, "policies": [item("A"), item("B")]}), encoding="utf-8")
+    paths.seed_from_file(db, seed)
+    # B가 재검수 대상이 되어 시드에서 빠지면 DB에서도 지운다(예전 경로가 남지 않는다).
+    seed.write_text(json.dumps({"version": 2, "policies": [item("A")]}), encoding="utf-8")
+    paths.seed_from_file(db, seed)
+    assert [r.serv_id for r in db.query(PolicyEligibility)] == ["A"]
+    assert db.query(EligibilityPath).count() == 2  # A의 공통 경로 + 기본 경로
+    assert db.query(EligibilityPathCondition).count() == 1
+    db.close()
+
+
 def test_seed_file_covers_every_policy_with_known_fields():
     data = json.loads(paths.SEED_PATH.read_text(encoding="utf-8"))
     fields = set(structured.user_values(USER, profile()))

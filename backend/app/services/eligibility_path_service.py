@@ -25,8 +25,11 @@ RANK = {"eligible": 0, "needs_review": 1, "ineligible": 2}
 
 
 def seed_from_file(db: Session, path: Path = SEED_PATH) -> int:
-    """JSON 시드를 DB에 넣는다. 같은 정책은 경로를 통째로 바꾼다."""
+    """JSON 시드를 DB에 넣는다. 같은 정책은 경로를 통째로 바꾸고, 시드에서 빠진 정책(재검수 대상 등)은 지운다."""
     data = json.loads(path.read_text(encoding="utf-8"))
+    keep = {item["serv_id"] for item in data["policies"]}
+    for record in db.query(PolicyEligibility).filter(PolicyEligibility.serv_id.notin_(keep)):
+        db.delete(record)
     for item in data["policies"]:
         record = db.get(PolicyEligibility, item["serv_id"])
         if record is None:
