@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parents[1] / "data"
-GOLD_FILES = ["structure_gold_train.json", "structure_gold_val.json", "structure_gold_rest.json"]
+GOLD_FILES = ["structure_gold_train.json", "structure_gold_val.json", "structure_gold_rest.json", "structure_gold_new57.json"]
 REVIEWED = DATA / "eligibility_paths_reviewed.json"
 OUT = DATA / "eligibility_paths.json"
 SNAPSHOT = DATA / "welfare-policies.json"

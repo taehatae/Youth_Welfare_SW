@@ -1060,6 +1060,41 @@
    ]
   },
   {
+   "serv_id": "WLF00000095",
+   "name": "사회보험사각지대해소 사업(두루누리 사회보험료 지원사업)",
+   "source_sha256": "5eef19fd4f637493acb924d567a6e8e25d1c29209036c3ce3db9deffed725b65",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 월소득",
+     "op": "lte",
+     "value": 2699999
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트",
+      "프리랜서",
+      "자영업"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
    "serv_id": "WLF00000099",
    "name": "저소득장애인 진단서 발급비 및 검사비 지원사업",
    "source_sha256": "ff6e94eeb19bd67f30894d357185db14e1a4f70f3597a1c770da4e58213b6b24",
@@ -1444,9 +1479,56 @@
    ]
   },
   {
+   "serv_id": "WLF00001063",
+   "name": "주거안정 월세대출",
+   "source_sha256": "6cbaffce0a49b630e2ca0ee35a66d52a0a8e715a333fb96906bcb2899b9d507a",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 명의 주택 보유",
+     "op": "is_true",
+     "kind": "exclusion"
+    },
+    {
+     "field": "본인 총재산",
+     "op": "lte",
+     "value": 345000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
    "serv_id": "WLF00001071",
    "name": "우수학생 국가장학금 지원",
    "source_sha256": "d62e3d59cb1b71e3b5f75be869d1838cfaaf5bf1f4a81ba13ac9f009d36f529f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00001073",
+   "name": "장기복무제대군인수업료지원",
+   "source_sha256": "57833ca9b8a278b0642add3766c285545474ef4562a4f64c95dcba460922b210",
    "status": "reviewed",
    "drafted_by": "converted",
    "reviewed_by": "claude",
@@ -2248,6 +2330,40 @@
    "reviewed_by": "claude",
    "reviewed_at": "2026-10-31",
    "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00003222",
+   "name": "버팀목전세자금대출",
+   "source_sha256": "e03698ab13b18949ee707aa6d15a571b75a0c3bab3d939fe7639b7aade51d753",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 명의 주택 보유",
+     "op": "is_true",
+     "kind": "exclusion"
+    },
+    {
+     "field": "본인 총재산",
+     "op": "lte",
+     "value": 345000000
+    },
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 200000000
+    }
+   ],
    "paths": [
     {
      "id": "기본",
@@ -3666,6 +3782,29 @@
    ]
   },
   {
+   "serv_id": "WLF00005024",
+   "name": "장애인 자립지원 시범사업",
+   "source_sha256": "f38e64b5387ec3f44048868f5a1f0b91de46645f0338d8f5b9d9540d49165d4a",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "등록 장애인",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
    "serv_id": "WLF00005031",
    "name": "발달장애인 긴급돌봄사업",
    "source_sha256": "abec2e2ed54a4a0ae815948d6075dd89b6133982c118491c98cd48ead81df6d7",
@@ -3755,6 +3894,58 @@
    ]
   },
   {
+   "serv_id": "WLF00005445",
+   "name": "자립준비청년(보호종료아동) 자립정착금 지원",
+   "source_sha256": "4b8cdd279b7f7e4ad92720f06f80be33f1854647a6b17a2ec3e544e4fd02dc3f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "자립준비청년",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00005446",
+   "name": "어업인 안전보험",
+   "source_sha256": "8ff276587827871e886d85a275f581d49ac89499f2ee7606f82a9a05c20bfd0e",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 15,
+     "upper": 90
+    },
+    {
+     "field": "농업인·어업인",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
    "serv_id": "WLF00005567",
    "name": "정신건강 심리상담 바우처사업",
    "source_sha256": "bb5cb65d39eb4bc09e986d27e945b7e6e10d50c6d73f99712a0015d83f950157",
@@ -3763,6 +3954,60 @@
    "reviewed_by": "claude",
    "reviewed_at": "2026-10-31",
    "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00005856",
+   "name": "양육비 선지급",
+   "source_sha256": "8c569df6f7bd634d50a5ef604d9cc4c1a0ae787961bf99badcbb01597a561429",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "자녀 수",
+     "op": "gte",
+     "value": 1
+    },
+    {
+     "field": "가구 소득인정액",
+     "op": "lte",
+     "value": 150
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00005858",
+   "name": "임신 사전건강관리 지원사업",
+   "source_sha256": "5cc15ba5d0a4c6e5bf33b1d2ccdb78091b222c275552cd55cfce5aac20b91b78",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 20,
+     "upper": 49
+    }
+   ],
    "paths": [
     {
      "id": "기본",
@@ -3874,6 +4119,1366 @@
      ]
     }
    ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006224",
+   "name": "저소득층 수도요금감면",
+   "source_sha256": "ef7eee15a6b5ca80debbfe1c30351bcc0a65bb52fa42f0b1f70ff99a5240aa9a",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "만 나이",
+     "label": "만 나이",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "gte",
+       "value": 65
+      }
+     ]
+    },
+    {
+     "id": "등록 장애인",
+     "label": "등록 장애인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "기초생활보장 수급자",
+     "label": "기초생활보장 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "차상위계층",
+     "label": "차상위계층",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006225",
+   "name": "지역난방기본요금감면",
+   "source_sha256": "cbc2c20a05c42ea3164139bd817d61cb0196cfc87e6dbcea392158b1ef1b757b",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006226",
+   "name": "저소득층, 사회적 배려대상 및 다자녀가구 지역난방 열요금 지원",
+   "source_sha256": "3544f7b925d7dd050a91f6dc42357586f01761a4c7f2fe6ef06a9785ab758ca5",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기초생활보장 수급자",
+     "label": "기초생활보장 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "차상위계층",
+     "label": "차상위계층",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "한부모가족",
+     "label": "한부모가족",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "한부모가족",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "등록 장애인",
+     "label": "등록 장애인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "국가유공자·보훈대상자",
+     "label": "국가유공자·보훈대상자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "자녀 수",
+     "label": "자녀 수",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "자녀 수",
+       "op": "gte",
+       "value": 3
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006227",
+   "name": "유선전화(인터넷요금전화포함), 초고속(인터넷통신)요금감면",
+   "source_sha256": "0170dbe8394878f0c887720bd10de0edd544d09809599d87cc71a401e13a0d9f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "생계급여 수급자",
+     "label": "생계급여 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "생계급여 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "의료급여 수급자",
+     "label": "의료급여 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "의료급여 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "등록 장애인",
+     "label": "등록 장애인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "국가유공자·보훈대상자",
+     "label": "국가유공자·보훈대상자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "국가유공자·보훈대상자",
+       "op": "is_true"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006235",
+   "name": "현장실습 기업현장 교육지원",
+   "source_sha256": "f3a58c513e781c0a2c86bc1ce9425c1f5f40a1911ad55cfb1b405558d699f01b",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006236",
+   "name": "고교 취업연계 장려금",
+   "source_sha256": "8c8780f6c7e92aa111e2a7c7485c23a975f90e48d1630aa01d60901b9dd9a1a1",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국적",
+     "op": "one_of",
+     "values": [
+      "대한민국"
+     ]
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006237",
+   "name": "안부살핌 우편서비스 사업",
+   "source_sha256": "97aa6fc84216a346ba91906b69448efa742522f2c39736a81a772c2b8a2ef666",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006241",
+   "name": "정신질환자 치료비 지원 사업",
+   "source_sha256": "e8da92c45b9cccd18ab3e6bc1b2d75d99e4fdfac7085c8d318787aff31905782",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006245",
+   "name": "어업활동지원",
+   "source_sha256": "02f56047d02f561c08b3f257af6e34a9b922344d67566e8a9a11580d1deecbc0",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "농업인·어업인",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006246",
+   "name": "우수고등학교 해외유학 장학금(드림장학금)",
+   "source_sha256": "8d1b320164af1976b2d95d57f24b863e6cad8492c91cfb7998ec9a5ddbb26a68",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기초생활보장 수급자",
+     "label": "기초생활보장 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "차상위계층",
+     "label": "차상위계층",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006248",
+   "name": "직장인 든든한 점심밥",
+   "source_sha256": "c08100f5ac3ef1252630e86b2ab0b0a46e3f4adc7c6f6ff82cf40de01abe229d",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "중소기업 재직",
+      "아르바이트"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006249",
+   "name": "해외취업 지원",
+   "source_sha256": "6e8091c4a8326a35423393da49011094df0b8f6b4e6d39dc714b8c3357972e36",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006252",
+   "name": "근로지원인 지원",
+   "source_sha256": "48453ad68f27d455a14a2d3f7f138b74193912a851666bfcc47ca3dadc645b0e",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "등록 장애인",
+     "op": "is_true"
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006254",
+   "name": "예술체육 비전장학금",
+   "source_sha256": "bbd6c07d3a12fc333e9ec2018a1fd925e48f1b0ccdb8cdeaf5885a71173c6fa4",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국적",
+     "op": "one_of",
+     "values": [
+      "대한민국"
+     ]
+    },
+    {
+     "field": "재학 여부",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006255",
+   "name": "생계유지곤란자 병역감면",
+   "source_sha256": "e42a1e6f889783899eb9028e9441b05d4987ef6740ef2f368725612b8fd307ea",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006258",
+   "name": "건강보험 임의계속가입제도",
+   "source_sha256": "4932bb74e5f9323752dfb7ca453243ff01719266210fcefd4bae3a721d73a8b2",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "미취업",
+      "아르바이트",
+      "프리랜서",
+      "자영업"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006263",
+   "name": "저소득 지역가입자 보험료 지원",
+   "source_sha256": "a2732f1107169ca26ea2ff29832c5bc6b8fc402360b2efb9dbda485a57dce15f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 월소득",
+     "op": "lte",
+     "value": 799999
+    },
+    {
+     "field": "본인 총재산",
+     "op": "lte",
+     "value": 599999999
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "미취업",
+      "아르바이트",
+      "프리랜서",
+      "자영업"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006264",
+   "name": "생활안정자금(융자)(이차보전)",
+   "source_sha256": "042a75dfa3ef085d1621ed2b8c01710ddcd501b4d888db2dc5d304e7bff6ebee",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 월소득",
+     "op": "lte",
+     "value": 5359036
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트",
+      "프리랜서",
+      "자영업"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006265",
+   "name": "연탄쿠폰",
+   "source_sha256": "fdc880d655b116af800c6a5324ead139d9c8805b603eae0c65b5bb91f7b142f5",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기초생활보장 수급자",
+     "label": "기초생활보장 수급자",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "기초생활보장 수급자",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "차상위계층",
+     "label": "차상위계층",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "차상위계층",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "가구 소득인정액",
+     "label": "가구 소득인정액",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "가구 소득인정액",
+       "op": "lte",
+       "value": 50
+      }
+     ]
+    },
+    {
+     "id": "만 나이",
+     "label": "만 나이",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "만 나이",
+       "op": "gte",
+       "value": 65
+      }
+     ]
+    },
+    {
+     "id": "등록 장애인",
+     "label": "등록 장애인",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "등록 장애인",
+       "op": "is_true"
+      }
+     ]
+    },
+    {
+     "id": "한부모가족",
+     "label": "한부모가족",
+     "kind": "기본",
+     "conditions": [
+      {
+       "field": "한부모가족",
+       "op": "is_true"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006266",
+   "name": "청년미래적금",
+   "source_sha256": "92a10b0472ffdfaa1152834355bd1086ef82d052966d01b90e1bc7548fb7f6a6",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 19,
+     "upper": 40
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006267",
+   "name": "서민금융진흥원 금융교육",
+   "source_sha256": "766142057fa3e3fd21571a6c19b0e293ec424fb1c5c32090e82e5099b790dc2f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006268",
+   "name": "불법사금융예방대출",
+   "source_sha256": "95d0e9eafd56f53706a3823c9684e6e8f738178c9eb9880af1b2abb9f531aa90",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 35000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006269",
+   "name": "미소금융",
+   "source_sha256": "0646160ec213e66ba58af432979ccada60dccb1bd72785f260bffbd6ef2e249d",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006270",
+   "name": "중소기업 취업연계 장학사업 (희망사다리 I유형)",
+   "source_sha256": "877f9facd1219f2fca7d1f3b73141834db6730a3c3f02e52cd2d5635c9173de4",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국적",
+     "op": "one_of",
+     "values": [
+      "대한민국"
+     ]
+    },
+    {
+     "field": "재학 여부",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006271",
+   "name": "햇살론119",
+   "source_sha256": "2c0eba1f566c4f0314167594c7270490c9bd04659e854bfda18beda5e1c8e405",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "자영업",
+      "프리랜서"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006272",
+   "name": "소상공인 특례 햇살론카드",
+   "source_sha256": "c87fbea63244e2a55ee874b3afe63ffb42a41e499f3b24d6b7b08733b9b70fa2",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "자영업",
+      "프리랜서"
+     ]
+    },
+    {
+     "field": "본인 연소득",
+     "op": "gte",
+     "value": 6000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006273",
+   "name": "햇살론특례",
+   "source_sha256": "d74e429393bfab5ee34edc8184f85b11dd880b383f978920a707fb32ed74ca3e",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 35000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006274",
+   "name": "햇살론일반",
+   "source_sha256": "1c2697c6169552f1626298722030ed8a070755e6b1ae3b8f96b5f900961ace8f",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 45000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006275",
+   "name": "햇살론카드",
+   "source_sha256": "de30b71e226c14985534aad954a227cf5688ea981d8b249cba5b79fba704100d",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 연소득",
+     "op": "gte",
+     "value": 6000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006276",
+   "name": "서민금융진흥원 자영업 컨설팅",
+   "source_sha256": "a42cb269af8feac9d87ae9b462c385b1d4dfacaeeeee1b356f404326976bc2ca",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 45000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006277",
+   "name": "서민금융진흥원 신용･부채관리 컨설팅",
+   "source_sha256": "6e20abf0e71c04ec013657bc09a95cda9746fb3f0934c078c2f043dd52cd38b3",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006278",
+   "name": "서민금융진흥원 소액보험(한부모가정의료보험)",
+   "source_sha256": "3cc38952d0c536820dc2500e4c086ed567d5a17373ea741d98cd8df081c0e5c6",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "한부모가족",
+     "op": "is_true"
+    },
+    {
+     "field": "생계급여 수급자",
+     "op": "is_true",
+     "kind": "exclusion"
+    },
+    {
+     "field": "의료급여 수급자",
+     "op": "is_true",
+     "kind": "exclusion"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006282",
+   "name": "보훈가족 심리재활서비스 지원",
+   "source_sha256": "d7fbd677909563ec170290e1f2195fba6c9e540b664c158213877dffaf106b17",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006283",
+   "name": "체불 근로자 생계비 융자",
+   "source_sha256": "be1dc1601e27ed9495e9e3c975e83d4e99a2a4f188c7c7181417c83ae10b38fd",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006286",
+   "name": "고졸 후학습자 장학사업(희망사다리Ⅱ유형)",
+   "source_sha256": "7559da0237d435e77316b2be5a0442774066a2edd7a547c3cff5de9827c5c0aa",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국적",
+     "op": "one_of",
+     "values": [
+      "대한민국"
+     ]
+    },
+    {
+     "field": "재학 여부",
+     "op": "is_true"
+    },
+    {
+     "field": "고용 상태",
+     "op": "one_of",
+     "values": [
+      "재직",
+      "중소기업 재직",
+      "아르바이트"
+     ]
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006288",
+   "name": "서민금융진흥원 금융상품 알선",
+   "source_sha256": "2f166859ffa6551aff44a84f4d669591bdc431e0aca278acf34e5e170c45ad14",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006290",
+   "name": "경남동행론(직접대출)",
+   "source_sha256": "295878fc45300cc75b4b05e7606b8dbceafa213e0e32c37204435b3edc99ed85",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "거주지",
+     "op": "one_of",
+     "values": [
+      "경상남도"
+     ]
+    },
+    {
+     "field": "본인 연소득",
+     "op": "lte",
+     "value": 35000000
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006293",
+   "name": "4·19혁명공로수당",
+   "source_sha256": "19ac3e5a39846f17fc7fb73ec004545f85c98dc4f2c156be3aea694a82d0cc53",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006295",
+   "name": "마을변호사",
+   "source_sha256": "fd94718c77b88e05105a42a02b46bcd8928fda6cb6c9c2558c119e7723e721a1",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006296",
+   "name": "국가보훈대상자 친환경차량(전기･수소차) 지원",
+   "source_sha256": "74de830820404aedbf8a10adb84754d851d0a278719a3ece08df994e83bde2dc",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "국가유공자·보훈대상자",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006297",
+   "name": "장애인 창업보육실 운영",
+   "source_sha256": "aa3f2f43e3364adffc118926619eb5783e1fb190403c4864385137e746fcfd3c",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "등록 장애인",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006301",
+   "name": "위기청년(가족돌봄, 고립은둔) 전담 지원사업",
+   "source_sha256": "b459a5e38c5824fc9144dfdd20e989e90ba6321733e0946e2bfeefa51fd5620b",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 13,
+     "upper": 34
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006305",
+   "name": "고졸자 후속관리 지원모델 개발사업",
+   "source_sha256": "2b6d05913122523b7c27a21db1993d52db449edaded85d5b0b1d360ca67e654b",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006307",
+   "name": "자립지원 전담기관 운영",
+   "source_sha256": "2bec5666d3144581cbbbc190c0a76f80d597383a55c46476b9723ead01bcde6c",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "자립준비청년",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006315",
+   "name": "가족전용상담전화",
+   "source_sha256": "de4f21ee7bd989419e6566acf44abd921fea66b2f7b34a7c2b522e62515c6799",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006316",
+   "name": "전문기술인재장학금",
+   "source_sha256": "5ceafe695fd6d415414f35f0c12ce78f95e8199c3211259b4a8527a7b60be9ed",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "재학 여부",
+     "op": "is_true"
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006318",
+   "name": "경계선지능청년지원 사업",
+   "source_sha256": "a5c1b529b4fffa93dcc3cd48402caf79522304aa0e10ae89b55d2e9b6ab1b1b4",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 18,
+     "upper": 39
+    }
+   ],
+   "paths": [
+    {
+     "id": "기본",
+     "label": "기본",
+     "kind": "기본",
+     "conditions": []
+    }
+   ]
+  },
+  {
+   "serv_id": "WLF00006319",
+   "name": "대지급금",
+   "source_sha256": "374b2e77923d1f88a00f981d2a45518a669bacbbbb6e6749c6704eaf6d3c0937",
+   "status": "reviewed",
+   "drafted_by": "converted",
+   "reviewed_by": "claude",
+   "reviewed_at": "2026-10-31",
+   "common": [],
    "paths": [
     {
      "id": "기본",
