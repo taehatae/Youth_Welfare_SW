@@ -1,6 +1,8 @@
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -142,3 +144,60 @@ def test_seed_file_covers_every_policy_with_known_fields():
         for p in [{"conditions": policy.get("common", [])}] + policy["paths"]:
             for c in p.get("conditions", []):
                 assert c["field"] in fields and c["op"] in {"gte", "lte", "between", "one_of", "is_true"}
+
+
+def batch4_record(serv_id):
+    """검수 데이터를 메모리 모델로만 구성한다. DB 적재는 하지 않는다."""
+    data = paths.SEED_PATH.parent
+    policy = next(p for p in json.loads((data / "eligibility_paths_reviewed.json").read_text(encoding="utf-8"))["policies"]
+                  if p["serv_id"] == serv_id and p.get("batch") == 4)
+    source = next(p for p in json.loads((data / "welfare-policies.json").read_text(encoding="utf-8"))["data"]["welfare_services"]
+                  if p["serv_id"] == serv_id)
+    service = SimpleNamespace(serv_id=serv_id, serv_name=policy["name"], detail_url=source.get("detail_url"),
+                              target_details=source["target_details"], selection_criteria=source["selection_criteria"])
+
+    def convert(c):
+        result = condition(c["field"], c["op"], c.get("value"), c.get("upper"), c.get("values", []),
+                           c.get("kind", "requirement"))
+        result.evidence = c["evidence"]
+        return result
+
+    rec = record([(p["id"], [convert(c) for c in p["conditions"]], p["checks"]) for p in policy["paths"]],
+                 common=[convert(c) for c in policy["common"]], common_checks=policy["common_checks"])
+    rec.serv_id = serv_id
+    rec.source_sha256 = structured.source_hash(service)
+    return service, rec
+
+
+@pytest.mark.parametrize("serv_id,age,provided,passed", [
+    ("WLF00006269", 27, profile(), 1),
+    ("WLF00003265", 19, profile(disability_status="YES"), 2),
+    ("WLF00006266", 35, {}, 1),
+])
+def test_batch4_current_design_can_be_eligible_with_unverified_required_checks(serv_id, age, provided, passed):
+    # 현행 예비 판정을 고정한다. 모든 필수 자격의 확인 완료를 의미하지 않는다.
+    service, rec = batch4_record(serv_id)
+    user = SimpleNamespace(age=age, region=None, income_level=None, employment_status=None)
+
+    result = paths.analyze(service, user, provided, rec)
+
+    assert result["status"] == "eligible"
+    assert result["passed_conditions"] == passed
+    assert result["review_conditions"]
+    assert all(row["status"] == "needs_review" for row in result["review_conditions"])
+    assert result["gap_conditions"] == []
+
+
+def test_batch4_nine_paths_without_comparison_conditions_remain_needs_review():
+    checked = 0
+    for serv_id in ("WLF00001146", "WLF00003231", "WLF00006269"):
+        _, rec = batch4_record(serv_id)
+        common = rec.paths[0]
+        for path in rec.paths[1:]:
+            if common.conditions or path.conditions:
+                continue
+            result = paths._evaluate_path(path, common, {})
+            assert result["status"] == "needs_review"
+            assert result["conditions"] == []
+            checked += 1
+    assert checked == 9

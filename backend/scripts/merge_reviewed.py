@@ -29,6 +29,8 @@ def merge(reviewed: dict, draft: dict, services: dict, today: str) -> list[str]:
         old = reviewed["policies"][by_id[serv_id]] if serv_id in by_id else None
         batch = old.get("batch", 1) if old else draft["batch"]
         item = {k: v for k, v in policy.items() if k not in DRAFT_ONLY_KEYS + ("batch", "source_sha256", "reviewed_at")}
+        if draft.get("drafted_by"):
+            item.setdefault("drafted_by", draft["drafted_by"])
         item.update({"batch": batch, "source_sha256": source_hash(target, selection), "reviewed_at": today})
         if old:
             reviewed["policies"][by_id[serv_id]] = item

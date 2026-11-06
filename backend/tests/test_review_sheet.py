@@ -11,10 +11,13 @@ def test_reviewed_paths_use_known_fields_and_quote_source():
     services = {s["serv_id"]: s for s in json.loads(SNAPSHOT.read_text(encoding="utf-8"))["data"]["welfare_services"]}
 
     ids = [p["serv_id"] for p in reviewed["policies"]]
-    assert len(ids) == len(set(ids)) == 20  # 1차 10개 + 2차 10개, 겹치지 않음
+    assert len(ids) == len(set(ids)) == 40  # 1·2·3·4차 각 10개, 겹치지 않음
+    assert sum(p.get("batch", 1) == 1 for p in reviewed["policies"]) == 10
     assert sum(p.get("batch") == 2 for p in reviewed["policies"]) == 10
+    assert sum(p.get("batch") == 3 for p in reviewed["policies"]) == 10
+    assert sum(p.get("batch") == 4 for p in reviewed["policies"]) == 10
 
-    for policy in (p for p in reviewed["policies"] if p.get("batch") == 2):  # 1차는 근거를 요약해 적은 곳이 있어 제외
+    for policy in (p for p in reviewed["policies"] if p.get("batch") in (2, 3, 4)):  # 1차는 근거를 요약해 적은 곳이 있어 제외
         service = services[policy["serv_id"]]
         source = "\n".join(t for t in (service["target_details"], service["selection_criteria"]) if t and t.strip())
         conditions = policy.get("common", []) + [c for p in policy["paths"] for c in p.get("conditions", [])]
