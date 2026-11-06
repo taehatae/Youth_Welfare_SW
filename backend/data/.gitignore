@@ -1,0 +1,7 @@
+# 모델 응답 캐시와 실험 실행 결과는 로컬에만 둔다. 검수한 데이터셋과 정답지만 저장소에 올린다.
+structure_cache.json
+llm_judgments*.json
+structured_train_*
+structured_val_*
+structured_all_*
+_*

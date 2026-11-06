@@ -26,9 +26,11 @@ export const setApiAccount = (id: string | null) => { expectedAccountId = id }
 export class ApiError extends Error {
   constructor(message: string, public status: number) { super(message) }
 }
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+// LLM이 정책을 하나씩 비교하는 진단은 수 분이 걸릴 수 있어 진단 요청만 대기 시간을 늘린다.
+const LONG_TIMEOUT_MS = 30 * 60 * 1000
+async function request<T>(path: string, init?: RequestInit, timeoutMs = 20000): Promise<T> {
   const controller = new AbortController()
-  const timeout = window.setTimeout(() => controller.abort(), 20000)
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
   const headers: Record<string, string> = { "Content-Type": "application/json" }
   if (expectedAccountId && !["/auth/login", "/auth/signup", "/auth/me"].includes(path)) headers["X-Account-ID"] = expectedAccountId
   try {
@@ -70,8 +72,8 @@ export const diagnoseAccount = async (profile: UserProfileInput) => validateStat
   method: "POST", body: JSON.stringify({ ...profile,
     employment_status: profile.employment_status === "PART_TIME" ? "OTHER" : profile.employment_status,
   }),
-}))
-export const refreshAccount = async () => validateState(await request<AccountState>("/welfare/refresh", { method: "POST" }))
+}, LONG_TIMEOUT_MS))
+export const refreshAccount = async () => validateState(await request<AccountState>("/welfare/refresh", { method: "POST" }, LONG_TIMEOUT_MS))
 export const toggleAccountPolicy = (profileKey: string, policyId: string) => request<{ items: SavedPolicy[] }>("/users/saved/toggle", { method: "POST", body: JSON.stringify({ profileKey, policyId }) })
 export const updateAccountPolicy = (profileKey: string, policyId: string, trackingStatus: TrackingStatus, note: string) =>
   request<{ items: SavedPolicy[] }>("/users/saved", { method: "PATCH", body: JSON.stringify({ profileKey, policyId, trackingStatus, note }) })

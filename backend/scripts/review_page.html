@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자격 조건 채점</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #fff; --line: #dfe2e7; --text: #16191f; --muted: #6b7280;
+    --accent: #2563eb; --ok: #15803d; --ok-bg: #dcfce7; --bad: #dc2626; --bad-bg: #fee2e2; --mark: #fef08a;
+  }
+  * { box-sizing: border-box; }
+  /* 화면 전체를 쓰고, 원문과 판단 목록이 각자 따로 스크롤된다. */
+  body { margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font: 15px/1.6 "Pretendard", "Malgun Gothic", system-ui, sans-serif; color: var(--text); background: var(--bg); }
+  header { flex: none; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  .top { display: flex; align-items: center; gap: 10px; }
+  .top h1 { font-size: 17px; margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .top button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  .pills { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .pills button { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+  .pills button.done { background: var(--ok-bg); border-color: var(--ok); color: var(--ok); font-weight: 700; }
+  .pills button.active { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .saved { color: var(--muted); font-size: 12px; }
+  main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 14px 16px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; } }
+  .judge { min-height: 0; overflow: auto; padding-bottom: 24px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .box h2 { font-size: 13px; color: var(--muted); font-weight: 600; margin: 0 0 10px; letter-spacing: .02em; }
+  .source { min-height: 0; overflow: auto; }
+  .source pre { white-space: pre-wrap; font: inherit; font-size: 15.5px; line-height: 1.75; margin: 0; }
+  mark { background: var(--mark); border-radius: 3px; padding: 0 1px; }
+  .group { margin-bottom: 14px; }
+  .group-title { font-weight: 700; font-size: 14px; margin: 4px 0 6px; padding-left: 8px; border-left: 3px solid var(--accent); }
+  .item { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; padding: 9px 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; background: #fff; }
+  .item.ok { background: #f3fcf6; border-color: #a7e3bd; }
+  .item.bad { background: #fff6f6; border-color: #f5b5b5; }
+  .item .text { font-size: 15px; }
+  .item .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; margin-right: 6px; }
+  /* 이전 차수에서 이미 검수한 항목: 흐리게 보여 새 항목에 집중하게 한다(다시 누르면 바꿀 수 있음). */
+  .item.prior { opacity: .55; }
+  .item.prior:hover { opacity: 1; }
+  .item .tag.prior { color: var(--ok); border-color: #a7e3bd; }
+  .grade { display: flex; gap: 6px; }
+  .grade button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 5px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+  .grade .o.on { background: var(--ok); border-color: var(--ok); color: #fff; font-weight: 700; }
+  .grade .x.on { background: var(--bad); border-color: var(--bad); color: #fff; font-weight: 700; }
+  .item textarea { grid-column: 1 / -1; }
+  textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; resize: vertical; }
+  .missing textarea { min-height: 90px; }
+  .actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 14px; }
+  .btn { border: 0; background: var(--accent); color: #fff; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+  .btn.ghost { background: #fff; color: var(--text); border: 1px solid var(--line); font-weight: 500; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+  .empty { color: var(--muted); font-size: 14px; padding: 4px 0 8px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1 id="title">자격 조건 채점</h1>
+    <span id="saved" class="saved"></span>
+    <button id="prevTop">←</button>
+    <button id="nextTop">→</button>
+  </div>
+  <div class="pills" id="pills"></div>
+</header>
+<main>
+  <div class="box source"><h2>원문</h2><div id="source"></div></div>
+  <div class="judge" id="judge">
+    <div class="box">
+      <h2>LLM 판단 — 하나씩 맞음 / 틀림</h2>
+      <div id="items"></div>
+    </div>
+    <div class="box missing" style="margin-top:14px">
+      <h2>놓친 조건 (원문에 있는데 위에 없는 것)</h2>
+      <textarea id="missing" placeholder="예) 직전학기 성적 C 이상 조건이 빠짐"></textarea>
+    </div>
+    <div class="actions">
+      <span class="hint" id="status"></span>
+      <button class="btn" id="done"></button>
+    </div>
+  </div>
+</main>
+<script>
+let data, review, current = 0, saveTimer;
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+// 정책 하나의 판단을 채점할 항목 목록으로 편다. 경로 이름은 묶음 제목으로만 쓴다.
+function itemsOf(policy) {
+  return policy.paths.map((p) => ({
+    title: p.id === "_common" ? "모든 대상 공통" : p.label,
+    items: [
+      ...p.conditions.map((c, i) => ({ key: `${p.id}|c${i}`, text: c.text, evidence: c.evidence || "", tag: "" })),
+      ...p.checks.map((t, i) => ({ key: `${p.id}|k${i}`, text: t, evidence: "", tag: "확인" })),
+    ],
+  })).filter((g) => g.items.length).concat(policy.preferences.length
+    ? [{ title: "우대 (판정에 안 씀)", items: policy.preferences.map((t, i) => ({ key: `_pref|${i}`, text: t, evidence: "", tag: "우대" })) }]
+    : []);
+}
+function state(policy) {
+  review.policies ??= {};
+  const s = (review.policies[policy.serv_id] ??= { done: false, missing: "", items: {} });
+  if (!s.items) {
+    // 예전 화면(경로 단위 O/X)에서 '조건이 맞는가'를 고른 경로는 그 경로의 항목 전체에 같은 채점을 옮긴다.
+    s.items = {};
+    for (const [pathId, old] of Object.entries(s.paths || {})) {
+      if (old.correct == null) continue;
+      itemsOf(policy).flatMap((g) => g.items).filter((it) => it.key.startsWith(pathId + "|"))
+        .forEach((it, i) => s.items[it.key] = { ok: old.correct, note: i === 0 ? old.note || "" : "" });
+    }
+    delete s.paths;
+  }
+  return s;
+}
+function itemState(policy, key) {
+  return (state(policy).items[key] ??= { ok: null, note: "" });
+}
+
+function save() {
+  $("saved").textContent = "저장 중…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    review.saved_at = new Date().toISOString();
+    try {
+      await fetch("/api/save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(review) });
+      $("saved").textContent = "저장됨";
+    } catch { $("saved").textContent = "저장 실패"; }
+  }, 300);
+}
+
+// 근거 구절('...'로 생략 가능)을 공백 차이와 상관없이 원문에서 찾아 칠한다.
+function renderSource(policy, evidence) {
+  const ranges = [];
+  (evidence || "").split("...").forEach((piece) => {
+    const chars = [...piece.replace(/\s+/g, "")].map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    if (!chars.length) return;
+    for (const m of policy.source.matchAll(new RegExp(chars.join("\\s*"), "g"))) ranges.push([m.index, m.index + m[0].length]);
+  });
+  ranges.sort((a, b) => a[0] - b[0]);
+  let html = "", pos = 0;
+  for (const [s, e] of ranges) {
+    if (e <= pos) continue;
+    html += esc(policy.source.slice(pos, Math.max(s, pos))) + "<mark>" + esc(policy.source.slice(Math.max(s, pos), e)) + "</mark>";
+    pos = e;
+  }
+  $("source").innerHTML = `<pre>${html + esc(policy.source.slice(pos))}</pre>`;
+}
+
+function counts(policy) {
+  const all = itemsOf(policy).flatMap((g) => g.items);
+  const s = state(policy);
+  const graded = all.filter((it) => s.items[it.key]?.ok != null).length;
+  const wrong = all.filter((it) => s.items[it.key]?.ok === false).length;
+  return { total: all.length, graded, wrong };
+}
+
+function renderHeader() {
+  const policy = data.policies[current];
+  $("title").textContent = `${current + 1}. ${policy.name}`;
+  $("pills").innerHTML = data.policies.map((p, i) =>
+    `<button title="${esc(p.name)}" class="${state(p).done ? "done" : ""} ${i === current ? "active" : ""}" data-i="${i}">${i + 1}</button>`).join("");
+  $("pills").querySelectorAll("button").forEach((b) => b.onclick = () => show(+b.dataset.i));
+}
+
+function renderItems(policy) {
+  const s = state(policy);
+  $("items").innerHTML = itemsOf(policy).map((g) => `<div class="group"><div class="group-title">${esc(g.title)}</div>
+    ${g.items.map((it) => {
+      const st = itemState(policy, it.key);
+      return `<div class="item ${st.ok === true ? "ok" : st.ok === false ? "bad" : ""} ${st.prior ? "prior" : ""}" data-key="${esc(it.key)}" data-ev="${esc(it.evidence)}">
+        <div class="text">${st.prior ? `<span class="tag prior">기존 검수</span>` : ""}${it.tag ? `<span class="tag">${it.tag}</span>` : ""}${esc(it.text)}</div>
+        <div class="grade"><button class="o ${st.ok === true ? "on" : ""}">맞음</button><button class="x ${st.ok === false ? "on" : ""}">틀림</button></div>
+        ${st.ok === false ? `<textarea rows="2" placeholder="어떻게 고쳐야 하나요?">${esc(st.note)}</textarea>` : ""}
+      </div>`;
+    }).join("")}</div>`).join("") || `<div class="empty">판단 없음</div>`;
+
+  $("items").querySelectorAll(".item").forEach((el) => {
+    const st = itemState(policy, el.dataset.key);
+    el.querySelector(".o").onclick = () => { delete st.prior; st.ok = st.ok === true ? null : true; save(); renderItems(policy); };
+    el.querySelector(".x").onclick = () => {
+      delete st.prior; st.ok = st.ok === false ? null : false; save(); renderItems(policy);
+      if (st.ok === false) $("items").querySelector(`.item[data-key="${CSS.escape(el.dataset.key)}"] textarea`)?.focus();
+    };
+    const note = el.querySelector("textarea");
+    if (note) note.oninput = () => { st.note = note.value; save(); };
+    el.onmouseenter = () => el.dataset.ev && renderSource(policy, el.dataset.ev);
+    el.onmouseleave = () => renderSource(policy, "");
+  });
+
+  const c = counts(policy);
+  $("status").textContent = `${c.graded} / ${c.total} 채점 · 틀림 ${c.wrong}`;
+  $("done").textContent = s.done ? "완료 취소" : current < data.policies.length - 1 ? "채점 완료 → 다음 정책" : "채점 완료";
+}
+
+function show(i) {
+  current = Math.max(0, Math.min(data.policies.length - 1, i));
+  const policy = data.policies[current];
+  $("missing").value = state(policy).missing;
+  renderSource(policy, ""); renderItems(policy); renderHeader();
+  $("judge").scrollTop = 0; document.querySelector(".source").scrollTop = 0;
+  try { localStorage.setItem("review-current", current); } catch {}
+}
+
+$("missing").oninput = (e) => { state(data.policies[current]).missing = e.target.value; save(); };
+$("prevTop").onclick = () => show(current - 1);
+$("nextTop").onclick = () => show(current + 1);
+$("done").onclick = () => {
+  const policy = data.policies[current], s = state(policy), c = counts(policy);
+  if (!s.done && c.graded < c.total && !confirm(`채점 안 한 항목이 ${c.total - c.graded}개 있어요. 그래도 완료할까요?`)) return;
+  s.done = !s.done; save();
+  if (s.done && current < data.policies.length - 1) show(current + 1); else { renderItems(policy); renderHeader(); }
+};
+document.addEventListener("keydown", (e) => {
+  if (["TEXTAREA", "INPUT"].includes(e.target.tagName)) return;
+  if (e.key === "ArrowRight") show(current + 1);
+  if (e.key === "ArrowLeft") show(current - 1);
+});
+
+(async () => {
+  data = await (await fetch("/api/data")).json();
+  review = data.review?.policies ? data.review : { batch: data.batch, policies: {} };
+  let start = 0;
+  try { start = +localStorage.getItem("review-current") || 0; } catch {}
+  show(start);
+})();
+</script>
+</body>
+</html>

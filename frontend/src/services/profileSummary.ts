@@ -5,7 +5,9 @@ import {
   HOUSING,
   INCOME,
   MARRIAGE,
+  NATIONALITY,
   QUALIFICATIONS,
+  SPECIAL_TARGETS,
   YES_NO,
   EMPTY_DRAFT,
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -29,12 +31,6 @@ const extraFields = [
     "single_parent_support_status",
     "한부모가족 지원 대상",
     "status",
-  ],
-  [
-    "householdMonthlyIncomeWon",
-    "household_monthly_income_won",
-    "가구 월소득",
-    "money",
   ],
   [
     "householdIncomeRecognitionKnown",
@@ -100,6 +96,16 @@ const extraFields = [
     "text",
   ],
 ] as const
+function manwonLabel(won: JsonValue | undefined) {
+  if (typeof won !== "number") return "미입력"
+  const manwon = Math.round(won / 10000)
+  const eok = Math.floor(manwon / 10000)
+  const rest = manwon % 10000
+  if (!eok) return `${manwon.toLocaleString("ko-KR")}만원`
+  return rest
+    ? `${eok}억 ${rest.toLocaleString("ko-KR")}만원`
+    : `${eok}억원`
+}
 const benefits: Record<string, string> = {
   LIVELIHOOD: "생계",
   MEDICAL: "의료",
@@ -131,6 +137,7 @@ export function profileSummary(profile: UserProfileInput | null) {
       items: [
         ["나이", `만 ${profile.age}세`],
         ["성별", label(GENDER, p.gender)],
+        ["국적", label(NATIONALITY, extra.nationality ?? "KOREAN")],
       ],
     },
     { title: "거주 지역", items: [["거주지", profile.region]] },
@@ -150,7 +157,27 @@ export function profileSummary(profile: UserProfileInput | null) {
           "주택 보유",
           p.owns_home == null ? "미확인" : p.owns_home ? "보유" : "미보유",
         ],
-        ["재산", label(ASSETS, p.asset_range)],
+        [
+          "가구 총재산",
+          typeof extra.asset_amount_won === "number"
+            ? manwonLabel(extra.asset_amount_won)
+            : p.asset_range
+              ? label(ASSETS, p.asset_range)
+              : "미입력",
+        ],
+        [
+          "본인 명의 재산",
+          typeof extra.personal_asset_amount_won === "number"
+            ? manwonLabel(extra.personal_asset_amount_won)
+            : "미입력",
+        ],
+        [
+          "세대 전원 무주택",
+          extra.household_homeless == null
+            ? "미확인"
+            : label(YES_NO, extra.household_homeless),
+        ],
+        ["가구 월소득", manwonLabel(extra.household_monthly_income_won)],
       ],
     },
     {
@@ -168,6 +195,12 @@ export function profileSummary(profile: UserProfileInput | null) {
     {
       title: "추가 조건",
       items: [
+        [
+          "해당 대상",
+          Array.isArray(extra.special_targets) && extra.special_targets.length
+            ? extra.special_targets.map((v) => label(SPECIAL_TARGETS, v)).join(", ")
+            : "해당 없음",
+        ],
         ["재학 여부", label(YES_NO, p.student_status)],
         ["장애 여부", label(YES_NO, p.disability_status)],
         ["혼인", label(MARRIAGE, p.marital_status)],
@@ -210,6 +243,20 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
         : []
     else additional[draftKey] = value == null ? "" : String(value)
   }
+  additional.assetAmountManwon =
+    typeof extra.asset_amount_won === "number"
+      ? String(Math.round(extra.asset_amount_won / 10000))
+      : ""
+  additional.personalAssetManwon =
+    typeof extra.personal_asset_amount_won === "number"
+      ? String(Math.round(extra.personal_asset_amount_won / 10000))
+      : ""
+  additional.householdMonthlyIncomeManwon =
+    typeof extra.household_monthly_income_won === "number"
+      ? String(Math.round(extra.household_monthly_income_won / 10000))
+      : ""
+  additional.householdHomeless =
+    typeof extra.household_homeless === "string" ? extra.household_homeless : ""
   return {
     ...EMPTY_DRAFT,
     age: String(profile.age),
@@ -241,6 +288,11 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
           ? "YES"
           : "UNKNOWN",
     qualifications: [...(p.qualifications ?? [])],
+    nationality:
+      typeof extra.nationality === "string" ? extra.nationality : "KOREAN",
+    specialTargets: Array.isArray(extra.special_targets)
+      ? extra.special_targets.filter((v): v is string => typeof v === "string")
+      : [],
     additionalEligibility: additional,
   }
 }

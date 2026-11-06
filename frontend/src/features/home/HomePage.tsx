@@ -130,15 +130,15 @@ export default function HomePage({
               <h2>어떤 지원이 나와 맞을까?</h2>
               <div className="youth-condition-list">
                 <div>
-                  <span>내가 충족한 조건</span>
-                  <span className="youth-condition-pass">확인 ✓</span>
+                  <span>입력값과 맞는 정책</span>
+                  <span className="youth-condition-pass">신청 가능 ✓</span>
                 </div>
                 <div>
-                  <span>아직 부족한 조건</span>
-                  <span className="youth-condition-review">추가 확인 △</span>
+                  <span>맞지 않는 조건이 있는 정책</span>
+                  <span className="youth-condition-gap">신청 불가 ✕</span>
                 </div>
               </div>
-              <p>현재의 가능성과 다음에 필요한 행동을 함께 확인해요.</p>
+              <p>충족한 조건 수와 부족한 조건을 함께 확인해요.</p>
             </div>
             <div className="youth-next-card">
               <span className="youth-refresh-icon" aria-hidden="true">

@@ -57,6 +57,26 @@ class DecisionEvidence(BaseModel):
     decision_ruleset_version: str = ""
 
 
+class PathConditionResult(BaseModel):
+    condition_type: str
+    status: Literal["passed", "failed", "needs_review"]
+    current_value: str
+    required_value: str
+    evidence: str = ""
+    # 모든 경로에 공통인 조건이면 True(화면에서 한 번만 보여준다)
+    common: bool = False
+
+
+class EligibilityPathResult(BaseModel):
+    path_id: str
+    label: str
+    kind: str
+    priority: int | None = None
+    status: Literal["eligible", "needs_review", "ineligible"]
+    conditions: list[PathConditionResult] = Field(default_factory=list)
+    checks: list[str] = Field(default_factory=list)
+
+
 class EligibilityAnalysis(BaseModel):
     policy_id: str
     title: str
@@ -70,8 +90,9 @@ class EligibilityAnalysis(BaseModel):
     review_conditions: list[ConditionAnalysis] = Field(
         default_factory=list
     )
-    recommendation_status: RecommendationStatus
-    recommendation_reason: str
+    # 추천 판정 도입 이전에 저장된 진단 결과도 읽을 수 있도록 기본값을 둔다.
+    recommendation_status: RecommendationStatus = "additional_review"
+    recommendation_reason: str = "이전에 저장된 진단 결과예요. 다시 진단하면 추천 사유를 확인할 수 있어요."
     recommendation_uncertainty: str | None = None
     confirmed_conditions: list[ConditionAnalysis] = Field(
         default_factory=list
@@ -84,6 +105,12 @@ class EligibilityAnalysis(BaseModel):
     decision_warnings: list[str] = Field(default_factory=list)
     decision_evidence: list[DecisionEvidence] = Field(default_factory=list)
     semantic_analysis: list[dict] = Field(default_factory=list)
+    # 자격 경로 판정 결과. 경로 데이터가 없는 정책이나 이전 결과에서는 비어 있다.
+    eligibility_paths: list[EligibilityPathResult] = Field(default_factory=list)
+    matched_path_id: str | None = None
+    blocked_by_common: list[str] = Field(default_factory=list)
+    preferences: list[str] = Field(default_factory=list)
+    path_review: Literal["reviewed", "converted"] | None = None
 
 
 class MatchedPoliciesResponse(BaseModel):

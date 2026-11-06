@@ -11,14 +11,16 @@ import type { UserProfileInput } from "../../types/welfareApi"
 import { REGIONS } from "../../data/regions"
 
 import {
-  ASSETS,
   EMPTY_ADDITIONAL_ELIGIBILITY,
+  householdIncomeManwon,
   EMPLOYMENT,
   GENDER,
   HOUSING,
   INCOME,
   MARRIAGE,
+  NATIONALITY,
   QUALIFICATIONS,
+  SPECIAL_TARGETS,
   YES_NO,
   incomeWon,
   numberOptions,
@@ -98,6 +100,47 @@ function Select({
 
   showUnanswered?: boolean
 }) {
+  // 선택지가 적으면 드롭다운 대신 한 번에 고르는 버튼으로 보여준다.
+  // 필수·미입력 항목은 아무것도 고르지 않은 상태가 빈 값이다.
+  const choices: Option[] =
+    required || showUnanswered || options.some(([v]) => v === "UNKNOWN")
+      ? options
+      : [...options, ["", "미확인"]]
+  if (choices.length >= 2 && choices.length <= 5)
+    return (
+      <fieldset
+        className="choice-field"
+        disabled={disabled}
+        aria-describedby={hint ? name + "-hint" : undefined}
+      >
+        <legend className="block text-sm font-semibold text-slate-800">
+          {label}
+          {required && <span className="ml-1 text-blue-700"> (필수)</span>}
+        </legend>
+        <div className="choice-group" data-count={choices.length}>
+          {choices.map(([id, text]) => (
+            <label key={id || "empty"} className="choice-option">
+              <input
+                type="radio"
+                name={name}
+                value={id}
+                checked={value === id}
+                onChange={() => onChange(id)}
+              />
+              <span>{text}</span>
+            </label>
+          ))}
+        </div>
+        {hint && (
+          <p
+            id={name + "-hint"}
+            className="text-sm leading-relaxed text-slate-500"
+          >
+            {hint}
+          </p>
+        )}
+      </fieldset>
+    )
   return (
     <div className="space-y-2">
       <label
@@ -260,15 +303,49 @@ export default function DiagnosisPage({
       name={`additional-${key}`}
       label={label}
       options={YES_NO_UNKNOWN_OPTIONS}
-      value={additional[key]}
+      value={additional[key] ?? ""}
       onChange={(value) => updateAdditional(key, value)}
       hint={hint}
       showUnanswered
     />
   )
 
+  const manwonInput = (
+    key: "assetAmountManwon" | "personalAssetManwon" | "householdMonthlyIncomeManwon",
+    label: string,
+    hint: string,
+    value: string,
+  ) => (
+    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+      {label}
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          placeholder="예: 5000"
+          value={value}
+          onChange={(event) => {
+            const next = { ...additional, [key]: event.target.value }
+            if (key === "householdMonthlyIncomeManwon")
+              next.householdMonthlyIncomeWon = ""
+            setDraft({ ...draft, additionalEligibility: next })
+            setError("")
+          }}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+        />
+        <span aria-hidden="true" className="font-normal">만원</span>
+      </div>
+      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+    </label>
+  )
+
   const field = (
-    key: Exclude<keyof ProfileDraft, "qualifications" | "additionalEligibility">,
+    key: Exclude<
+      keyof ProfileDraft,
+      "qualifications" | "additionalEligibility" | "specialTargets"
+    >,
 
     label: string,
 
@@ -284,7 +361,7 @@ export default function DiagnosisPage({
       name={key}
       label={label}
       options={options}
-      value={draft[key]}
+      value={draft[key] ?? (key === "nationality" ? "KOREAN" : "")}
       onChange={(value) => update(key, value)}
       hint={hint}
       required={required}
@@ -397,6 +474,7 @@ export default function DiagnosisPage({
           <div className="review-actions">
             <button
               type="button"
+              className="secondary-action"
               disabled={busy}
               onClick={() => {
                 setReviewProfile(null)
@@ -419,7 +497,10 @@ export default function DiagnosisPage({
     )
 
   return (
-    <section className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6">
+    <section
+      className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6"
+      data-compact-heading={step > 0 || undefined}
+    >
       <PageHeading
         eyebrow="내 정보에서 시작하는 맞춤 진단"
         title="내 자격 진단"
@@ -492,9 +573,9 @@ export default function DiagnosisPage({
               <button
                 type="button"
                 onClick={() => setPage("explorer")}
-                className="text-sm text-blue-700 underline underline-offset-4"
+                className="text-action"
               >
-                대상 연령 밖이라면 정책 목록 살펴보기
+                대상 연령 밖이라면 정책 목록 살펴보기 →
               </button>
             </>
           )}
@@ -538,53 +619,59 @@ export default function DiagnosisPage({
                 "여러 소득이 있다면 가장 큰 비중의 소득원을 선택해주세요.",
               )}
               <div>
-                <p className="mb-3 text-sm font-semibold">
-                  본인 월평균 세전 소득 (필수)
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {field(
-                    "incomeMajor",
-
-                    "백만원 단위",
-
-                    numberOptions(0, 99).map(([v]) => [
-                      v,
-
-                      Number(v) * 100 + "만원",
-                    ]),
-
-                    undefined,
-
-                    true,
-
-                    draft.incomeType === "NONE",
-                  )}
-                  {field(
-                    "incomeMinor",
-
-                    "나머지 만원 단위",
-
-                    numberOptions(0, 99, "만원"),
-
-                    undefined,
-
-                    true,
-
-                    draft.incomeType === "NONE",
-                  )}
+                <label
+                  htmlFor="income-manwon"
+                  className="mb-2 block text-sm font-semibold text-slate-800"
+                >
+                  본인 월평균 세전 소득
+                  <span className="ml-1 text-blue-700"> (필수)</span>
+                </label>
+                <div className="unit-input">
+                  <input
+                    id="income-manwon"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={9999}
+                    step={1}
+                    placeholder="예: 215"
+                    disabled={draft.incomeType === "NONE"}
+                    aria-describedby="income-manwon-hint"
+                    value={
+                      draft.incomeMajor === "" || draft.incomeMinor === ""
+                        ? ""
+                        : Number(draft.incomeMajor) * 100 +
+                          Number(draft.incomeMinor)
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      const manwon = Math.min(
+                        9999,
+                        Math.max(0, Math.floor(Number(raw))),
+                      )
+                      const empty = raw === "" || Number.isNaN(manwon)
+                      setDraft({
+                        ...draft,
+                        incomeMajor: empty ? "" : String(Math.floor(manwon / 100)),
+                        incomeMinor: empty ? "" : String(manwon % 100),
+                      })
+                      setError("")
+                    }}
+                  />
+                  <span aria-hidden="true">만원</span>
                 </div>
                 <p
                   className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-900"
                   aria-live="polite"
                 >
                   {draft.incomeMajor !== "" && draft.incomeMinor !== ""
-                    ? "선택한 월 소득: " +
+                    ? "입력한 월 소득: " +
                       incomeWon(draft).toLocaleString("ko-KR") +
                       "원"
-                    : "예: 215만원 → 200만원 + 15만원"}
+                    : "월 215만원이라면 215를 입력하세요."}
                 </p>
-                <p className="mt-2 text-sm text-slate-500">
-                  모든 소득을 합산해 만원 단위로 선택해주세요 (0~9,999만원).
+                <p id="income-manwon-hint" className="mt-2 text-sm text-slate-500">
+                  모든 소득을 합산해 만원 단위로 입력해주세요 (0~9,999만원).
                   가구소득과 소득인정액은 정책별로 추가 확인이 필요합니다.
                 </p>
               </div>
@@ -601,6 +688,12 @@ export default function DiagnosisPage({
 
                 "정책에서 사용하는 가구 범위는 다를 수 있어요.",
               )}
+              {manwonInput(
+                "householdMonthlyIncomeManwon",
+                "가구 전체 월소득 (만원)",
+                "가구원 모두의 세전 월소득 합계예요. 공공임대(도시근로자 월평균소득 기준)와 비교할 때 써요.",
+                householdIncomeManwon(additional),
+              )}
               {field("housing", "현재 주거 형태", HOUSING, undefined, true)}
               {field(
                 "ownsHome",
@@ -611,14 +704,22 @@ export default function DiagnosisPage({
 
                 "현재 거주 형태와 별개로 다른 곳에 보유한 주택도 포함합니다.",
               )}
-              {field(
-                "asset",
-
-                "본인 총재산 구간",
-
-                ASSETS,
-
-                "부채 차감 전 부동산·금융재산 등의 합계입니다. 정책별 산정액과는 다를 수 있어요.",
+              {additionalSelect(
+                "householdHomeless",
+                "세대원 전원 무주택 여부",
+                "주민등록상 세대원 모두 주택을 갖고 있지 않으면 '해당'이에요. 공공임대·주택 대출 정책에서 많이 봐요.",
+              )}
+              {manwonInput(
+                "assetAmountManwon",
+                "가구 총재산 (만원)",
+                "함께 사는 가구원의 부동산·예금·자동차·전월세 보증금 등을 합한 금액이에요. 모르면 비워두세요.",
+                additional.assetAmountManwon ?? "",
+              )}
+              {manwonInput(
+                "personalAssetManwon",
+                "본인 명의 재산 (만원)",
+                "부모 등과 함께 산다면 가구 재산과 별도로 본인 명의 재산만 적어주세요. 1인 가구면 비워둬도 돼요.",
+                additional.personalAssetManwon ?? "",
               )}
             </>
           )}
@@ -639,7 +740,42 @@ export default function DiagnosisPage({
           )}
           {step === 5 && (
             <>
-              {field("student", "현재 재학 여부", YES_NO)}
+              {field("nationality", "국적", NATIONALITY)}
+              <fieldset className="space-y-2">
+                <legend className="mb-2 text-sm font-semibold">
+                  해당하는 대상 (해당하는 것만 선택)
+                </legend>
+                {SPECIAL_TARGETS.map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(draft.specialTargets ?? []).includes(value)}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          specialTargets: e.target.checked
+                            ? [...(draft.specialTargets ?? []), value]
+                            : (draft.specialTargets ?? []).filter((v) => v !== value),
+                        })
+                      }
+                      className="h-4 w-4 accent-blue-700"
+                    />
+                    {label}
+                  </label>
+                ))}
+                <p className="text-sm text-slate-500">
+                  해당 없으면 선택하지 않아도 돼요.
+                </p>
+              </fieldset>
+              {field(
+                "student",
+                "현재 재학 여부",
+                YES_NO,
+                "입학 예정이거나 다음 학기 복학 예정이어도 '해당'을 선택해주세요.",
+              )}
               {field("disability", "등록 장애인 여부", YES_NO)}
               {field("maritalStatus", "혼인 상태", MARRIAGE)}
               {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
@@ -678,20 +814,14 @@ export default function DiagnosisPage({
                 </fieldset>
               )}
 
-              <details className="motion-details rounded-xl border border-slate-200 p-4">
-                <summary className="cursor-pointer font-semibold text-slate-900">
-                  복지 수급·가구 소득 등 추가 정보 입력 (선택)
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로
-                  저장됩니다. 입력 내용은 본인 응답이며 공식 자격 증명으로
-                  간주되지 않습니다.
-                </p>
-                <div className="details-body mt-5 space-y-7">
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
                       복지 수급·자격 정보
                     </legend>
+                    <p className="text-sm text-slate-500">
+                      많은 정책이 이 조건으로 대상을 나눠요. 모르면 ‘모름·확인
+                      필요’를 선택하세요.
+                    </p>
                     {additionalSelect(
                       "basicBenefitStatus",
                       "기초생활보장급여 수급 여부",
@@ -748,26 +878,21 @@ export default function DiagnosisPage({
                     )}
                   </fieldset>
 
+              <details className="motion-details optional-details">
+                <summary>
+                  가구 소득·보호 경험 등 추가 정보 입력 <small>(선택)</small>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로
+                  저장됩니다. 입력 내용은 본인 응답이며 공식 자격 증명으로
+                  간주되지 않습니다.
+                </p>
+                <div className="details-body mt-5 space-y-7">
+
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
                       가구 소득 정보
                     </legend>
-                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                      가구 전체 월소득 (원, 선택)
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={additional.householdMonthlyIncomeWon}
-                        onChange={(event) =>
-                          updateAdditional(
-                            "householdMonthlyIncomeWon",
-                            event.target.value,
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                      />
-                    </label>
                     {additionalSelect(
                       "householdIncomeRecognitionKnown",
 

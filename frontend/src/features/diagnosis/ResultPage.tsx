@@ -1,7 +1,12 @@
 import { useState } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
-  statusLabels,
+  isUnverified,
+  metCountOf,
+  resultCategoryOf,
+  resultCategoryLabels,
+  resultCategoryOrder,
+  type ResultCategory,
 } from "../../components/policy/AnalysisPolicyCard"
 import AnalysisChanges, {
   changedPolicyIds,
@@ -11,12 +16,13 @@ import { formatTime, type Snapshot } from "../../services/analysisSession"
 import {
   policyResults,
   type PolicyRow,
-  type PolicyStatus,
   type SavedPolicy,
 } from "../../services/policyResults"
 import "./reverse.css"
 
-type Filter = "all" | PolicyStatus | "saved" | "changed"
+type Filter = "all" | ResultCategory | "saved" | "changed"
+// 같은 분류 안에서는 입력값과 대조해 충족한 조건이 많은 정책을 먼저 보여준다.
+const metCount = metCountOf
 export default function ResultPage({
   snapshot,
   previous,
@@ -39,6 +45,8 @@ export default function ResultPage({
   const [filter, setFilter] = useState<Filter>("all")
   const [search, setSearch] = useState("")
   const [query, setQuery] = useState("")
+  // 지금은 원문 기준으로 자격 경로를 검수한 정책만 기본으로 보여준다(체크를 끄면 전체).
+  const [reviewedOnly, setReviewedOnly] = useState(true)
   if (!snapshot)
     return (
       <section className="reverse-page">
@@ -60,17 +68,28 @@ export default function ResultPage({
       </section>
     )
   const { analysis } = snapshot
-  const rows = policyResults(snapshot)
+  const allRows = policyResults(snapshot)
+  const reviewedCount = allRows.filter((p) => p.pathReview === "reviewed").length
+  // 검수 정보가 없는 이전 결과는 필터 없이 전체를 보여준다.
+  const onlyReviewed = reviewedOnly && reviewedCount > 0
+  const rows = allRows.filter((p) => !onlyReviewed || p.pathReview === "reviewed").sort(
+    (a, b) =>
+      resultCategoryOrder.indexOf(resultCategoryOf(a)) -
+        resultCategoryOrder.indexOf(resultCategoryOf(b)) ||
+      metCount(b) - metCount(a),
+  )
   const key = snapshot.profileKey ?? ""
   const savedIds = new Set(
     savedPolicies.filter((p) => p.profileKey === key).map((p) => p.policy.id),
   )
   const changedIds = changedPolicyIds(previous, snapshot)
-  const counts = {
-    eligible: rows.filter((p) => p.status === "eligible").length,
-    ineligible: rows.filter((p) => p.status === "ineligible").length,
-    needs_review: rows.filter((p) => p.status === "needs_review").length,
-  }
+  const counts = Object.fromEntries(
+    resultCategoryOrder.map((category) => [
+      category,
+      rows.filter((p) => resultCategoryOf(p) === category).length,
+    ]),
+  ) as Record<ResultCategory, number>
+  const unverifiedCount = rows.filter(isUnverified).length
   const filtered = rows.filter(
     (p) =>
       (filter === "all" ||
@@ -78,7 +97,7 @@ export default function ResultPage({
           ? savedIds.has(p.id)
           : filter === "changed"
             ? changedIds.has(p.id)
-            : p.status === filter)) &&
+            : resultCategoryOf(p) === filter)) &&
       p.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
   )
   const filters: {
@@ -87,9 +106,11 @@ export default function ResultPage({
     count: number
   }[] = [
     { id: "all", label: "전체", count: rows.length },
-    { id: "eligible", label: "자동 비교상 충족", count: counts.eligible },
-    { id: "ineligible", label: "미충족 조건 있음", count: counts.ineligible },
-    { id: "needs_review", label: "추가 확인 필요", count: counts.needs_review },
+    ...resultCategoryOrder.map((category) => ({
+      id: category,
+      label: resultCategoryLabels[category],
+      count: counts[category],
+    })),
     {
       id: "saved",
       label: "관심 정책",
@@ -100,7 +121,7 @@ export default function ResultPage({
           {
             id: "changed" as const,
             label: "추가·변경 정책",
-            count: changedIds.size,
+            count: rows.filter((p) => changedIds.has(p.id)).length,
           },
         ]
       : []),
@@ -112,7 +133,7 @@ export default function ResultPage({
         ? "이번 진단의 관심 정책"
         : filter === "changed"
           ? "추가·변경 정책"
-          : statusLabels[filter]
+          : resultCategoryLabels[filter]
   return (
     <section className="reverse-page" aria-busy={busy}>
       <PageHeading
@@ -130,12 +151,21 @@ export default function ResultPage({
       >
         <div className="analysis-summary" aria-label="전체 분석 요약">
           <strong>
-            총 {analysis.matched.evaluated_count ?? rows.length}건 분석
+            총 {onlyReviewed ? rows.length : (analysis.matched.evaluated_count ?? rows.length)}건 분석
           </strong>
-          <span>자동 비교상 충족 {counts.eligible}건</span>
-          <span>미충족 조건 있음 {counts.ineligible}건</span>
-          <span>추가 확인 {counts.needs_review}건</span>
+          {resultCategoryOrder.map((category) => (
+            <span key={category} data-category={category}>
+              {resultCategoryLabels[category]} {counts[category]}건
+            </span>
+          ))}
         </div>
+        {unverifiedCount > 0 && (
+          <p className="analysis-unverified">
+            신청 가능 {counts.likely}건 중 <strong>{unverifiedCount}건</strong>은
+            입력한 정보로 비교할 수 있는 조건이 없어 ‘비교 조건 없음’으로 표시했어요.
+            이 정책들은 공식 안내에서 세부 자격을 꼭 확인해주세요.
+          </p>
+        )}
       </PageHeading>
       <AnalysisChanges
         key={snapshot.checkedAt}
@@ -174,14 +204,27 @@ export default function ResultPage({
             </button>
           </section>
           <section data-reveal className="reverse-note">
-            <h2>추가 확인은 무슨 뜻인가요?</h2>
+            <h2>결과는 이렇게 나눠요</h2>
             <p>
-              자동으로 비교하지 못한 조건이 남은 정책입니다. 이 표시만으로 신청
-              불가를 뜻하지는 않아요.
+              판정은 내가 입력한 정보와 비교할 수 있는 조건만으로 해요.
             </p>
             <p>
-              미충족 조건이 함께 있을 수 있으니, 조건 개수와 상세 안내를 같이
-              확인해주세요.
+              정책마다 자격 경로(대상·유형별 조건)가 여러 개일 수 있고, 그중
+              하나만 맞으면 돼요.
+            </p>
+            <p>
+              <strong>신청 가능</strong> 입력한 정보로 비교한 조건을 모두
+              충족하는 경로가 있어요. 입력값으로 비교할 수 없는 조건은 카드의
+              확인 사항을 봐주세요.
+            </p>
+            <p>
+              <strong>확인 필요</strong> 입력하지 않은 정보가 있거나, 입력값으로
+              비교할 수 없는 경로가 있어요. 카드에서 무엇을 입력하면 되는지
+              확인하세요.
+            </p>
+            <p>
+              <strong>신청 불가</strong> 모든 경로에서 부족한 조건이 있어요.
+              카드에서 가장 가까운 경로와 부족한 조건을 확인하세요.
             </p>
           </section>
         </aside>
@@ -221,10 +264,21 @@ export default function ResultPage({
               확인할 수 있어요.
             </p>
           </form>
+          {reviewedCount > 0 && (
+            <label className="reviewed-only-toggle">
+              <input
+                type="checkbox"
+                checked={reviewedOnly}
+                onChange={(event) => setReviewedOnly(event.target.checked)}
+              />
+              원문 기준으로 자격 경로를 검수한 정책만 보기 ({reviewedCount}개)
+            </label>
+          )}
           <div className="analysis-filters" aria-label="분석 결과 필터">
             {filters.map((item) => (
               <button
                 key={item.id}
+                data-category={item.id}
                 aria-pressed={filter === item.id}
                 onClick={() => setFilter(item.id)}
               >

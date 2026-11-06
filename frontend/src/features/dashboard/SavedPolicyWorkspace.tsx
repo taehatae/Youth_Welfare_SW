@@ -2,9 +2,9 @@ import { useId, useState } from "react"
 import { formatTime, safeOfficialUrl, type Snapshot } from "../../services/analysisSession"
 import { policyResults, trackingLabels, type PolicyRow, type SavedPolicy, type TrackingStatus } from "../../services/policyResults"
 import type { Page } from "../../types/page"
+import { resultCategoryLabels, resultCategoryOf } from "../../components/policy/AnalysisPolicyCard"
 
 type UpdateSaved = (item: SavedPolicy, status: TrackingStatus, note: string) => Promise<void>
-const statusLabels = { eligible: "자동 비교상 충족", ineligible: "미충족 조건 있음", needs_review: "추가 확인 필요" }
 
 function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
   item: SavedPolicy; latest?: PolicyRow; currentProfile: boolean; busy: boolean; updateSaved: UpdateSaved
@@ -25,7 +25,7 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
   return <article className="workspace-saved-card" data-reveal>
     <div className="workspace-saved-top"><span className="workspace-tracking" data-tracking={item.trackingStatus ?? "interested"}>{trackingLabels[item.trackingStatus ?? "interested"]}</span><span className="dashboard-small">{currentProfile ? "현재 진단 프로필" : "이전 진단 프로필"}</span></div>
     <h3>{row.title}</h3>
-    <p className="workspace-saved-verdict">{latest ? "최근 조회 결과" : "저장 당시 결과"}<strong>{statusLabels[row.status]}</strong></p>
+    <p className="workspace-saved-verdict">{latest ? "최근 조회 결과" : "저장 당시 결과"}<strong data-result={resultCategoryOf(row)}>{resultCategoryLabels[resultCategoryOf(row)]}</strong></p>
     {currentProfile && !latest && <p className="dashboard-small">이번 조회에 없는 정책이에요. 종료 여부는 공식 공고에서 확인해주세요.</p>}
     <p className="workspace-saved-time">관심 저장 · {formatTime(item.savedAt)}</p>
     {!editing && <>

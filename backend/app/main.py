@@ -16,6 +16,11 @@ from app.models.welfare_eligibility_condition import (
     WelfareEligibilityCondition,  # noqa: F401
 )
 from app.models.account import Account, AccountSession, AccountWorkspace, AuthAttempt  # noqa: F401
+from app.models.eligibility_path import (  # noqa: F401
+    EligibilityPath,
+    EligibilityPathCondition,
+    PolicyEligibility,
+)
 from app.models.welfare_sync import (  # noqa: F401
     WelfareApiQuotaWindow,
     WelfareSyncBatch,

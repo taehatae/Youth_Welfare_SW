@@ -10,14 +10,24 @@ import { categoryLabel, type CatalogDetail } from "../../types/policyCatalog"
 
 import type { Page } from "../../types/page"
 
+import type { PolicyRow } from "../../services/policyResults"
+
+import MyPolicyResult from "../../components/policy/MyPolicyResult"
+
+import PolicyText from "./PolicyText"
+
 import "./catalog.css"
 
 export default function PolicyDetailPage({
   policyId,
   setPage,
+  myResult,
+  checkedAt,
 }: {
   policyId: string
   setPage: (page: Page) => void
+  myResult?: PolicyRow
+  checkedAt?: string
 }) {
   const [result, setResult] = useState<{
     id: string
@@ -87,6 +97,13 @@ export default function PolicyDetailPage({
             </span>
             <span>수집일 {formatTime(policy.synced_at)}</span>
           </div>
+          {myResult && checkedAt && (
+            <MyPolicyResult
+              policy={myResult}
+              checkedAt={checkedAt}
+              onOpenResults={() => setPage("result")}
+            />
+          )}
           <div className="catalog-detail-layout">
             <div>
               {[
@@ -101,10 +118,7 @@ export default function PolicyDetailPage({
                 >
                   <span className="catalog-section-number">0{index + 1}</span>
                   <h2>{title}</h2>
-                  <p>
-                    {content ||
-                      "제공된 정보가 없어요. 공식 공고에서 확인해주세요."}
-                  </p>
+                  <PolicyText text={content} />
                 </section>
               ))}
               {policy.application_methods.length > 0 && (
