@@ -57,3 +57,51 @@ def test_every_reviewed_policy_matches_current_source():
     for policy in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]:
         _, target, selection = services[policy["serv_id"]]
         assert policy.get("source_sha256") == source_hash(target, selection), policy["name"]
+
+
+def test_merge_preserves_explicit_draft_author_in_generated_seed():
+    services = {"A": ("정책A", "원문A", None)}
+    reviewed = {"version": 2, "policies": []}
+    draft = {"batch": 3, "drafted_by": "Codex",
+             "policies": [{"serv_id": "A", "name": "정책A", "paths": [PATH]}]}
+
+    merge(reviewed, draft, services, "2026-11-06")
+
+    assert reviewed["policies"][0]["drafted_by"] == "Codex"
+    policies, stale = build(services, {p["serv_id"]: p for p in reviewed["policies"]}, {})
+    assert stale == []
+    assert policies[0]["drafted_by"] == "Codex"
+    assert policies[0]["reviewed_by"] == "human(3차)"
+    assert policies[0]["reviewed_at"] == "2026-11-06"
+
+
+def test_batch3_review_date_falls_back_to_registered_batch_date():
+    services = {"A": ("정책A", "원문A", None)}
+    reviewed = {"A": {"serv_id": "A", "name": "정책A", "batch": 3,
+                      "source_sha256": source_hash("원문A", None), "paths": [PATH]}}
+
+    policies, stale = build(services, reviewed, {})
+
+    assert stale == []
+    assert policies[0]["reviewed_at"] == "2026-11-06"
+
+
+def test_seed_distinguishes_30_human_reviewed_and_122_converted_policies():
+    from scripts.build_eligibility_paths import OUT
+
+    reviewed = {p["serv_id"]: p for p in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]}
+    seed = json.loads(OUT.read_text(encoding="utf-8"))["policies"]
+    assert len(seed) == len({p["serv_id"] for p in seed}) == 152
+    human = [p for p in seed if p["serv_id"] in reviewed]
+    converted = [p for p in seed if p["serv_id"] not in reviewed]
+    assert len(human) == 30 and len(converted) == 122
+    assert all(p["drafted_by"] == "converted" and p["reviewed_by"] == "claude" for p in converted)
+    for policy in human:
+        original = reviewed[policy["serv_id"]]
+        batch = original.get("batch", 1)
+        assert policy["reviewed_by"] == ("claude+human(1차)" if batch == 1 else f"human({batch}차)")
+        assert policy.get("common", []) == original.get("common", [])
+        assert policy["paths"] == original["paths"]
+        if batch == 3:
+            assert policy["drafted_by"] == "Codex"
+            assert policy["reviewed_at"] == "2026-11-06"

@@ -6,34 +6,63 @@
    "name": "장애인일자리지원",
    "source_sha256": "a48909723439fb4da59e0d9b4fe5018246e828d607546a41f939ce0631a298bd",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 18
+     "value": 18,
+     "evidence": "18세 이상 「장애인복지법」상 등록된 미취업 장애인"
     },
     {
      "field": "등록 장애인",
-     "op": "is_true"
-    },
-    {
-     "field": "고용 상태",
-     "op": "one_of",
-     "values": [
-      "미취업"
-     ]
+     "op": "is_true",
+     "evidence": "「장애인복지법」상 등록된 미취업 장애인"
     }
+   ],
+   "common_checks": [
+    "국민건강보험 직장가입자(피부양자는 제외)는 선발 제외. 단, 신청 당시 직장가입자 중 근로계약서상 근로종료일이 장애인일자리 사업 시작 전일 경우 신청 가능",
+    "사업자등록증이 있는 자는 선발 제외",
+    "타 재정지원 일자리사업 참여자는 선발 제외. 단, 신청 당시 해당 근로 종료일이 이 사업 시작 전임을 입증하는 근로계약서를 제출하면 신청 가능",
+    "장애인일자리사업에 2년 이상 연속 참여한 대상자는 선발 제외. 단, 반복참여 제한 예외 대상자는 신청 가능",
+    "최근 1년 이내 장애인일자리사업 참여 중단 조치를 받은 자는 선발 제외",
+    "수행기관 또는 배치기관 법인·기관·단체의 대표·임직원은 선발 제외",
+    "시각장애인안마사 파견사업은 안마원·안마시술소 개설자나 그 고용인, 개인사업자로 출장 안마서비스를 제공하는 자를 제외. 단, 외부 요구로 신고 없이 출장 시술하는 자는 가능"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "미취업",
+     "label": "등록된 미취업 장애인",
      "kind": "기본",
-     "conditions": []
+     "conditions": [
+      {
+       "field": "고용 상태",
+       "op": "one_of",
+       "values": [
+        "미취업"
+       ],
+       "evidence": "등록된 미취업 장애인을 대상으로 합니다."
+      }
+     ],
+     "checks": []
+    },
+    {
+     "id": "근로종료예정",
+     "label": "사업 시작 전 근로종료 예정 예외",
+     "kind": "예외",
+     "conditions": [],
+     "checks": [
+      "신청 당시 직장가입자라도 근로계약서 기준 근로종료일이 장애인일자리사업 시작 전일 것",
+      "타 재정지원 일자리사업 참여 중이면 그 근로 종료일이 이 사업 시작 전임을 입증하는 근로계약서를 제출할 것"
+     ]
     }
+   ],
+   "preferences": [
+    "일반형 일자리참여자 선발 기준표와 지자체 여건에 맞는 기준으로 우선 선발(사업참여경력·장애정도·소득수준 등 반영)",
+    "참여 이력은 장애인일자리사업의 모든 유형 및 타 지역 참여 경험을 포함",
+    "장애인일자리사업 우수 참여자, 특수학교 및 대학교 졸업예정자 등은 가점 반영"
    ]
   },
   {
@@ -41,34 +70,44 @@
    "name": "장애인자립자금대여",
    "source_sha256": "7ae901f6faf95151d970b5f66f53b2d37ffbddbd495515797002825654b9a823",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
-    {
-     "field": "가구 소득인정액",
-     "op": "between",
-     "value": 50,
-     "upper": 100
-    },
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 19
+     "value": 19,
+     "evidence": "19세 이상의 등록장애인을 지원합니다."
     },
     {
      "field": "등록 장애인",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "19세 이상의 등록장애인을 지원합니다."
+    },
+    {
+     "field": "가구 소득인정액",
+     "op": "lte",
+     "value": 100,
+     "evidence": "가구의 소득인정액이 「국민기초생활보장법」에 의한 기준중위소득 50% 초과 100% 이하"
     }
+   ],
+   "common_checks": [
+    "가구의 소득인정액이 기준중위소득 50%를 초과할 것(50% 이하 제외). 하한의 엄격한 초과 여부는 별도로 확인",
+    "원문 금액 예시는 2025년 4인 가구 기준 3,048,887원 초과 6,097,773원 이하. 실제 적용 연도와 가구원 수에 따른 기준을 확인",
+    "대여희망자 또는 보증인이 융자기관 내규의 여신 취급제한자(금융채무불이행자·신용회복 중·개인회생·파산·면책자)이면 대여 또는 보증자격 제한",
+    "시군구의 추천을 받아도 해당 금융기관 여신규정의 신용등급·보증인 대출요건 등에 따라 대여되지 않을 수 있음"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "자립자금대여",
+     "label": "등록장애인 자립자금대여",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": []
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00000027",
@@ -926,28 +965,36 @@
    "name": "발달장애인 공공후견지원 사업",
    "source_sha256": "1ddd3f83713821ae3b1d885071fa1c8f92d97388ddec08645aaa27fbd321c058",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 19
+     "value": 19,
+     "evidence": "(등록기준) 19세 이상 성인발달장애인"
     },
     {
      "field": "등록 장애인",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "(등록기준) 19세 이상 성인발달장애인(「장애인복지법」상 지적·자폐성 장애인)"
     }
+   ],
+   "common_checks": [
+    "「장애인복지법」상 지적·자폐성 장애인일 것. 지적장애·자폐성 장애를 부장애로 가진 경우도 신청 가능",
+    "의사결정 지원이 필요한 사람일 것"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "공공후견",
+     "label": "의사결정 지원이 필요한 성인발달장애인",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": []
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00000075",
@@ -980,30 +1027,62 @@
    "name": "청소년특별지원",
    "source_sha256": "07c3c8ec9020b57d2af2888008aabd74e25605ddd220554a6e31e8ad7ee8fa12",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "between",
      "value": 9,
-     "upper": 24
-    },
-    {
-     "field": "가구 소득인정액",
-     "op": "lte",
-     "value": 100
+     "upper": 24,
+     "evidence": "9세 이상 24세 이하 청소년 중 아래 대상자를 지원합니다."
     }
+   ],
+   "common_checks": [
+    "청소년이 속한 가구의 소득이 중위소득 100% 이하일 것(원문은 가구 소득이며 소득인정액이라고 명시하지 않음)",
+    "주민등록 거주지·친부모·양부모 등을 구분하지 않고 실제 생계나 주거를 같이하는 부모만 가구원에 포함",
+    "다른 제도 및 법령에 따라 동일한 내용의 지원을 받지 않을 것"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
-     "kind": "기본",
-     "conditions": []
+     "id": "교육적선도",
+     "label": "교육적 선도 대상 청소년",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「청소년복지 지원법」 제19조 제1항의 교육적 선도 대상자 중 비행·일탈 예방을 위해 지원이 필요한 청소년일 것"
+     ]
+    },
+    {
+     "id": "학교밖",
+     "label": "학교 밖 청소년",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「학교 밖 청소년 지원에 관한 법률」 제2조제2호에 따른 학교 밖 청소년일 것"
+     ]
+    },
+    {
+     "id": "보호부재",
+     "label": "보호자가 없거나 실질적 보호를 받지 못하는 청소년",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "보호자가 없거나 실질적으로 보호자의 보호를 받지 못하는 청소년일 것"
+     ]
+    },
+    {
+     "id": "교류제한",
+     "label": "교류·거주공간 제한으로 일상생활이 곤란한 청소년",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "타인과의 교류가 거의 없거나 상당 기간 제한된 거주공간에서만 생활해 일상생활이 현저히 곤란한 청소년일 것"
+     ]
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00000090",
@@ -1235,59 +1314,57 @@
    "name": "여성청소년 생리용품 지원",
    "source_sha256": "fb3bf8d911e53f91b94092225dac0a1cd5c297f486c4942f1c0e87d002bf38e2",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
+    {
+     "field": "만 나이",
+     "op": "between",
+     "value": 9,
+     "upper": 24,
+     "evidence": "9~24세 여성청소년을 대상으로 지원합니다."
+    },
     {
      "field": "성별",
      "op": "one_of",
      "values": [
       "여성"
-     ]
-    },
-    {
-     "field": "만 나이",
-     "op": "between",
-     "value": 9,
-     "upper": 24
+     ],
+     "evidence": "9~24세 여성청소년을 대상으로 지원합니다."
     }
    ],
+   "common_checks": [],
    "paths": [
     {
-     "id": "기초생활보장 수급자",
-     "label": "기초생활보장 수급자",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "기초생활보장 수급자",
-       "op": "is_true"
-      }
+     "id": "수급가구",
+     "label": "기초생활보장급여 수급자 가구",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「국민기초생활보장법」에 따른 생계·의료·주거·교육급여 수급자 가구에 해당할 것(본인의 수급 여부만으로 가구 해당 여부를 제외하지 않음)"
      ]
     },
     {
-     "id": "차상위계층",
-     "label": "차상위계층",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "차상위계층",
-       "op": "is_true"
-      }
+     "id": "차상위가구",
+     "label": "법정 차상위계층 가구",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「국민기초생활보장법」에 따른 법정 차상위계층 가구에 해당할 것"
      ]
     },
     {
-     "id": "한부모가족",
-     "label": "한부모가족",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "한부모가족",
-       "op": "is_true"
-      }
+     "id": "한부모가구",
+     "label": "한부모가족 지원대상자 가구",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「한부모가족지원법」 제5조 및 제5조의 2에 따른 지원대상자 가구에 해당할 것"
      ]
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00000812",
@@ -1922,28 +1999,36 @@
    "name": "발달장애인 주간활동서비스",
    "source_sha256": "53b24854f2b87919934ec6a2405df29d93b72e3c82188023547c756e7f4762ce",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 18
+     "value": 18,
+     "evidence": "만 18세이상 「장애인복지법」상 등록된 지적 및 자폐성 장애인을 지원합니다."
     },
     {
      "field": "등록 장애인",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "「장애인복지법」상 등록된 지적 및 자폐성 장애인을 지원합니다."
     }
+   ],
+   "common_checks": [
+    "등록된 지적·자폐성 장애인에 해당할 것. 등록장애 여부만으로 해당 장애 유형까지 확인되지는 않음",
+    "장애인 당사자 및 가구의 소득수준과 무관하게 신청 가능"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "주간활동",
+     "label": "등록된 지적·자폐성 장애인",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": []
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00001172",
@@ -2178,28 +2263,54 @@
    "name": "중증장애인직업재활지원",
    "source_sha256": "165139346190b1692a18ffd25ad3eaa1a3ba6dd528a68371bac50a2ae9a631a8",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 15
+     "value": 15,
+     "evidence": "15세 이상 등록장애인을 대상으로 합니다."
     },
     {
      "field": "등록 장애인",
-     "op": "is_true"
+     "op": "is_true",
+     "evidence": "15세 이상 등록장애인을 대상으로 합니다."
     }
    ],
+   "common_checks": [],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "직업재활",
+     "label": "직업재활지원 전체 사업 대상",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": []
+    },
+    {
+     "id": "직업적응훈련",
+     "label": "직업적응훈련 대상",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "직업생활 및 직업환경에 대한 심리적, 기능적인 적응력 향상이 필요한 장애인",
+      "지원고용, 일반취업 및 상위기관으로 이동하기 위해 직업적응훈련이 필요한 장애인"
+     ]
+    },
+    {
+     "id": "직업적응훈련수당",
+     "label": "직업적응훈련수당 지급 대상",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "한국장애인개발원이 훈련과정을 승인한 직업능력개발훈련 실시기관에 재학 중인 훈련생일 것(일반 학교 재학 여부와 구분)",
+      "실업급여 수급자격이 없을 것(단순 미취업 여부와 구분)",
+      "매월 출석일수가 소정출석일수의 80% 이상일 것. 훈련준비금·자격 취득수당은 이 출석 기준의 예외"
+     ]
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00003192",
@@ -2437,25 +2548,29 @@
    "name": "청소년상담1388 전화상담",
    "source_sha256": "cb60d75d68f960e45b7c697cd60f0cf507d6f84215fdbafb0195a5d0321dd1f1",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "between",
      "value": 9,
-     "upper": 24
+     "upper": 24,
+     "evidence": "9~24세 청소년을 지원합니다."
     }
    ],
+   "common_checks": [],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
+     "id": "전화상담",
+     "label": "9~24세 청소년",
      "kind": "기본",
-     "conditions": []
+     "conditions": [],
+     "checks": []
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00003238",
@@ -3856,24 +3971,58 @@
    "name": "대중교통비 환급 지원(모두의카드)",
    "source_sha256": "ca8eccb39307aa356174c2086f82c755d1ca36906879832621975a3f14801e67",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [
     {
      "field": "만 나이",
      "op": "gte",
-     "value": 19
+     "value": 19,
+     "evidence": "만 19세 이상 국민 중 월 15회 이상 대중교통 이용자"
     }
+   ],
+   "common_checks": [
+    "월 15회 이상 대중교통을 이용할 것"
    ],
    "paths": [
     {
-     "id": "기본",
-     "label": "기본",
-     "kind": "기본",
-     "conditions": []
+     "id": "국민",
+     "label": "만 19세 이상 국민",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "국적",
+       "op": "one_of",
+       "values": [
+        "대한민국"
+       ],
+       "evidence": "만 19세 이상 국민"
+      }
+     ],
+     "checks": []
+    },
+    {
+     "id": "외국인",
+     "label": "외국인 등록번호가 있는 외국인",
+     "kind": "유형",
+     "conditions": [
+      {
+       "field": "국적",
+       "op": "one_of",
+       "values": [
+        "외국인"
+       ],
+       "evidence": "외국인 등록번호가 있는 외국인에 한해 회원가입 가능합니다."
+      }
+     ],
+     "checks": [
+      "외국인 등록번호가 있을 것",
+      "외국인 등록번호로 거소사실 여부를 확인할 수 없다면 홈페이지로 가입할 것"
+     ]
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00005442",
@@ -4133,57 +4282,92 @@
    "name": "저소득층 수도요금감면",
    "source_sha256": "ef7eee15a6b5ca80debbfe1c30351bcc0a65bb52fa42f0b1f70ff99a5240aa9a",
    "status": "reviewed",
-   "drafted_by": "converted",
-   "reviewed_by": "claude",
-   "reviewed_at": "2026-10-31",
+   "drafted_by": "Codex",
+   "reviewed_by": "human(3차)",
+   "reviewed_at": "2026-11-06",
    "common": [],
+   "common_checks": [
+    "수도요금 할인 대상은 지방자치단체별로 상이하므로 해당 지방자치단체에 대상 여부를 문의할 것"
+   ],
    "paths": [
     {
-     "id": "만 나이",
-     "label": "만 나이",
-     "kind": "기본",
+     "id": "고령자",
+     "label": "65세 이상인 자",
+     "kind": "유형",
      "conditions": [
       {
        "field": "만 나이",
        "op": "gte",
-       "value": 65
+       "value": 65,
+       "evidence": "65세 이상인 자"
       }
-     ]
+     ],
+     "checks": []
     },
     {
-     "id": "등록 장애인",
-     "label": "등록 장애인",
-     "kind": "기본",
+     "id": "장애인",
+     "label": "장애인복지법 적용 장애인",
+     "kind": "유형",
      "conditions": [
       {
        "field": "등록 장애인",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "「장애인복지법」의 적용을 받는 장애인"
       }
+     ],
+     "checks": []
+    },
+    {
+     "id": "수급권자",
+     "label": "국민기초생활보장법 수급권자",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「국민기초생활보장법」에 따른 수급권자일 것(현재 수급 중인지 여부만으로 수급받을 권리가 있는 사람까지 제외하지 않음)"
      ]
     },
     {
-     "id": "기초생활보장 수급자",
-     "label": "기초생활보장 수급자",
-     "kind": "기본",
-     "conditions": [
-      {
-       "field": "기초생활보장 수급자",
-       "op": "is_true"
-      }
-     ]
-    },
-    {
-     "id": "차상위계층",
+     "id": "차상위",
      "label": "차상위계층",
-     "kind": "기본",
+     "kind": "유형",
      "conditions": [
       {
        "field": "차상위계층",
-       "op": "is_true"
+       "op": "is_true",
+       "evidence": "수급권자 및 차상위계층"
       }
+     ],
+     "checks": []
+    },
+    {
+     "id": "학교",
+     "label": "초·중등교육법상 학교",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「초ㆍ중등교육법」 제2조 각 호에 따른 학교일 것"
+     ]
+    },
+    {
+     "id": "사회복지시설",
+     "label": "사회복지사업법상 사회복지시설",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "「사회복지사업법」 제2조제3호에 따른 사회복지시설일 것"
+     ]
+    },
+    {
+     "id": "조례시설",
+     "label": "시·군 조례로 정하는 그 밖의 시설",
+     "kind": "유형",
+     "conditions": [],
+     "checks": [
+      "시ㆍ군의 조례로 정하는 시설일 것"
      ]
     }
-   ]
+   ],
+   "preferences": []
   },
   {
    "serv_id": "WLF00006225",
