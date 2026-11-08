@@ -57,3 +57,96 @@ def test_every_reviewed_policy_matches_current_source():
     for policy in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]:
         _, target, selection = services[policy["serv_id"]]
         assert policy.get("source_sha256") == source_hash(target, selection), policy["name"]
+
+
+def test_merge_preserves_explicit_draft_author_in_generated_seed():
+    services = {"A": ("정책A", "원문A", None)}
+    reviewed = {"version": 2, "policies": []}
+    draft = {"batch": 3, "drafted_by": "Codex",
+             "policies": [{"serv_id": "A", "name": "정책A", "paths": [PATH]}]}
+
+    merge(reviewed, draft, services, "2026-11-06")
+
+    assert reviewed["policies"][0]["drafted_by"] == "Codex"
+    policies, stale = build(services, {p["serv_id"]: p for p in reviewed["policies"]}, {})
+    assert stale == []
+    assert policies[0]["drafted_by"] == "Codex"
+    assert policies[0]["reviewed_by"] == "human(3차)"
+    assert policies[0]["reviewed_at"] == "2026-11-06"
+
+
+def test_batch3_review_date_falls_back_to_registered_batch_date():
+    services = {"A": ("정책A", "원문A", None)}
+    reviewed = {"A": {"serv_id": "A", "name": "정책A", "batch": 3,
+                      "source_sha256": source_hash("원문A", None), "paths": [PATH]}}
+
+    policies, stale = build(services, reviewed, {})
+
+    assert stale == []
+    assert policies[0]["reviewed_at"] == "2026-11-06"
+
+
+def test_seed_distinguishes_40_human_reviewed_and_112_converted_policies():
+    from scripts.build_eligibility_paths import OUT
+
+    reviewed = {p["serv_id"]: p for p in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]}
+    seed = json.loads(OUT.read_text(encoding="utf-8"))["policies"]
+    assert len(seed) == len({p["serv_id"] for p in seed}) == 152
+    human = [p for p in seed if p["serv_id"] in reviewed]
+    converted = [p for p in seed if p["serv_id"] not in reviewed]
+    assert len(human) == 40 and len(converted) == 112
+    assert all(p["drafted_by"] == "converted" and p["reviewed_by"] == "claude" for p in converted)
+    for policy in human:
+        original = reviewed[policy["serv_id"]]
+        batch = original.get("batch", 1)
+        assert policy["reviewed_by"] == ("claude+human(1차)" if batch == 1 else f"human({batch}차)")
+        assert policy.get("common", []) == original.get("common", [])
+        assert policy["paths"] == original["paths"]
+        if batch in (3, 4):
+            assert policy["drafted_by"] == "Codex"
+            assert policy["reviewed_at"] == "2026-11-06"
+
+
+def test_batch4_review_date_falls_back_to_registered_batch_date():
+    services = {"A": ("정책A", "원문A", None)}
+    reviewed = {"A": {"serv_id": "A", "name": "정책A", "batch": 4,
+                      "source_sha256": source_hash("원문A", None), "paths": [PATH]}}
+
+    policies, stale = build(services, reviewed, {})
+
+    assert stale == []
+    assert policies[0]["reviewed_at"] == "2026-11-06"
+    assert policies[0]["reviewed_by"] == "human(4차)"
+
+
+def test_batch4_merge_keeps_existing_reviewed_policies_unchanged():
+    from copy import deepcopy
+
+    existing = [{"serv_id": f"OLD-{n}", "name": f"기존 정책 {n}", "batch": n // 10 + 1,
+                 "source_sha256": "unchanged", "reviewed_at": "2026-11-02", "paths": [PATH]}
+                for n in range(30)]
+    reviewed = {"version": 2, "policies": deepcopy(existing)}
+    draft = {"batch": 4, "drafted_by": "Codex", "policies": [
+        {"serv_id": "NEW", "name": "신규 정책", "paths": [PATH]}]}
+
+    merge(reviewed, draft, {"NEW": ("신규 정책", "원문", None)}, "2026-11-06")
+
+    assert reviewed["policies"][:30] == existing
+    assert len(reviewed["policies"]) == 31
+    assert reviewed["policies"][-1]["batch"] == 4
+    assert reviewed["policies"][-1]["source_sha256"] == source_hash("원문", None)
+
+
+def test_batch4_reviewed_content_matches_approved_v2_draft():
+    from scripts.build_eligibility_paths import DATA
+
+    draft = json.loads((DATA / "eligibility_paths_batch4_revised_draft_v2.json").read_text(encoding="utf-8"))
+    reviewed = json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]
+    actual = {p["serv_id"]: p for p in reviewed if p.get("batch") == 4}
+    assert len(actual) == len(draft["policies"]) == 10
+    assert set(actual) == {p["serv_id"] for p in draft["policies"]}
+    for policy in draft["policies"]:
+        saved = actual[policy["serv_id"]]
+        assert all(saved[key] == value for key, value in policy.items())
+        assert saved["reviewed_at"] == "2026-11-06"
+        assert saved["drafted_by"] == "Codex"
