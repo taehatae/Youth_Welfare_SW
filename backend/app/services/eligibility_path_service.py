@@ -20,7 +20,9 @@ from app.services import structured_condition_service as base
 
 SEED_PATH = Path(__file__).resolve().parents[2] / "data" / "eligibility_paths.json"
 UNITS = {"만 나이": "세", "가구 소득인정액": "%", "도시근로자 월평균소득 대비 가구소득": "%", "가구 총재산": "원", "본인 총재산": "원",
-         "본인 월소득": "원", "본인 연소득": "원", "가구원 수": "명", "자녀 수": "명"}
+         "본인 월소득": "원", "본인 연소득": "원", "가구원 수": "명", "자녀 수": "명",
+         "가구 월소득 중위소득 대비": "%", "부부합산 연소득": "원", "가구 순자산": "원", "본인 순자산": "원",
+         "자동차가액": "원", "혼인 기간": "년", "신용점수(KCB)": "점", "신용점수(NICE)": "점"}
 RANK = {"eligible": 0, "needs_review": 1, "ineligible": 2}
 
 

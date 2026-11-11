@@ -112,7 +112,60 @@ def user_values(user, profile: dict | None) -> dict[str, Any]:
         values[field] = False if benefit is False else (code in benefit_types) if benefit and benefit_types else None
     for field, code in SPECIAL_TARGETS.items():
         values[field] = (code in targets) if isinstance(targets, list) else None
+    values.update(_extended_values(p, extra, values, household_size, median, monthly, household_asset))
     return values
+
+
+SCHOOL_LABELS = {"HIGH": "고등학교", "COLLEGE": "대학", "GRADUATE": "대학원"}
+MONEY_FIELDS = {"가구 총재산", "본인 총재산", "가구 순자산", "본인 순자산", "부부합산 연소득", "자동차가액"}
+
+
+def _won(value) -> int | None:
+    return int(value) if value not in (None, "") else None
+
+
+def _extended_values(p: dict, extra: dict, values: dict, household_size, median, monthly, household_asset) -> dict:
+    """여러 정책에서 자주 쓰는 기준을 비교할 수 있게 추가한 항목. 모르면 None(확인 필요)으로 둔다."""
+    out: dict[str, Any] = {}
+    married = values["혼인 상태"]
+    # 가구 월소득을 중위소득으로 나눈 비율. '소득인정액'(재산 환산 포함)과 다른 '가구 소득' 기준에 쓴다.
+    household_income = _won(extra.get("household_monthly_income_won"))
+    out["가구 월소득 중위소득 대비"] = round(household_income / median * 100, 1) if household_income is not None and median else None
+    # 본인 또는 가구 안에 기초생활보장 수급자가 있으면 '수급 가구'다.
+    own, house = values["기초생활보장 수급자"], _yes_no(extra.get("household_basic_benefit_status"))
+    out["기초생활보장 수급 가구"] = True if own or house else False if own is False and house is False else None
+    out["구직 등록"] = _yes_no(extra.get("job_seek_registration"))
+    # 학교 구분은 재학 중일 때만 의미가 있다.
+    out["학교 구분"] = SCHOOL_LABELS.get(extra.get("school_level")) if values["재학 여부"] else None
+    # 등록 장애인이 아니면 중증 장애인도 아니다.
+    severe = _yes_no(extra.get("severe_disability"))
+    out["중증 장애인"] = False if values["등록 장애인"] is False else severe
+    children = values["자녀 수"]
+    under7 = _yes_no(extra.get("has_child_under_7"))
+    out["6세 이하 자녀"] = False if children == 0 else under7
+    out["임신 중"] = _yes_no(extra.get("pregnancy"))
+    # 배우자 소득: 기혼이면 입력값, 미혼·이혼·사별이면 0으로 본다.
+    spouse = _won(extra.get("spouse_monthly_income_won"))
+    if married in ("미혼", "이혼", "사별"):
+        spouse = 0
+    out["부부합산 연소득"] = (monthly + spouse) * 12 if monthly is not None and spouse is not None else None
+    out["맞벌이"] = (monthly > 0 and spouse > 0) if married == "기혼" and monthly is not None and spouse is not None else (
+        False if married in ("미혼", "이혼", "사별") else None)
+    years = extra.get("marriage_years")
+    out["혼인 기간"] = int(years) if married == "기혼" and years not in (None, "") else None
+    # 순자산 = 재산 − 부채. 부채를 입력하지 않았으면 알 수 없다(재산 그대로 쓰면 빚이 있는 사람이 잘못 불가가 됨).
+    debt, own_debt = _won(extra.get("household_debt_won")), _won(extra.get("personal_debt_won"))
+    asset = household_asset if isinstance(household_asset, int) else None
+    out["가구 순자산"] = asset - debt if asset is not None and debt is not None else None
+    own_asset = values["본인 총재산"] if isinstance(values["본인 총재산"], int) else None
+    if own_debt is None and household_size == 1:
+        own_debt = debt
+    out["본인 순자산"] = own_asset - own_debt if own_asset is not None and own_debt is not None else None
+    out["자동차가액"] = _won(extra.get("car_value_won"))
+    score, bureau = extra.get("credit_score"), extra.get("credit_bureau")
+    out["신용점수(KCB)"] = int(score) if bureau == "KCB" and score not in (None, "") else None
+    out["신용점수(NICE)"] = int(score) if bureau == "NICE" and score not in (None, "") else None
+    return out
 
 
 def matches(condition: dict, value: Any) -> bool | None:
@@ -155,6 +208,8 @@ def describe(condition: dict) -> str:
     number = lambda x: f"{x / 10000:,.0f}만원" if unit == "원" else f"{x:g}{unit}"
     if field == "가구 소득인정액":
         number = lambda x: f"기준 중위소득 {x:g}%"
+    if field == "가구 월소득 중위소득 대비":
+        number = lambda x: f"기준 중위소득 {x:g}%"
     if field == "도시근로자 월평균소득 대비 가구소득":
         number = lambda x: f"{x:g}%"
     if operator == "gte":
@@ -176,10 +231,14 @@ def show(field: str, value: Any) -> str:
     if isinstance(value, tuple):
         low, high = value
         return f"{low / 10000:,.0f}만원 이상" if high is None else f"{low / 10000:,.0f}만~{(high + 1) / 10000:,.0f}만원 미만"
-    if field in ("가구 총재산", "본인 총재산"):
+    if field in MONEY_FIELDS:
         return f"{value / 10000:,.0f}만원"
-    if field == "도시근로자 월평균소득 대비 가구소득":
+    if field in ("도시근로자 월평균소득 대비 가구소득", "가구 월소득 중위소득 대비"):
         return f"{value:g}%"
+    if field == "혼인 기간":
+        return f"{value}년"
+    if field.startswith("신용점수"):
+        return f"{value}점"
     if field == "만 나이":
         return f"{value}세"
     if field in ("본인 월소득", "본인 연소득"):

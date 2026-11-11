@@ -104,7 +104,7 @@ def test_seed_distinguishes_40_human_reviewed_and_112_converted_policies():
         assert policy["paths"] == original["paths"]
         if batch in (3, 4):
             assert policy["drafted_by"] == "Codex"
-            assert policy["reviewed_at"] == "2026-11-06"
+            assert policy["reviewed_at"] == original["reviewed_at"]  # 재검수일(2026-11-11)
 
 
 def test_batch4_review_date_falls_back_to_registered_batch_date():
@@ -137,16 +137,16 @@ def test_batch4_merge_keeps_existing_reviewed_policies_unchanged():
     assert reviewed["policies"][-1]["source_sha256"] == source_hash("원문", None)
 
 
-def test_batch4_reviewed_content_matches_approved_v2_draft():
+def test_batch3_4_reviewed_content_matches_rechecked_draft():
+    # 3·4차 20개는 2026-11-11 재검수(eligibility_paths_recheck34_draft.json)를 반영한 내용이다.
     from scripts.build_eligibility_paths import DATA
 
-    draft = json.loads((DATA / "eligibility_paths_batch4_revised_draft_v2.json").read_text(encoding="utf-8"))
+    draft = json.loads((DATA / "eligibility_paths_recheck34_draft.json").read_text(encoding="utf-8"))
     reviewed = json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]
-    actual = {p["serv_id"]: p for p in reviewed if p.get("batch") == 4}
-    assert len(actual) == len(draft["policies"]) == 10
+    actual = {p["serv_id"]: p for p in reviewed if p.get("batch") in (3, 4)}
+    assert len(actual) == len(draft["policies"]) == 20
     assert set(actual) == {p["serv_id"] for p in draft["policies"]}
     for policy in draft["policies"]:
         saved = actual[policy["serv_id"]]
         assert all(saved[key] == value for key, value in policy.items())
-        assert saved["reviewed_at"] == "2026-11-06"
         assert saved["drafted_by"] == "Codex"

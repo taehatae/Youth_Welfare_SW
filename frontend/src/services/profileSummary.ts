@@ -8,6 +8,7 @@ import {
   NATIONALITY,
   QUALIFICATIONS,
   SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
   YES_NO,
   EMPTY_DRAFT,
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -178,6 +179,9 @@ export function profileSummary(profile: UserProfileInput | null) {
             : label(YES_NO, extra.household_homeless),
         ],
         ["가구 월소득", manwonLabel(extra.household_monthly_income_won)],
+        ["가구 부채", manwonLabel(extra.household_debt_won)],
+        ["본인 명의 부채", manwonLabel(extra.personal_debt_won)],
+        ["자동차가액", manwonLabel(extra.car_value_won)],
       ],
     },
     {
@@ -202,6 +206,13 @@ export function profileSummary(profile: UserProfileInput | null) {
             : "해당 없음",
         ],
         ["재학 여부", label(YES_NO, p.student_status)],
+        ["학교 구분", extra.school_level ? label(SCHOOL_LEVEL, extra.school_level) : "미입력"],
+        ["중증 장애", extra.severe_disability ? label(YES_NO, extra.severe_disability) : "미입력"],
+        ["6세 이하 자녀", extra.has_child_under_7 ? label(YES_NO, extra.has_child_under_7) : "미입력"],
+        ["임신 중", extra.pregnancy ? label(YES_NO, extra.pregnancy) : "미입력"],
+        ["배우자 월소득", manwonLabel(extra.spouse_monthly_income_won)],
+        ["혼인 기간", typeof extra.marriage_years === "number" ? `${extra.marriage_years}년` : "미입력"],
+        ["신용점수", typeof extra.credit_score === "number" ? `${extra.credit_score}점 (${extra.credit_bureau ?? "평가사 미확인"})` : "미입력"],
         ["장애 여부", label(YES_NO, p.disability_status)],
         ["혼인", label(MARRIAGE, p.marital_status)],
         ["자녀", count(p.children_count)],
@@ -251,6 +262,21 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
     typeof extra.personal_asset_amount_won === "number"
       ? String(Math.round(extra.personal_asset_amount_won / 10000))
       : ""
+  const manwonOf = (won: JsonValue | undefined) =>
+    typeof won === "number" ? String(Math.round(won / 10000)) : ""
+  const textOf = (value: JsonValue | undefined) =>
+    typeof value === "string" || typeof value === "number" ? String(value) : ""
+  additional.schoolLevel = textOf(extra.school_level)
+  additional.severeDisability = textOf(extra.severe_disability)
+  additional.hasChildUnder7 = textOf(extra.has_child_under_7)
+  additional.pregnancy = textOf(extra.pregnancy)
+  additional.spouseMonthlyIncomeManwon = manwonOf(extra.spouse_monthly_income_won)
+  additional.marriageYears = textOf(extra.marriage_years)
+  additional.householdDebtManwon = manwonOf(extra.household_debt_won)
+  additional.personalDebtManwon = manwonOf(extra.personal_debt_won)
+  additional.carValueManwon = manwonOf(extra.car_value_won)
+  additional.creditBureau = textOf(extra.credit_bureau)
+  additional.creditScore = textOf(extra.credit_score)
   additional.householdMonthlyIncomeManwon =
     typeof extra.household_monthly_income_won === "number"
       ? String(Math.round(extra.household_monthly_income_won / 10000))

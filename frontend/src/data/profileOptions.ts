@@ -50,6 +50,18 @@ export const YES_NO: Option[] = [
   ["UNKNOWN", "미확인"],
 ]
 
+// 재학 중일 때 학교 구분. 장학금·학자금 정책 대부분이 '대학(원)생'을 대상으로 한다.
+export const SCHOOL_LEVEL: Option[] = [
+  ["HIGH", "고등학교"],
+  ["COLLEGE", "대학(전문대 포함)"],
+  ["GRADUATE", "대학원"],
+]
+
+export const CREDIT_BUREAU: Option[] = [
+  ["KCB", "KCB (올크레딧)"],
+  ["NICE", "NICE (나이스지키미)"],
+]
+
 export const MARRIAGE: Option[] = [
   ["SINGLE", "미혼"],
   ["MARRIED", "기혼"],
@@ -132,6 +144,17 @@ export interface AdditionalEligibilityDraft {
   householdMonthlyIncomeManwon?: string
   assetAmountManwon?: string
   personalAssetManwon?: string
+  schoolLevel?: string
+  severeDisability?: string
+  hasChildUnder7?: string
+  pregnancy?: string
+  spouseMonthlyIncomeManwon?: string
+  marriageYears?: string
+  householdDebtManwon?: string
+  personalDebtManwon?: string
+  carValueManwon?: string
+  creditBureau?: string
+  creditScore?: string
   householdHomeless?: string
   householdIncomeRecognitionKnown: string
   recognizedHouseholdIncomeWon: string
@@ -157,6 +180,17 @@ export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
   householdMonthlyIncomeManwon: "",
   assetAmountManwon: "",
   personalAssetManwon: "",
+  schoolLevel: "",
+  severeDisability: "",
+  hasChildUnder7: "",
+  pregnancy: "",
+  spouseMonthlyIncomeManwon: "",
+  marriageYears: "",
+  householdDebtManwon: "",
+  personalDebtManwon: "",
+  carValueManwon: "",
+  creditBureau: "",
+  creditScore: "",
   householdHomeless: "",
   householdIncomeRecognitionKnown: "",
   recognizedHouseholdIncomeWon: "",
@@ -241,13 +275,14 @@ export function stepError(d: ProfileDraft, step: number): string {
 
   if (step === 3 && d.additionalEligibility) {
     const a = d.additionalEligibility
-    const amounts = [a.assetAmountManwon ?? "", a.personalAssetManwon ?? "", a.householdMonthlyIncomeManwon ?? ""]
+    const amounts = [a.assetAmountManwon ?? "", a.personalAssetManwon ?? "", a.householdMonthlyIncomeManwon ?? "",
+      a.householdDebtManwon ?? "", a.personalDebtManwon ?? "", a.carValueManwon ?? ""]
     if (
       amounts.some(
         (v) => v !== "" && (!/^\d+$/.test(v) || !Number.isSafeInteger(Number(v) * 10000)),
       )
     )
-      return "총재산과 가구 월소득은 0 이상의 정수(만원)로 입력해주세요."
+      return "재산·부채·자동차가액과 가구 월소득은 0 이상의 정수(만원)로 입력해주세요."
   }
 
   if (step === 4 && !EMPLOYMENT.some(([v]) => v === d.employment))
@@ -269,6 +304,15 @@ export function stepError(d: ProfileDraft, step: number): string {
       )
     )
       return "추가 금액과 보호 기간은 0 이상의 정수로 입력해주세요."
+    const extraNumbers = [
+      additional.spouseMonthlyIncomeManwon ?? "",
+      additional.marriageYears ?? "",
+      additional.creditScore ?? "",
+    ]
+    if (extraNumbers.some((value) => value !== "" && (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value) * 10000))))
+      return "배우자 월소득·혼인 기간·신용점수는 0 이상의 정수로 입력해주세요."
+    if ((additional.creditScore ?? "") !== "" && Number(additional.creditScore) > 1000)
+      return "신용점수는 0~1000점 사이로 입력해주세요."
     if (
       additional.protectionEndMonth &&
       !validYearMonth(additional.protectionEndMonth)
@@ -308,6 +352,12 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
   const assetAmount =
     (extra.assetAmountManwon ?? "") === "" ? null : Number(extra.assetAmountManwon)
   const incomeManwon = householdIncomeManwon(extra)
+  const manwon = (value: string | undefined) => (value ?? "") === "" ? null : Number(value) * 10000
+  const yesNo = (value: string | undefined) => value || null
+  const married = d.maritalStatus === "MARRIED"
+  const student = d.student === "YES"
+  const disabled = d.disability === "YES"
+  const hasChildren = Number(d.childrenCount || 0) > 0
   const personalAsset =
     (extra.personalAssetManwon ?? "") === "" ? null : Number(extra.personalAssetManwon)
 
@@ -356,6 +406,18 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         asset_amount_won: assetAmount == null ? null : assetAmount * 10000,
         personal_asset_amount_won: personalAsset == null ? null : personalAsset * 10000,
         household_homeless: extra.householdHomeless || null,
+        // 여러 정책에서 자주 쓰는 기준. 해당할 때만 묻고, 그 밖에는 저장하지 않는다.
+        school_level: student ? extra.schoolLevel || null : null,
+        severe_disability: disabled ? yesNo(extra.severeDisability) : null,
+        has_child_under_7: hasChildren ? yesNo(extra.hasChildUnder7) : null,
+        pregnancy: married || d.gender === "FEMALE" ? yesNo(extra.pregnancy) : null,
+        spouse_monthly_income_won: married ? manwon(extra.spouseMonthlyIncomeManwon) : null,
+        marriage_years: married && (extra.marriageYears ?? "") !== "" ? Number(extra.marriageYears) : null,
+        household_debt_won: manwon(extra.householdDebtManwon),
+        personal_debt_won: manwon(extra.personalDebtManwon),
+        car_value_won: manwon(extra.carValueManwon),
+        credit_bureau: (extra.creditScore ?? "") !== "" ? extra.creditBureau || null : null,
+        credit_score: (extra.creditScore ?? "") !== "" && extra.creditBureau ? Number(extra.creditScore) : null,
         household_income_recognition_known:
           extra.householdIncomeRecognitionKnown || null,
         recognized_household_income_won:
@@ -465,6 +527,17 @@ const optionalAdditionalKeys = [
   "householdMonthlyIncomeManwon",
   "assetAmountManwon",
   "personalAssetManwon",
+  "schoolLevel",
+  "severeDisability",
+  "hasChildUnder7",
+  "pregnancy",
+  "spouseMonthlyIncomeManwon",
+  "marriageYears",
+  "householdDebtManwon",
+  "personalDebtManwon",
+  "carValueManwon",
+  "creditBureau",
+  "creditScore",
   "householdHomeless",
 ]
 
@@ -485,6 +558,9 @@ function isAdditionalEligibilityDraft(
     "employmentSupportProgram",
     "selfSufficiencyProgramStatus",
     "householdHomeless",
+    "severeDisability",
+    "hasChildUnder7",
+    "pregnancy",
   ]
   return (
     Object.keys(EMPTY_ADDITIONAL_ELIGIBILITY).every((key) =>

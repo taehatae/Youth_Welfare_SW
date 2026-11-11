@@ -21,6 +21,8 @@ import {
   NATIONALITY,
   QUALIFICATIONS,
   SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
+  CREDIT_BUREAU,
   YES_NO,
   incomeWon,
   numberOptions,
@@ -311,7 +313,14 @@ export default function DiagnosisPage({
   )
 
   const manwonInput = (
-    key: "assetAmountManwon" | "personalAssetManwon" | "householdMonthlyIncomeManwon",
+    key:
+      | "assetAmountManwon"
+      | "personalAssetManwon"
+      | "householdMonthlyIncomeManwon"
+      | "householdDebtManwon"
+      | "personalDebtManwon"
+      | "carValueManwon"
+      | "spouseMonthlyIncomeManwon",
     label: string,
     hint: string,
     value: string,
@@ -336,6 +345,30 @@ export default function DiagnosisPage({
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
         />
         <span aria-hidden="true" className="font-normal">만원</span>
+      </div>
+      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+    </label>
+  )
+
+  const numberInput = (
+    key: "marriageYears" | "creditScore",
+    label: string,
+    hint: string,
+    unit: string,
+  ) => (
+    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+      {label}
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          value={additional[key] ?? ""}
+          onChange={(event) => updateAdditional(key, event.target.value)}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+        />
+        <span aria-hidden="true" className="font-normal">{unit}</span>
       </div>
       <span className="block text-sm font-normal text-slate-500">{hint}</span>
     </label>
@@ -721,6 +754,24 @@ export default function DiagnosisPage({
                 "부모 등과 함께 산다면 가구 재산과 별도로 본인 명의 재산만 적어주세요. 1인 가구면 비워둬도 돼요.",
                 additional.personalAssetManwon ?? "",
               )}
+              {manwonInput(
+                "householdDebtManwon",
+                "가구 부채 (만원)",
+                "가구 총재산에서 뺄 대출·빚이에요. 대출 정책은 '재산 − 부채(순자산)'로 비교해요. 없으면 0, 모르면 비워두세요.",
+                additional.householdDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "personalDebtManwon",
+                "본인 명의 부채 (만원)",
+                "본인 명의 재산에서 뺄 본인 명의 대출이에요. 1인 가구면 비워둬도 돼요.",
+                additional.personalDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "carValueManwon",
+                "가구 자동차가액 (만원)",
+                "가구가 가진 자동차의 현재 가액 합계예요. 공공임대는 자동차가액 기준이 있어요. 없으면 0.",
+                additional.carValueManwon ?? "",
+              )}
             </>
           )}
           {step === 4 && (
@@ -776,9 +827,49 @@ export default function DiagnosisPage({
                 YES_NO,
                 "입학 예정이거나 다음 학기 복학 예정이어도 '해당'을 선택해주세요.",
               )}
+              {draft.student === "YES" && (
+                <Select
+                  name="additional-schoolLevel"
+                  label="학교 구분"
+                  options={SCHOOL_LEVEL}
+                  value={additional.schoolLevel ?? ""}
+                  onChange={(value) => updateAdditional("schoolLevel", value)}
+                  hint="장학금·학자금은 대학(원)생 대상이 많아요."
+                />
+              )}
               {field("disability", "등록 장애인 여부", YES_NO)}
+              {draft.disability === "YES" &&
+                additionalSelect(
+                  "severeDisability",
+                  "장애의 정도가 심한 장애인(중증) 여부",
+                  "장애인등록증에 '장애의 정도가 심한'으로 적혀 있으면 '해당'이에요.",
+                )}
               {field("maritalStatus", "혼인 상태", MARRIAGE)}
+              {draft.maritalStatus === "MARRIED" && (
+                <>
+                  {manwonInput(
+                    "spouseMonthlyIncomeManwon",
+                    "배우자 월소득 (만원)",
+                    "세전 월소득이에요. 소득이 없으면 0. 부부합산 소득·맞벌이 기준(주택 대출·공공임대)과 비교해요.",
+                    additional.spouseMonthlyIncomeManwon ?? "",
+                  )}
+                  {numberInput(
+                    "marriageYears",
+                    "혼인 기간 (년)",
+                    "혼인신고 후 지난 햇수예요. 신혼부부 기준(7년 이내 등)과 비교해요.",
+                    "년",
+                  )}
+                </>
+              )}
+              {(draft.maritalStatus === "MARRIED" || draft.gender === "FEMALE") &&
+                additionalSelect(
+                  "pregnancy",
+                  "임신 중 여부 (본인 또는 배우자)",
+                  "임신 중이면 대상이 되는 주거·바우처 정책이 있어요.",
+                )}
               {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
+              {Number(draft.childrenCount || 0) > 0 &&
+                additionalSelect("hasChildUnder7", "만 6세 이하 자녀 여부")}
               {field("qualificationStatus", "보유 자격증 여부", YES_NO)}
               {draft.qualificationStatus === "YES" && (
                 <fieldset className="space-y-2">
@@ -925,6 +1016,28 @@ export default function DiagnosisPage({
                       본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며,
                       모르는 금액은 계산하지 않습니다.
                     </p>
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">
+                      신용 정보
+                    </legend>
+                    <p className="text-sm text-slate-500">
+                      서민금융 대출은 '신용점수 하위 20%' 같은 기준이 있어요. 평가사마다 점수가 달라 함께 골라주세요.
+                    </p>
+                    <Select
+                      name="additional-creditBureau"
+                      label="신용평가사"
+                      options={CREDIT_BUREAU}
+                      value={additional.creditBureau ?? ""}
+                      onChange={(value) => updateAdditional("creditBureau", value)}
+                    />
+                    {numberInput(
+                      "creditScore",
+                      "개인신용점수",
+                      "카드사·은행 앱이나 평가사 사이트에서 확인할 수 있어요(1000점 만점).",
+                      "점",
+                    )}
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
