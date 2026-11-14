@@ -16,7 +16,7 @@ GOLD_FILES = ["structure_gold_train.json", "structure_gold_val.json", "structure
 REVIEWED = DATA / "eligibility_paths_reviewed.json"
 OUT = DATA / "eligibility_paths.json"
 SNAPSHOT = DATA / "welfare-policies.json"
-BATCH_DATES = {1: "2026-11-02", 2: "2026-11-04", 3: "2026-11-06", 4: "2026-11-06"}
+BATCH_DATES = {1: "2026-11-02", 2: "2026-11-04", 3: "2026-11-11", 4: "2026-11-11", 5: "2026-11-15"}  # 3·4차는 장지훈 재검수일
 OPS = {"min": "gte", "max": "lte", "range": "between", "one_of": "one_of", "is_true": "is_true"}
 
 

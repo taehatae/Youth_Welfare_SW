@@ -1,3 +1,4 @@
+import pytest
 from types import SimpleNamespace
 
 from app.services import structured_condition_service as structured
@@ -103,3 +104,40 @@ def test_personal_asset_falls_back_to_household_asset_only_for_one_person_househ
     assert values({"household_size": 3, "additional_conditions": extra}) is None
     assert values({"household_size": 1, "additional_conditions": extra}) == 500_000_000
     assert values({"household_size": 3, "additional_conditions": {**extra, "personal_asset_amount_won": 30_000_000}}) == 30_000_000
+
+
+def test_extended_values_cover_frequent_criteria_without_guessing():
+    user = SimpleNamespace(age=30, region=None, income_level=3_000_000, employment_status="EMPLOYED")
+    married = {"household_size": 3, "marital_status": "MARRIED", "children_count": 1, "student_status": "YES",
+               "disability_status": "YES", "additional_conditions": {
+                   "household_monthly_income_won": 5_000_000, "basic_benefit_status": "NO",
+                   "household_basic_benefit_status": "YES", "school_level": "GRADUATE", "severe_disability": "NO",
+                   "has_child_under_7": "YES", "spouse_monthly_income_won": 2_000_000, "marriage_years": 3,
+                   "asset_amount_won": 300_000_000, "household_debt_won": 100_000_000, "car_value_won": 20_000_000,
+                   "credit_bureau": "KCB", "credit_score": 650}}
+    v = structured.user_values(user, married)
+    assert v["기초생활보장 수급 가구"] is True  # 본인은 아니어도 가구 안에 수급자가 있으면 수급 가구
+    assert v["학교 구분"] == "대학원" and v["중증 장애인"] is False and v["6세 이하 자녀"] is True
+    assert v["부부합산 연소득"] == 60_000_000 and v["맞벌이"] is True and v["혼인 기간"] == 3
+    assert v["가구 순자산"] == 200_000_000 and v["자동차가액"] == 20_000_000
+    assert v["신용점수(KCB)"] == 650 and v["신용점수(NICE)"] is None
+    assert v["가구 월소득 중위소득 대비"] is not None
+
+    single = structured.user_values(user, {"marital_status": "SINGLE", "children_count": 0, "student_status": "NO",
+                                           "disability_status": "NO", "additional_conditions": {"asset_amount_won": 300_000_000}})
+    assert single["부부합산 연소득"] == 36_000_000 and single["맞벌이"] is False  # 미혼은 본인 소득만
+    assert single["6세 이하 자녀"] is False and single["중증 장애인"] is False and single["학교 구분"] is None
+    assert single["가구 순자산"] is None  # 부채를 모르면 순자산을 추정하지 않는다
+
+
+@pytest.mark.parametrize("extra,age,under7", [
+    ({"youngest_child_age": 4}, 4, True),
+    ({"youngest_child_age": 9}, 9, False),
+    ({"youngest_child_age": 9, "has_child_under_7": "YES"}, 9, False),  # 막내 나이가 있으면 나이로 판단
+    ({"has_child_under_7": "YES"}, None, True),  # 예전 저장본(예/아니오)도 읽는다
+    ({}, None, None),
+])
+def test_youngest_child_age_drives_child_age_criteria(extra, age, under7):
+    user = SimpleNamespace(age=30, region=None, income_level=None, employment_status=None)
+    v = structured.user_values(user, {"children_count": 2, "additional_conditions": extra})
+    assert v["막내 자녀 나이"] == age and v["6세 이하 자녀"] is under7

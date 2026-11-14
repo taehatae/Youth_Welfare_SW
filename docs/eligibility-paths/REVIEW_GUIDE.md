@@ -30,20 +30,20 @@ API 원문 ─▶ 초안(LLM) ─▶ 사람 채점(채점 화면) ─▶ 수정�
 
 - 이미 검수한 정책(`eligibility_paths_reviewed.json`)과 겹치지 않게 고른다.
 - 조건마다 `evidence`(원문 근거 구절)를 원문에서 **그대로** 복사해 넣는다. 자동 점검이 원문에 있는지 확인한다.
-- 자동 점검: `python scripts/make_review_sheet.py data/eligibility_paths_batch3_draft.json ../docs/eligibility-paths/batch-3`
+- 자동 점검: `python scripts/make_review_sheet.py data/eligibility_paths_batchN_draft.json ../docs/eligibility-paths/batch-N`
   - 입력 항목에 없는 `field`, 잘못된 연산자, 원문에 없는 근거 구절을 잡아 준다.
 
 ### ② 사람 채점 (채점 화면)
 
 ```bash
 cd backend
-python scripts/review_server.py data/eligibility_paths_batch3_draft.json   # → http://localhost:8765
+python scripts/review_server.py data/eligibility_paths_batchN_draft.json   # → http://localhost:8765
 ```
 
 - **왼쪽 원문, 오른쪽 LLM 판단**. 판단 줄에 마우스를 올리면 근거 구절이 원문에서 노랗게 표시된다.
 - 판단(비교 조건·확인 사항·우대) **하나하나**를 `맞음 / 틀림`으로 채점한다. `틀림`이면 어떻게 고쳐야 하는지 적는다.
 - 판단에서 빠진 조건은 정책마다 **놓친 조건** 칸에 적는다.
-- 누를 때마다 `data/eligibility_paths_batch3_review.json`에 저장된다. 위쪽 번호로 정책을 오가고, 다 보면 `채점 완료 → 다음 정책`.
+- 누를 때마다 `data/eligibility_paths_batchN_review.json`에 저장된다. 위쪽 번호로 정책을 오가고, 다 보면 `채점 완료 → 다음 정책`.
 
 ### ③ 반영
 
@@ -52,7 +52,7 @@ python scripts/review_server.py data/eligibility_paths_batch3_draft.json   # →
 
 ```bash
 cd backend
-python scripts/merge_reviewed.py data/eligibility_paths_batch3_draft.json
+python scripts/merge_reviewed.py data/eligibility_paths_batchN_draft.json
 python scripts/build_eligibility_paths.py && python scripts/load_eligibility_paths.py
 python -m pytest -q
 ```

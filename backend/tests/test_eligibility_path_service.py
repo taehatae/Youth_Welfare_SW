@@ -171,24 +171,54 @@ def batch4_record(serv_id):
 
 @pytest.mark.parametrize("serv_id,age,provided,passed", [
     ("WLF00006269", 27, profile(), 1),
-    ("WLF00003265", 19, profile(disability_status="YES"), 2),
-    ("WLF00006266", 35, {}, 1),
+    ("WLF00003265", 19, profile(disability_status="YES", additional={"severe_disability": "NO"}), 4),
+    ("WLF00006266", 35, {"household_size": 1, "additional_conditions": {"household_monthly_income_won": 2_000_000}}, 3),
 ])
-def test_batch4_current_design_can_be_eligible_with_unverified_required_checks(serv_id, age, provided, passed):
-    # 현행 예비 판정을 고정한다. 모든 필수 자격의 확인 완료를 의미하지 않는다.
+def test_batch4_can_be_eligible_with_unverified_required_checks(serv_id, age, provided, passed):
+    # 비교 조건을 모두 충족하면 가능. 확인 사항은 '추가 확인'으로만 남는다.
     service, rec = batch4_record(serv_id)
-    user = SimpleNamespace(age=age, region=None, income_level=None, employment_status=None)
+    user = SimpleNamespace(age=age, region=None, income_level=None if serv_id != "WLF00006266" else 2_000_000,
+                           employment_status=None)
 
     result = paths.analyze(service, user, provided, rec)
 
     assert result["status"] == "eligible"
     assert result["passed_conditions"] == passed
-    assert result["review_conditions"]
     assert all(row["status"] == "needs_review" for row in result["review_conditions"])
     assert result["gap_conditions"] == []
 
 
-def test_batch4_nine_paths_without_comparison_conditions_remain_needs_review():
+@pytest.mark.parametrize("serv_id,provided,missing", [
+    ("WLF00003265", profile(disability_status="YES"), "중증 장애인"),
+    ("WLF00006266", {}, "본인 연소득"),
+])
+def test_batch4_recheck_asks_for_newly_comparable_inputs(serv_id, provided, missing):
+    # 미충족 없이 충족한 조건이 있으면 가능. 입력하지 않은 기준은 불가로 만들지 않고 '추가 확인'으로 안내한다.
+    service, rec = batch4_record(serv_id)
+    user = SimpleNamespace(age=30, region=None, income_level=None, employment_status=None)
+
+    result = paths.analyze(service, user, provided, rec)
+
+    assert result["status"] == "eligible" and result["gap_conditions"] == []
+    assert missing in result["recommendation_reason"]
+    assert missing in {r["condition_type"] for r in result["review_conditions"]}
+
+
+def test_path_status_rule_met_without_unmet_is_eligible():
+    # 미충족 있음 → 불가, 미충족 없고 충족 있음 → 가능, 충족·미충족 모두 없음 → 확인 필요
+    rec = record([("기본", [condition("만 나이", "gte", 19), condition("등록 장애인", "is_true")], [])])
+    adult = SimpleNamespace(age=22, region=None, income_level=None, employment_status=None)
+    minor = SimpleNamespace(age=17, region=None, income_level=None, employment_status=None)
+    unknown = SimpleNamespace(age=None, region=None, income_level=None, employment_status=None)
+    unanswered = {"disability_status": "UNKNOWN"}
+
+    assert paths.analyze(SERVICE, adult, unanswered, rec)["status"] == "eligible"
+    assert paths.analyze(SERVICE, minor, unanswered, rec)["status"] == "ineligible"
+    assert paths.analyze(SERVICE, unknown, unanswered, rec)["status"] == "needs_review"
+    assert paths.analyze(SERVICE, adult, {"disability_status": "NO"}, rec)["status"] == "ineligible"
+
+
+def test_batch4_paths_without_comparison_conditions_remain_needs_review():
     checked = 0
     for serv_id in ("WLF00001146", "WLF00003231", "WLF00006269"):
         _, rec = batch4_record(serv_id)
@@ -200,4 +230,5 @@ def test_batch4_nine_paths_without_comparison_conditions_remain_needs_review():
             assert result["status"] == "needs_review"
             assert result["conditions"] == []
             checked += 1
-    assert checked == 9
+    # 재검수 후 보조공학기기 3개·미소금융 수급권자 경로가 비교 조건을 갖게 됐다.
+    assert checked == 5

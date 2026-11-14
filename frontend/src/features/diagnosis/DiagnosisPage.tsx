@@ -19,8 +19,9 @@ import {
   INCOME,
   MARRIAGE,
   NATIONALITY,
-  QUALIFICATIONS,
   SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
+  CREDIT_BUREAU,
   YES_NO,
   incomeWon,
   numberOptions,
@@ -237,9 +238,6 @@ export default function DiagnosisPage({
       next.incomeMinor = "0"
     }
 
-    if (key === "qualificationStatus" && value !== "YES")
-      next.qualifications = []
-
     setDraft(next)
 
     setError("")
@@ -262,29 +260,12 @@ export default function DiagnosisPage({
       next.basicBenefitTypes = value === "NO" ? ["NONE"] : []
     }
 
-    if (key === "registeredAddressSido") {
-      next.registeredAddressDistrict =
-        value === "세종특별자치시" ? value as string : ""
-
-      next.registeredResidenceStartMonth = ""
-    }
-
     if (key === "householdIncomeRecognitionKnown" && value !== "YES") {
       next.recognizedHouseholdIncomeWon = ""
     }
 
     if (key === "childWelfareProtectionExperience" && value !== "YES") {
       next.protectionEnded = ""
-
-      next.protectionEndMonth = ""
-
-      next.protectionDurationMonths = ""
-    }
-
-    if (key === "protectionEnded" && value !== "YES") {
-      next.protectionEndMonth = ""
-
-      next.protectionDurationMonths = ""
     }
 
     setDraft({ ...draft, additionalEligibility: next })
@@ -311,7 +292,14 @@ export default function DiagnosisPage({
   )
 
   const manwonInput = (
-    key: "assetAmountManwon" | "personalAssetManwon" | "householdMonthlyIncomeManwon",
+    key:
+      | "assetAmountManwon"
+      | "personalAssetManwon"
+      | "householdMonthlyIncomeManwon"
+      | "householdDebtManwon"
+      | "personalDebtManwon"
+      | "carValueManwon"
+      | "spouseMonthlyIncomeManwon",
     label: string,
     hint: string,
     value: string,
@@ -336,6 +324,30 @@ export default function DiagnosisPage({
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
         />
         <span aria-hidden="true" className="font-normal">만원</span>
+      </div>
+      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+    </label>
+  )
+
+  const numberInput = (
+    key: "marriageYears" | "creditScore" | "youngestChildAge",
+    label: string,
+    hint: string,
+    unit: string,
+  ) => (
+    <label className="block space-y-2 text-sm font-semibold text-slate-800">
+      {label}
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          value={additional[key] ?? ""}
+          onChange={(event) => updateAdditional(key, event.target.value)}
+          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+        />
+        <span aria-hidden="true" className="font-normal">{unit}</span>
       </div>
       <span className="block text-sm font-normal text-slate-500">{hint}</span>
     </label>
@@ -721,6 +733,24 @@ export default function DiagnosisPage({
                 "부모 등과 함께 산다면 가구 재산과 별도로 본인 명의 재산만 적어주세요. 1인 가구면 비워둬도 돼요.",
                 additional.personalAssetManwon ?? "",
               )}
+              {manwonInput(
+                "householdDebtManwon",
+                "가구 부채 (만원)",
+                "가구 총재산에서 뺄 대출·빚이에요. 대출 정책은 '재산 − 부채(순자산)'로 비교해요. 없으면 0, 모르면 비워두세요.",
+                additional.householdDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "personalDebtManwon",
+                "본인 명의 부채 (만원)",
+                "본인 명의 재산에서 뺄 본인 명의 대출이에요. 1인 가구면 비워둬도 돼요.",
+                additional.personalDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "carValueManwon",
+                "가구 자동차가액 (만원)",
+                "가구가 가진 자동차의 현재 가액 합계예요. 공공임대는 자동차가액 기준이 있어요. 없으면 0.",
+                additional.carValueManwon ?? "",
+              )}
             </>
           )}
           {step === 4 && (
@@ -776,43 +806,54 @@ export default function DiagnosisPage({
                 YES_NO,
                 "입학 예정이거나 다음 학기 복학 예정이어도 '해당'을 선택해주세요.",
               )}
-              {field("disability", "등록 장애인 여부", YES_NO)}
-              {field("maritalStatus", "혼인 상태", MARRIAGE)}
-              {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
-              {field("qualificationStatus", "보유 자격증 여부", YES_NO)}
-              {draft.qualificationStatus === "YES" && (
-                <fieldset className="space-y-2">
-                  <legend className="mb-2 text-sm font-semibold">
-                    보유 자격 (복수 선택)
-                  </legend>
-                  {QUALIFICATIONS.map(([value, label]) => (
-                    <label
-                      key={value}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={draft.qualifications.includes(value)}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-
-                            qualifications: e.target.checked
-                              ? [...draft.qualifications, value]
-                              : draft.qualifications.filter((v) => v !== value),
-                          })
-                        }
-                        className="h-4 w-4 accent-blue-700"
-                      />
-                      {label}
-                    </label>
-                  ))}
-                  <p className="text-sm text-slate-500">
-                    목록 밖 자격은 보유 여부만 저장하며, 자동 충족으로 판정하지
-                    않습니다.
-                  </p>
-                </fieldset>
+              {draft.student === "YES" && (
+                <Select
+                  name="additional-schoolLevel"
+                  label="학교 구분"
+                  options={SCHOOL_LEVEL}
+                  value={additional.schoolLevel ?? ""}
+                  onChange={(value) => updateAdditional("schoolLevel", value)}
+                  hint="장학금·학자금은 대학(원)생 대상이 많아요."
+                />
               )}
+              {field("disability", "등록 장애인 여부", YES_NO)}
+              {draft.disability === "YES" &&
+                additionalSelect(
+                  "severeDisability",
+                  "장애의 정도가 심한 장애인(중증) 여부",
+                  "장애인등록증에 '장애의 정도가 심한'으로 적혀 있으면 '해당'이에요.",
+                )}
+              {field("maritalStatus", "혼인 상태", MARRIAGE)}
+              {draft.maritalStatus === "MARRIED" && (
+                <>
+                  {manwonInput(
+                    "spouseMonthlyIncomeManwon",
+                    "배우자 월소득 (만원)",
+                    "세전 월소득이에요. 소득이 없으면 0. 부부합산 소득·맞벌이 기준(주택 대출·공공임대)과 비교해요.",
+                    additional.spouseMonthlyIncomeManwon ?? "",
+                  )}
+                  {numberInput(
+                    "marriageYears",
+                    "혼인 기간 (년)",
+                    "혼인신고 후 지난 햇수예요. 신혼부부 기준(7년 이내 등)과 비교해요.",
+                    "년",
+                  )}
+                </>
+              )}
+              {(draft.maritalStatus === "MARRIED" || draft.gender === "FEMALE") &&
+                additionalSelect(
+                  "pregnancy",
+                  "임신 중 여부 (본인 또는 배우자)",
+                  "임신 중이면 대상이 되는 주거·바우처 정책이 있어요.",
+                )}
+              {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
+              {Number(draft.childrenCount || 0) > 0 &&
+                numberInput(
+                  "youngestChildAge",
+                  "막내 자녀 나이 (만)",
+                  "자녀가 여럿이면 가장 어린 자녀의 만 나이예요. 1세 미만이면 0.",
+                  "세",
+                )}
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
@@ -929,6 +970,28 @@ export default function DiagnosisPage({
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
+                      신용 정보
+                    </legend>
+                    <p className="text-sm text-slate-500">
+                      서민금융 대출은 '신용점수 하위 20%' 같은 기준이 있어요. 평가사마다 점수가 달라 함께 골라주세요.
+                    </p>
+                    <Select
+                      name="additional-creditBureau"
+                      label="신용평가사"
+                      options={CREDIT_BUREAU}
+                      value={additional.creditBureau ?? ""}
+                      onChange={(value) => updateAdditional("creditBureau", value)}
+                    />
+                    {numberInput(
+                      "creditScore",
+                      "개인신용점수",
+                      "카드사·은행 앱이나 평가사 사이트에서 확인할 수 있어요(1000점 만점).",
+                      "점",
+                    )}
+                  </fieldset>
+
+                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
+                    <legend className="px-1 font-semibold">
                       보호 경험·종료 정보
                     </legend>
                     {additionalSelect(
@@ -939,111 +1002,15 @@ export default function DiagnosisPage({
                     {additional.childWelfareProtectionExperience === "YES" && (
                       <>
                         {additionalSelect("protectionEnded", "보호 종료 여부")}
-                        {additional.protectionEnded === "YES" && (
-                          <>
-                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                              보호 종료 연월 (선택)
-                              <input
-                                type="month"
-                                value={additional.protectionEndMonth}
-                                onChange={(event) =>
-                                  updateAdditional(
-                                    "protectionEndMonth",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                              />
-                            </label>
-                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                              보호 기간 (개월, 선택)
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={additional.protectionDurationMonths}
-                                onChange={(event) =>
-                                  updateAdditional(
-                                    "protectionDurationMonths",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                              />
-                            </label>
-                          </>
-                        )}
                       </>
                     )}
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
-                      구직·취업지원·자활 정보
+                      구직 정보
                     </legend>
                     {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
-                    {additionalSelect(
-                      "employmentSupportProgram",
-
-                      "취업지원 프로그램 참여 여부",
-                    )}
-                    {additionalSelect(
-                      "selfSufficiencyProgramStatus",
-
-                      "자활사업 참여 여부",
-                    )}
-                  </fieldset>
-
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
-                      주민등록 주소·거주 기간 정보
-                    </legend>
-                    <p className="text-sm text-slate-500">
-                      지역과 거주 시작 시점은 참고 정보이며, 별도 증빙이 필요한
-                      조건은 추가 확인으로 남습니다.
-                    </p>
-                    <Select
-                      name="additional-registeredAddressSido"
-                      label="주민등록상 시도"
-                      options={Object.keys(REGIONS).map((value) => [
-                        value,
-                        value,
-                      ])}
-                      value={additional.registeredAddressSido}
-                      onChange={(value) =>
-                        updateAdditional("registeredAddressSido", value)
-                      }
-                      showUnanswered
-                    />
-                    <Select
-                      name="additional-registeredAddressDistrict"
-                      label="주민등록상 시군구"
-                      options={(
-                        REGIONS[additional.registeredAddressSido] ?? []
-                      ).map(
-                        (value) => [value, value],
-                      )}
-                      value={additional.registeredAddressDistrict}
-                      onChange={(value) =>
-                        updateAdditional("registeredAddressDistrict", value)
-                      }
-                      disabled={!additional.registeredAddressSido}
-                      showUnanswered
-                    />
-                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                      주민등록상 거주 시작 연월 (선택)
-                      <input
-                        type="month"
-                        value={additional.registeredResidenceStartMonth}
-                        onChange={(event) =>
-                          updateAdditional(
-                            "registeredResidenceStartMonth",
-                            event.target.value,
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                      />
-                    </label>
                   </fieldset>
                 </div>
               </details>

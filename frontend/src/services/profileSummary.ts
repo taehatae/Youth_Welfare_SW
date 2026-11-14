@@ -6,8 +6,8 @@ import {
   INCOME,
   MARRIAGE,
   NATIONALITY,
-  QUALIFICATIONS,
   SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
   YES_NO,
   EMPTY_DRAFT,
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -57,44 +57,7 @@ const extraFields = [
     "status",
   ],
   ["protectionEnded", "protection_ended", "보호 종료", "status"],
-  ["protectionEndMonth", "protection_end_month", "보호 종료 연월", "text"],
-  [
-    "protectionDurationMonths",
-    "protection_duration_months",
-    "보호 기간",
-    "months",
-  ],
   ["jobSeekRegistration", "job_seek_registration", "구직 등록", "status"],
-  [
-    "employmentSupportProgram",
-    "employment_support_program",
-    "취업지원 프로그램",
-    "status",
-  ],
-  [
-    "selfSufficiencyProgramStatus",
-    "self_sufficiency_program_status",
-    "자활사업 참여",
-    "status",
-  ],
-  [
-    "registeredAddressSido",
-    "registered_address_sido",
-    "주민등록상 시도",
-    "text",
-  ],
-  [
-    "registeredAddressDistrict",
-    "registered_address_district",
-    "주민등록상 시군구",
-    "text",
-  ],
-  [
-    "registeredResidenceStartMonth",
-    "registered_residence_start_month",
-    "주민등록 거주 시작",
-    "text",
-  ],
 ] as const
 function manwonLabel(won: JsonValue | undefined) {
   if (typeof won !== "number") return "미입력"
@@ -178,6 +141,9 @@ export function profileSummary(profile: UserProfileInput | null) {
             : label(YES_NO, extra.household_homeless),
         ],
         ["가구 월소득", manwonLabel(extra.household_monthly_income_won)],
+        ["가구 부채", manwonLabel(extra.household_debt_won)],
+        ["본인 명의 부채", manwonLabel(extra.personal_debt_won)],
+        ["자동차가액", manwonLabel(extra.car_value_won)],
       ],
     },
     {
@@ -202,17 +168,16 @@ export function profileSummary(profile: UserProfileInput | null) {
             : "해당 없음",
         ],
         ["재학 여부", label(YES_NO, p.student_status)],
+        ["학교 구분", extra.school_level ? label(SCHOOL_LEVEL, extra.school_level) : "미입력"],
+        ["중증 장애", extra.severe_disability ? label(YES_NO, extra.severe_disability) : "미입력"],
+        ["막내 자녀 나이", typeof extra.youngest_child_age === "number" ? `만 ${extra.youngest_child_age}세` : "미입력"],
+        ["임신 중", extra.pregnancy ? label(YES_NO, extra.pregnancy) : "미입력"],
+        ["배우자 월소득", manwonLabel(extra.spouse_monthly_income_won)],
+        ["혼인 기간", typeof extra.marriage_years === "number" ? `${extra.marriage_years}년` : "미입력"],
+        ["신용점수", typeof extra.credit_score === "number" ? `${extra.credit_score}점 (${extra.credit_bureau ?? "평가사 미확인"})` : "미입력"],
         ["장애 여부", label(YES_NO, p.disability_status)],
         ["혼인", label(MARRIAGE, p.marital_status)],
         ["자녀", count(p.children_count)],
-        [
-          "자격증",
-          extra.qualification_status === "NO"
-            ? "미보유"
-            : (p.qualifications ?? []).length
-              ? p.qualifications.map((v) => label(QUALIFICATIONS, v)).join(", ")
-              : "미확인",
-        ],
         ...extraFields.map(([, key, title, kind]) => [
           title,
           extraLabel(extra[key], kind),
@@ -251,6 +216,21 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
     typeof extra.personal_asset_amount_won === "number"
       ? String(Math.round(extra.personal_asset_amount_won / 10000))
       : ""
+  const manwonOf = (won: JsonValue | undefined) =>
+    typeof won === "number" ? String(Math.round(won / 10000)) : ""
+  const textOf = (value: JsonValue | undefined) =>
+    typeof value === "string" || typeof value === "number" ? String(value) : ""
+  additional.schoolLevel = textOf(extra.school_level)
+  additional.severeDisability = textOf(extra.severe_disability)
+  additional.youngestChildAge = textOf(extra.youngest_child_age)
+  additional.pregnancy = textOf(extra.pregnancy)
+  additional.spouseMonthlyIncomeManwon = manwonOf(extra.spouse_monthly_income_won)
+  additional.marriageYears = textOf(extra.marriage_years)
+  additional.householdDebtManwon = manwonOf(extra.household_debt_won)
+  additional.personalDebtManwon = manwonOf(extra.personal_debt_won)
+  additional.carValueManwon = manwonOf(extra.car_value_won)
+  additional.creditBureau = textOf(extra.credit_bureau)
+  additional.creditScore = textOf(extra.credit_score)
   additional.householdMonthlyIncomeManwon =
     typeof extra.household_monthly_income_won === "number"
       ? String(Math.round(extra.household_monthly_income_won / 10000))
@@ -281,13 +261,6 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
     student: p.student_status ?? "UNKNOWN",
     maritalStatus: p.marital_status ?? "UNKNOWN",
     childrenCount: p.children_count == null ? "" : String(p.children_count),
-    qualificationStatus:
-      typeof extra.qualification_status === "string"
-        ? extra.qualification_status
-        : (p.qualifications ?? []).length
-          ? "YES"
-          : "UNKNOWN",
-    qualifications: [...(p.qualifications ?? [])],
     nationality:
       typeof extra.nationality === "string" ? extra.nationality : "KOREAN",
     specialTargets: Array.isArray(extra.special_targets)
