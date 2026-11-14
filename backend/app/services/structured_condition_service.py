@@ -140,8 +140,12 @@ def _extended_values(p: dict, extra: dict, values: dict, household_size, median,
     # 등록 장애인이 아니면 중증 장애인도 아니다.
     severe = _yes_no(extra.get("severe_disability"))
     out["중증 장애인"] = False if values["등록 장애인"] is False else severe
+    # 자녀 나이는 막내 나이로 받는다. '6세 이하', '미성년' 등 자녀 나이 기준은 모두 막내 기준으로 판단할 수 있다.
     children = values["자녀 수"]
-    under7 = _yes_no(extra.get("has_child_under_7"))
+    youngest = extra.get("youngest_child_age")
+    youngest = int(youngest) if children != 0 and youngest not in (None, "") else None
+    out["막내 자녀 나이"] = youngest
+    under7 = youngest <= 6 if youngest is not None else _yes_no(extra.get("has_child_under_7"))  # 예전 저장본은 예/아니오
     out["6세 이하 자녀"] = False if children == 0 else under7
     out["임신 중"] = _yes_no(extra.get("pregnancy"))
     # 배우자 소득: 기혼이면 입력값, 미혼·이혼·사별이면 0으로 본다.
@@ -239,7 +243,7 @@ def show(field: str, value: Any) -> str:
         return f"{value}년"
     if field.startswith("신용점수"):
         return f"{value}점"
-    if field == "만 나이":
+    if field in ("만 나이", "막내 자녀 나이"):
         return f"{value}세"
     if field in ("본인 월소득", "본인 연소득"):
         return f"{value / 10000:,.0f}만원"

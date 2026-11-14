@@ -1,3 +1,4 @@
+import pytest
 from types import SimpleNamespace
 
 from app.services import structured_condition_service as structured
@@ -127,3 +128,16 @@ def test_extended_values_cover_frequent_criteria_without_guessing():
     assert single["부부합산 연소득"] == 36_000_000 and single["맞벌이"] is False  # 미혼은 본인 소득만
     assert single["6세 이하 자녀"] is False and single["중증 장애인"] is False and single["학교 구분"] is None
     assert single["가구 순자산"] is None  # 부채를 모르면 순자산을 추정하지 않는다
+
+
+@pytest.mark.parametrize("extra,age,under7", [
+    ({"youngest_child_age": 4}, 4, True),
+    ({"youngest_child_age": 9}, 9, False),
+    ({"youngest_child_age": 9, "has_child_under_7": "YES"}, 9, False),  # 막내 나이가 있으면 나이로 판단
+    ({"has_child_under_7": "YES"}, None, True),  # 예전 저장본(예/아니오)도 읽는다
+    ({}, None, None),
+])
+def test_youngest_child_age_drives_child_age_criteria(extra, age, under7):
+    user = SimpleNamespace(age=30, region=None, income_level=None, employment_status=None)
+    v = structured.user_values(user, {"children_count": 2, "additional_conditions": extra})
+    assert v["막내 자녀 나이"] == age and v["6세 이하 자녀"] is under7

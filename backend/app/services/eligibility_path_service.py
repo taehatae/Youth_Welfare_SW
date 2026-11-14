@@ -2,7 +2,7 @@
 
 판정 규칙
 - 조건: 충족 / 미충족 / 미입력. 확인 사항(checks)은 입력으로 비교할 수 없어 안내만 하고 판정에는 쓰지 않는다.
-- 경로: 미충족이 하나라도 있으면 불가, 비교 조건이 모두 충족이면 가능, 그 밖(미입력, 비교 조건 없음)은 확인 필요.
+- 경로: 미충족이 하나라도 있으면 불가, 미충족 없이 충족이 하나라도 있으면 가능(미입력 조건은 추가 확인), 충족·미충족이 모두 없으면 확인 필요.
 - 정책: 가능한 경로가 하나라도 있으면 가능, 모든 경로가 불가면 불가, 그 밖은 확인 필요.
   비교 조건이 없는 경로가 있으면 그 정책은 불가가 되지 않는다(신청할 수 있는 사람을 놓치지 않기 위해).
 - 역설계: 불가면 모든 경로가 막히는 공통 조건, 없으면 미충족이 가장 적은 경로를 보여준다.
@@ -22,7 +22,7 @@ SEED_PATH = Path(__file__).resolve().parents[2] / "data" / "eligibility_paths.js
 UNITS = {"만 나이": "세", "가구 소득인정액": "%", "도시근로자 월평균소득 대비 가구소득": "%", "가구 총재산": "원", "본인 총재산": "원",
          "본인 월소득": "원", "본인 연소득": "원", "가구원 수": "명", "자녀 수": "명",
          "가구 월소득 중위소득 대비": "%", "부부합산 연소득": "원", "가구 순자산": "원", "본인 순자산": "원",
-         "자동차가액": "원", "혼인 기간": "년", "신용점수(KCB)": "점", "신용점수(NICE)": "점"}
+         "자동차가액": "원", "혼인 기간": "년", "막내 자녀 나이": "세", "신용점수(KCB)": "점", "신용점수(NICE)": "점"}
 RANK = {"eligible": 0, "needs_review": 1, "ineligible": 2}
 
 
@@ -83,8 +83,10 @@ def _evaluate_path(path: EligibilityPath, common: EligibilityPath | None, values
         rows.append({"condition_type": c.field, "status": _status(base.matches(cond, values.get(c.field))),
                      "current_value": base.show(c.field, values.get(c.field)), "required_value": base.describe(cond),
                      "evidence": c.evidence, "common": common is not None and c in common.conditions})
+    # 미충족이 있으면 불가, 미충족 없이 충족이 하나라도 있으면 가능(입력하지 않은 조건은 '추가 확인'으로 안내),
+    # 충족도 미충족도 없을 때(비교 조건이 없거나 모두 미입력)만 확인 필요다.
     statuses = {r["status"] for r in rows}
-    status = "ineligible" if "failed" in statuses else "eligible" if rows and statuses == {"passed"} else "needs_review"
+    status = "ineligible" if "failed" in statuses else "eligible" if "passed" in statuses else "needs_review"
     return {"path_id": path.path_key, "label": path.label, "kind": path.kind, "priority": path.priority,
             "status": status, "conditions": rows, "checks": (common.checks if common else []) + (path.checks or [])}
 
@@ -132,7 +134,11 @@ def analyze(service, user, profile: dict | None, record: PolicyEligibility | Non
     fields = lambda rows: ", ".join(dict.fromkeys(r["condition_type"] for r in rows))
     multiple = len(paths) > 1
     where = f"'{best['label']}' 경로" if multiple else "정책"
-    if status == "eligible":
+    unanswered = [r for r in best["conditions"] if r["status"] == "needs_review"]
+    if status == "eligible" and unanswered:
+        reason = (f"{where}의 비교 조건 {len(confirmed)}개를 충족하고 맞지 않는 조건이 없습니다. "
+                  f"입력하지 않은 항목({fields(unanswered)})은 추가 확인하세요.")
+    elif status == "eligible":
         reason = f"{where}의 비교 조건 {len(confirmed)}개를 모두 충족합니다."
     elif status == "needs_review":
         missing = [r for r in best["conditions"] if r["status"] == "needs_review"]

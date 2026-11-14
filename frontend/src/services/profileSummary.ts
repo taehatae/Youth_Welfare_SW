@@ -6,7 +6,6 @@ import {
   INCOME,
   MARRIAGE,
   NATIONALITY,
-  QUALIFICATIONS,
   SPECIAL_TARGETS,
   SCHOOL_LEVEL,
   YES_NO,
@@ -58,44 +57,7 @@ const extraFields = [
     "status",
   ],
   ["protectionEnded", "protection_ended", "보호 종료", "status"],
-  ["protectionEndMonth", "protection_end_month", "보호 종료 연월", "text"],
-  [
-    "protectionDurationMonths",
-    "protection_duration_months",
-    "보호 기간",
-    "months",
-  ],
   ["jobSeekRegistration", "job_seek_registration", "구직 등록", "status"],
-  [
-    "employmentSupportProgram",
-    "employment_support_program",
-    "취업지원 프로그램",
-    "status",
-  ],
-  [
-    "selfSufficiencyProgramStatus",
-    "self_sufficiency_program_status",
-    "자활사업 참여",
-    "status",
-  ],
-  [
-    "registeredAddressSido",
-    "registered_address_sido",
-    "주민등록상 시도",
-    "text",
-  ],
-  [
-    "registeredAddressDistrict",
-    "registered_address_district",
-    "주민등록상 시군구",
-    "text",
-  ],
-  [
-    "registeredResidenceStartMonth",
-    "registered_residence_start_month",
-    "주민등록 거주 시작",
-    "text",
-  ],
 ] as const
 function manwonLabel(won: JsonValue | undefined) {
   if (typeof won !== "number") return "미입력"
@@ -208,7 +170,7 @@ export function profileSummary(profile: UserProfileInput | null) {
         ["재학 여부", label(YES_NO, p.student_status)],
         ["학교 구분", extra.school_level ? label(SCHOOL_LEVEL, extra.school_level) : "미입력"],
         ["중증 장애", extra.severe_disability ? label(YES_NO, extra.severe_disability) : "미입력"],
-        ["6세 이하 자녀", extra.has_child_under_7 ? label(YES_NO, extra.has_child_under_7) : "미입력"],
+        ["막내 자녀 나이", typeof extra.youngest_child_age === "number" ? `만 ${extra.youngest_child_age}세` : "미입력"],
         ["임신 중", extra.pregnancy ? label(YES_NO, extra.pregnancy) : "미입력"],
         ["배우자 월소득", manwonLabel(extra.spouse_monthly_income_won)],
         ["혼인 기간", typeof extra.marriage_years === "number" ? `${extra.marriage_years}년` : "미입력"],
@@ -216,14 +178,6 @@ export function profileSummary(profile: UserProfileInput | null) {
         ["장애 여부", label(YES_NO, p.disability_status)],
         ["혼인", label(MARRIAGE, p.marital_status)],
         ["자녀", count(p.children_count)],
-        [
-          "자격증",
-          extra.qualification_status === "NO"
-            ? "미보유"
-            : (p.qualifications ?? []).length
-              ? p.qualifications.map((v) => label(QUALIFICATIONS, v)).join(", ")
-              : "미확인",
-        ],
         ...extraFields.map(([, key, title, kind]) => [
           title,
           extraLabel(extra[key], kind),
@@ -268,7 +222,7 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
     typeof value === "string" || typeof value === "number" ? String(value) : ""
   additional.schoolLevel = textOf(extra.school_level)
   additional.severeDisability = textOf(extra.severe_disability)
-  additional.hasChildUnder7 = textOf(extra.has_child_under_7)
+  additional.youngestChildAge = textOf(extra.youngest_child_age)
   additional.pregnancy = textOf(extra.pregnancy)
   additional.spouseMonthlyIncomeManwon = manwonOf(extra.spouse_monthly_income_won)
   additional.marriageYears = textOf(extra.marriage_years)
@@ -307,13 +261,6 @@ export function profileToDraft(profile: UserProfileInput): ProfileDraft {
     student: p.student_status ?? "UNKNOWN",
     maritalStatus: p.marital_status ?? "UNKNOWN",
     childrenCount: p.children_count == null ? "" : String(p.children_count),
-    qualificationStatus:
-      typeof extra.qualification_status === "string"
-        ? extra.qualification_status
-        : (p.qualifications ?? []).length
-          ? "YES"
-          : "UNKNOWN",
-    qualifications: [...(p.qualifications ?? [])],
     nationality:
       typeof extra.nationality === "string" ? extra.nationality : "KOREAN",
     specialTargets: Array.isArray(extra.special_targets)

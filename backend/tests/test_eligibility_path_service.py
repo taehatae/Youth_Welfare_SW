@@ -193,14 +193,29 @@ def test_batch4_can_be_eligible_with_unverified_required_checks(serv_id, age, pr
     ("WLF00006266", {}, "본인 연소득"),
 ])
 def test_batch4_recheck_asks_for_newly_comparable_inputs(serv_id, provided, missing):
-    # 재검수에서 비교 조건으로 바꾼 기준은 입력하지 않으면 '확인 필요'로 남는다(잘못된 불가 없음).
+    # 미충족 없이 충족한 조건이 있으면 가능. 입력하지 않은 기준은 불가로 만들지 않고 '추가 확인'으로 안내한다.
     service, rec = batch4_record(serv_id)
     user = SimpleNamespace(age=30, region=None, income_level=None, employment_status=None)
 
     result = paths.analyze(service, user, provided, rec)
 
-    assert result["status"] == "needs_review"
+    assert result["status"] == "eligible" and result["gap_conditions"] == []
     assert missing in result["recommendation_reason"]
+    assert missing in {r["condition_type"] for r in result["review_conditions"]}
+
+
+def test_path_status_rule_met_without_unmet_is_eligible():
+    # 미충족 있음 → 불가, 미충족 없고 충족 있음 → 가능, 충족·미충족 모두 없음 → 확인 필요
+    rec = record([("기본", [condition("만 나이", "gte", 19), condition("등록 장애인", "is_true")], [])])
+    adult = SimpleNamespace(age=22, region=None, income_level=None, employment_status=None)
+    minor = SimpleNamespace(age=17, region=None, income_level=None, employment_status=None)
+    unknown = SimpleNamespace(age=None, region=None, income_level=None, employment_status=None)
+    unanswered = {"disability_status": "UNKNOWN"}
+
+    assert paths.analyze(SERVICE, adult, unanswered, rec)["status"] == "eligible"
+    assert paths.analyze(SERVICE, minor, unanswered, rec)["status"] == "ineligible"
+    assert paths.analyze(SERVICE, unknown, unanswered, rec)["status"] == "needs_review"
+    assert paths.analyze(SERVICE, adult, {"disability_status": "NO"}, rec)["status"] == "ineligible"
 
 
 def test_batch4_paths_without_comparison_conditions_remain_needs_review():

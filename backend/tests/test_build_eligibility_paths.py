@@ -83,7 +83,7 @@ def test_batch3_review_date_falls_back_to_registered_batch_date():
     policies, stale = build(services, reviewed, {})
 
     assert stale == []
-    assert policies[0]["reviewed_at"] == "2026-11-06"
+    assert policies[0]["reviewed_at"] == "2026-11-11"
 
 
 def test_seed_distinguishes_40_human_reviewed_and_112_converted_policies():
@@ -115,7 +115,7 @@ def test_batch4_review_date_falls_back_to_registered_batch_date():
     policies, stale = build(services, reviewed, {})
 
     assert stale == []
-    assert policies[0]["reviewed_at"] == "2026-11-06"
+    assert policies[0]["reviewed_at"] == "2026-11-11"
     assert policies[0]["reviewed_by"] == "human(4차)"
 
 

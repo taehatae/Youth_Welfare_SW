@@ -19,7 +19,6 @@ import {
   INCOME,
   MARRIAGE,
   NATIONALITY,
-  QUALIFICATIONS,
   SPECIAL_TARGETS,
   SCHOOL_LEVEL,
   CREDIT_BUREAU,
@@ -239,9 +238,6 @@ export default function DiagnosisPage({
       next.incomeMinor = "0"
     }
 
-    if (key === "qualificationStatus" && value !== "YES")
-      next.qualifications = []
-
     setDraft(next)
 
     setError("")
@@ -264,29 +260,12 @@ export default function DiagnosisPage({
       next.basicBenefitTypes = value === "NO" ? ["NONE"] : []
     }
 
-    if (key === "registeredAddressSido") {
-      next.registeredAddressDistrict =
-        value === "세종특별자치시" ? value as string : ""
-
-      next.registeredResidenceStartMonth = ""
-    }
-
     if (key === "householdIncomeRecognitionKnown" && value !== "YES") {
       next.recognizedHouseholdIncomeWon = ""
     }
 
     if (key === "childWelfareProtectionExperience" && value !== "YES") {
       next.protectionEnded = ""
-
-      next.protectionEndMonth = ""
-
-      next.protectionDurationMonths = ""
-    }
-
-    if (key === "protectionEnded" && value !== "YES") {
-      next.protectionEndMonth = ""
-
-      next.protectionDurationMonths = ""
     }
 
     setDraft({ ...draft, additionalEligibility: next })
@@ -351,7 +330,7 @@ export default function DiagnosisPage({
   )
 
   const numberInput = (
-    key: "marriageYears" | "creditScore",
+    key: "marriageYears" | "creditScore" | "youngestChildAge",
     label: string,
     hint: string,
     unit: string,
@@ -869,41 +848,12 @@ export default function DiagnosisPage({
                 )}
               {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
               {Number(draft.childrenCount || 0) > 0 &&
-                additionalSelect("hasChildUnder7", "만 6세 이하 자녀 여부")}
-              {field("qualificationStatus", "보유 자격증 여부", YES_NO)}
-              {draft.qualificationStatus === "YES" && (
-                <fieldset className="space-y-2">
-                  <legend className="mb-2 text-sm font-semibold">
-                    보유 자격 (복수 선택)
-                  </legend>
-                  {QUALIFICATIONS.map(([value, label]) => (
-                    <label
-                      key={value}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={draft.qualifications.includes(value)}
-                        onChange={(e) =>
-                          setDraft({
-                            ...draft,
-
-                            qualifications: e.target.checked
-                              ? [...draft.qualifications, value]
-                              : draft.qualifications.filter((v) => v !== value),
-                          })
-                        }
-                        className="h-4 w-4 accent-blue-700"
-                      />
-                      {label}
-                    </label>
-                  ))}
-                  <p className="text-sm text-slate-500">
-                    목록 밖 자격은 보유 여부만 저장하며, 자동 충족으로 판정하지
-                    않습니다.
-                  </p>
-                </fieldset>
-              )}
+                numberInput(
+                  "youngestChildAge",
+                  "막내 자녀 나이 (만)",
+                  "자녀가 여럿이면 가장 어린 자녀의 만 나이예요. 1세 미만이면 0.",
+                  "세",
+                )}
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
@@ -1052,111 +1002,15 @@ export default function DiagnosisPage({
                     {additional.childWelfareProtectionExperience === "YES" && (
                       <>
                         {additionalSelect("protectionEnded", "보호 종료 여부")}
-                        {additional.protectionEnded === "YES" && (
-                          <>
-                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                              보호 종료 연월 (선택)
-                              <input
-                                type="month"
-                                value={additional.protectionEndMonth}
-                                onChange={(event) =>
-                                  updateAdditional(
-                                    "protectionEndMonth",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                              />
-                            </label>
-                            <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                              보호 기간 (개월, 선택)
-                              <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={additional.protectionDurationMonths}
-                                onChange={(event) =>
-                                  updateAdditional(
-                                    "protectionDurationMonths",
-                                    event.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                              />
-                            </label>
-                          </>
-                        )}
                       </>
                     )}
                   </fieldset>
 
                   <fieldset className="space-y-5 border-t border-slate-200 pt-5">
                     <legend className="px-1 font-semibold">
-                      구직·취업지원·자활 정보
+                      구직 정보
                     </legend>
                     {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
-                    {additionalSelect(
-                      "employmentSupportProgram",
-
-                      "취업지원 프로그램 참여 여부",
-                    )}
-                    {additionalSelect(
-                      "selfSufficiencyProgramStatus",
-
-                      "자활사업 참여 여부",
-                    )}
-                  </fieldset>
-
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
-                      주민등록 주소·거주 기간 정보
-                    </legend>
-                    <p className="text-sm text-slate-500">
-                      지역과 거주 시작 시점은 참고 정보이며, 별도 증빙이 필요한
-                      조건은 추가 확인으로 남습니다.
-                    </p>
-                    <Select
-                      name="additional-registeredAddressSido"
-                      label="주민등록상 시도"
-                      options={Object.keys(REGIONS).map((value) => [
-                        value,
-                        value,
-                      ])}
-                      value={additional.registeredAddressSido}
-                      onChange={(value) =>
-                        updateAdditional("registeredAddressSido", value)
-                      }
-                      showUnanswered
-                    />
-                    <Select
-                      name="additional-registeredAddressDistrict"
-                      label="주민등록상 시군구"
-                      options={(
-                        REGIONS[additional.registeredAddressSido] ?? []
-                      ).map(
-                        (value) => [value, value],
-                      )}
-                      value={additional.registeredAddressDistrict}
-                      onChange={(value) =>
-                        updateAdditional("registeredAddressDistrict", value)
-                      }
-                      disabled={!additional.registeredAddressSido}
-                      showUnanswered
-                    />
-                    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                      주민등록상 거주 시작 연월 (선택)
-                      <input
-                        type="month"
-                        value={additional.registeredResidenceStartMonth}
-                        onChange={(event) =>
-                          updateAdditional(
-                            "registeredResidenceStartMonth",
-                            event.target.value,
-                          )
-                        }
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
-                      />
-                    </label>
                   </fieldset>
                 </div>
               </details>

@@ -21,7 +21,7 @@ export interface AnalysisSession {
   knownPolicies: MatchedPolicy[]
 }
 export const emptySession = (): AnalysisSession => ({
-  draft: { ...EMPTY_DRAFT, qualifications: [] },
+  draft: { ...EMPTY_DRAFT },
   step: 0,
   diagnosis: null,
   previousDiagnosis: null,

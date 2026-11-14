@@ -3,7 +3,7 @@
 정책마다 지금 원문의 해시(source_sha256)와 검수일을 함께 기록한다. 나중에 원문이 바뀌면
 build_eligibility_paths.py가 해시를 비교해 그 정책을 시드에서 빼고 재검수 목록에 올린다.
 
-    python scripts/merge_reviewed.py data/eligibility_paths_batch3_draft.json
+    python scripts/merge_reviewed.py data/eligibility_paths_batchN_draft.json
     python scripts/merge_reviewed.py --stamp-existing      # 해시가 없는 기존 검수본에 지금 원문 해시 기록
 
 이미 검수본에 있는 정책은 새 내용으로 바꾸고 차수(batch)는 그대로 둔다.

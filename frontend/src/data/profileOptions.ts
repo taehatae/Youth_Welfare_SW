@@ -83,19 +83,6 @@ export const SPECIAL_TARGETS: Option[] = [
   ["FARMER", "농업인·어업인 (본인 또는 가구)"],
 ]
 
-// 초기 선택 목록. 목록 밖 자격은 코드 OTHER로만 보존하고 자동 충족 판정에 쓰지 않는다.
-
-export const QUALIFICATIONS: Option[] = [
-  ["DRIVER_1", "1종 운전면허"],
-  ["DRIVER_2", "2종 운전면허"],
-  ["SOCIAL_WORKER_1", "사회복지사 1급"],
-  ["SOCIAL_WORKER_2", "사회복지사 2급"],
-  ["COMPUTER_1", "컴퓨터활용능력 1급"],
-  ["COMPUTER_2", "컴퓨터활용능력 2급"],
-  ["ENGINEER_INFORMATION", "정보처리기사"],
-  ["OTHER", "목록에 없는 자격 보유"],
-]
-
 export const numberOptions = (
   start: number,
   end: number,
@@ -126,8 +113,6 @@ export interface ProfileDraft {
   maritalStatus: string
 
   childrenCount: string
-  qualificationStatus: string
-  qualifications: string[]
   // 나중에 추가된 항목이라 예전에 저장된 진행 상태에는 없을 수 있다.
   nationality?: string
   specialTargets?: string[]
@@ -146,7 +131,7 @@ export interface AdditionalEligibilityDraft {
   personalAssetManwon?: string
   schoolLevel?: string
   severeDisability?: string
-  hasChildUnder7?: string
+  youngestChildAge?: string
   pregnancy?: string
   spouseMonthlyIncomeManwon?: string
   marriageYears?: string
@@ -161,14 +146,7 @@ export interface AdditionalEligibilityDraft {
   householdBasicBenefitStatus: string
   childWelfareProtectionExperience: string
   protectionEnded: string
-  protectionEndMonth: string
-  protectionDurationMonths: string
   jobSeekRegistration: string
-  employmentSupportProgram: string
-  selfSufficiencyProgramStatus: string
-  registeredAddressSido: string
-  registeredAddressDistrict: string
-  registeredResidenceStartMonth: string
 }
 
 export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
@@ -182,7 +160,7 @@ export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
   personalAssetManwon: "",
   schoolLevel: "",
   severeDisability: "",
-  hasChildUnder7: "",
+  youngestChildAge: "",
   pregnancy: "",
   spouseMonthlyIncomeManwon: "",
   marriageYears: "",
@@ -197,14 +175,7 @@ export const EMPTY_ADDITIONAL_ELIGIBILITY: AdditionalEligibilityDraft = {
   householdBasicBenefitStatus: "",
   childWelfareProtectionExperience: "",
   protectionEnded: "",
-  protectionEndMonth: "",
-  protectionDurationMonths: "",
   jobSeekRegistration: "",
-  employmentSupportProgram: "",
-  selfSufficiencyProgramStatus: "",
-  registeredAddressSido: "",
-  registeredAddressDistrict: "",
-  registeredResidenceStartMonth: "",
 }
 
 export const EMPTY_DRAFT: ProfileDraft = {
@@ -224,8 +195,6 @@ export const EMPTY_DRAFT: ProfileDraft = {
   student: "UNKNOWN",
   maritalStatus: "UNKNOWN",
   childrenCount: "",
-  qualificationStatus: "UNKNOWN",
-  qualifications: [],
 }
 
 // 가구 월소득(만원). 예전 원 단위 저장값은 만원으로 환산한다.
@@ -288,22 +257,18 @@ export function stepError(d: ProfileDraft, step: number): string {
   if (step === 4 && !EMPLOYMENT.some(([v]) => v === d.employment))
     return "현재 고용 상태를 선택해주세요."
 
-  if (step === 5 && d.qualificationStatus === "YES" && !d.qualifications.length)
-    return "보유한 자격을 선택해주세요. 목록에 없으면 해당 항목을 선택할 수 있어요."
-
   if (step === 5 && d.additionalEligibility) {
     const additional = d.additionalEligibility
     const optionalAmounts = [
       additional.householdMonthlyIncomeWon,
       additional.recognizedHouseholdIncomeWon,
-      additional.protectionDurationMonths,
     ]
     if (
       optionalAmounts.some(
         (value) => value !== "" && (!/^\d+$/.test(value) || !Number.isSafeInteger(Number(value))),
       )
     )
-      return "추가 금액과 보호 기간은 0 이상의 정수로 입력해주세요."
+      return "추가 금액은 0 이상의 정수로 입력해주세요."
     const extraNumbers = [
       additional.spouseMonthlyIncomeManwon ?? "",
       additional.marriageYears ?? "",
@@ -313,24 +278,12 @@ export function stepError(d: ProfileDraft, step: number): string {
       return "배우자 월소득·혼인 기간·신용점수는 0 이상의 정수로 입력해주세요."
     if ((additional.creditScore ?? "") !== "" && Number(additional.creditScore) > 1000)
       return "신용점수는 0~1000점 사이로 입력해주세요."
-    if (
-      additional.protectionEndMonth &&
-      !validYearMonth(additional.protectionEndMonth)
-    )
-      return "보호 종료 연월을 확인해주세요."
-    if (
-      additional.registeredResidenceStartMonth &&
-      !validYearMonth(additional.registeredResidenceStartMonth)
-    )
-      return "주민등록상 거주 시작 연월을 확인해주세요."
+    const youngest = additional.youngestChildAge ?? ""
+    if (youngest !== "" && (!/^\d+$/.test(youngest) || Number(youngest) > 40))
+      return "막내 자녀 나이는 0~40세 사이의 정수로 입력해주세요."
   }
 
   return ""
-}
-
-function validYearMonth(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})$/.exec(value)
-  return !!match && Number(match[1]) >= 1900 && Number(match[2]) >= 1 && Number(match[2]) <= 12
 }
 
 export function toProfile(d: ProfileDraft): UserProfileInput {
@@ -387,10 +340,9 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         d.maritalStatus as UserProfileInput["eligibility_conditions"]["marital_status"],
       children_count: d.childrenCount ? Number(d.childrenCount) : null,
 
-      qualifications: d.qualificationStatus === "YES" ? d.qualifications : [],
+      qualifications: [],
 
       additional_conditions: {
-        qualification_status: d.qualificationStatus,
         profile_schema_version: 3,
         employment_detail: d.employment,
         basic_benefit_status: extra.basicBenefitStatus || null,
@@ -409,7 +361,8 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         // 여러 정책에서 자주 쓰는 기준. 해당할 때만 묻고, 그 밖에는 저장하지 않는다.
         school_level: student ? extra.schoolLevel || null : null,
         severe_disability: disabled ? yesNo(extra.severeDisability) : null,
-        has_child_under_7: hasChildren ? yesNo(extra.hasChildUnder7) : null,
+        youngest_child_age:
+          hasChildren && (extra.youngestChildAge ?? "") !== "" ? Number(extra.youngestChildAge) : null,
         pregnancy: married || d.gender === "FEMALE" ? yesNo(extra.pregnancy) : null,
         spouse_monthly_income_won: married ? manwon(extra.spouseMonthlyIncomeManwon) : null,
         marriage_years: married && (extra.marriageYears ?? "") !== "" ? Number(extra.marriageYears) : null,
@@ -429,21 +382,7 @@ export function toProfile(d: ProfileDraft): UserProfileInput {
         child_welfare_protection_experience:
           extra.childWelfareProtectionExperience || null,
         protection_ended: extra.protectionEnded || null,
-        protection_end_month:
-          extra.protectionEnded === "YES" ? extra.protectionEndMonth || null : null,
-        protection_duration_months:
-          extra.childWelfareProtectionExperience === "YES" &&
-          extra.protectionEnded === "YES"
-            ? optionalNumber(extra.protectionDurationMonths)
-            : null,
         job_seek_registration: extra.jobSeekRegistration || null,
-        employment_support_program: extra.employmentSupportProgram || null,
-        self_sufficiency_program_status:
-          extra.selfSufficiencyProgramStatus || null,
-        registered_address_sido: extra.registeredAddressSido || null,
-        registered_address_district: extra.registeredAddressDistrict || null,
-        registered_residence_start_month:
-          extra.registeredResidenceStartMonth || null,
         nationality: d.nationality || "KOREAN",
         special_targets: d.specialTargets ?? [],
       },
@@ -478,15 +417,7 @@ export function isDraft(value: unknown): value is ProfileDraft {
     return false
 
   if (
-    !Object.keys(EMPTY_DRAFT).every((key) =>
-      key === "qualifications"
-        ? Array.isArray(d[key]) &&
-          (d[key] as unknown[]).every(
-            (v) =>
-              typeof v === "string" && QUALIFICATIONS.some(([id]) => id === v),
-          )
-        : typeof d[key] === "string",
-    )
+    !Object.keys(EMPTY_DRAFT).every((key) => typeof d[key] === "string")
   )
     return false
 
@@ -505,7 +436,6 @@ export function isDraft(value: unknown): value is ProfileDraft {
     student: YES_NO,
     maritalStatus: MARRIAGE,
     childrenCount: numberOptions(0, 20),
-    qualificationStatus: YES_NO,
   }
 
   return (
@@ -529,7 +459,7 @@ const optionalAdditionalKeys = [
   "personalAssetManwon",
   "schoolLevel",
   "severeDisability",
-  "hasChildUnder7",
+  "youngestChildAge",
   "pregnancy",
   "spouseMonthlyIncomeManwon",
   "marriageYears",
@@ -555,11 +485,8 @@ function isAdditionalEligibilityDraft(
     "childWelfareProtectionExperience",
     "protectionEnded",
     "jobSeekRegistration",
-    "employmentSupportProgram",
-    "selfSufficiencyProgramStatus",
     "householdHomeless",
     "severeDisability",
-    "hasChildUnder7",
     "pregnancy",
   ]
   return (
@@ -579,14 +506,6 @@ function isAdditionalEligibilityDraft(
       optionalAdditionalKeys.includes(key) && additional[key] === undefined
         ? true
         : ["", "YES", "NO", "UNKNOWN"].includes(additional[key] as string),
-    ) &&
-    (additional.registeredAddressSido === "" ||
-      (typeof additional.registeredAddressSido === "string" &&
-        Object.prototype.hasOwnProperty.call(REGIONS, additional.registeredAddressSido))) &&
-    (additional.registeredAddressDistrict === "" ||
-      (typeof additional.registeredAddressSido === "string" &&
-        REGIONS[additional.registeredAddressSido]?.includes(
-          additional.registeredAddressDistrict as string,
-        )))
+    )
   )
 }
