@@ -86,7 +86,7 @@ def test_batch3_review_date_falls_back_to_registered_batch_date():
     assert policies[0]["reviewed_at"] == "2026-11-11"
 
 
-def test_seed_distinguishes_40_human_reviewed_and_112_converted_policies():
+def test_seed_distinguishes_60_human_reviewed_and_92_converted_policies():
     from scripts.build_eligibility_paths import OUT
 
     reviewed = {p["serv_id"]: p for p in json.loads(REVIEWED.read_text(encoding="utf-8"))["policies"]}
@@ -94,7 +94,7 @@ def test_seed_distinguishes_40_human_reviewed_and_112_converted_policies():
     assert len(seed) == len({p["serv_id"] for p in seed}) == 152
     human = [p for p in seed if p["serv_id"] in reviewed]
     converted = [p for p in seed if p["serv_id"] not in reviewed]
-    assert len(human) == 40 and len(converted) == 112
+    assert len(human) == 60 and len(converted) == 92
     assert all(p["drafted_by"] == "converted" and p["reviewed_by"] == "claude" for p in converted)
     for policy in human:
         original = reviewed[policy["serv_id"]]
