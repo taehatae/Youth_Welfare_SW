@@ -60,6 +60,18 @@ python -m uvicorn app.main:app --reload
 
 기본 주소는 `http://127.0.0.1:8000`이며, Swagger UI는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다.
 
+### 팀원 PC에서 검수 자격 경로·역설계 실행
+
+DB 파일을 공유하지 않고 저장소의 JSON으로 구성합니다. 자세한 명령과 기존 데이터 변경 범위는 **[로컬 실행·적재 가이드](../docs/eligibility-paths/LOCAL_SETUP.md)**를 따르세요.
+
+1. `backend/`에서 실제 SQLite 경로와 `USE_ELIGIBILITY_PATHS=true`, `USE_STRUCTURED_CONDITIONS=true`, `USE_LLM_JUDGE=false`를 명시합니다.
+2. 기존 DB를 백업하고 앱 테이블을 준비합니다.
+3. `scripts.policy_data`로 `data/welfare-policies.json`을 미리보기한 뒤 백업과 함께 가져옵니다.
+4. 같은 DB 설정으로 `python -B -m scripts.load_eligibility_paths`를 실행합니다.
+5. 정책 152개·저장 조건 1,749개·사람 검수 60개·변환본 92개 및 원문 해시를 확인하고 서버를 시작합니다.
+
+개인화 안내 코드까지 dev에 포함되어 있어야 최신 안내 API를 사용할 수 있습니다. 플래그만 켜거나 기존 스냅샷을 다시 여는 것으로 이전 진단이 갱신되지는 않습니다. 위 가이드의 새 진단 확인 절차까지 진행하세요.
+
 ## 계정과 진단 기록 (2026-10-24)
 
 - 기존 `users`/`user_eligibility_conditions`는 진단 프로필로 유지함.

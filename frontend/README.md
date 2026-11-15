@@ -11,6 +11,22 @@ pnpm dev
 
 Create a production build with pnpm build.
 
+### 검수 자격 경로·개인화 역설계 연결
+
+먼저 [백엔드 데이터 적재·실행 가이드](../docs/eligibility-paths/LOCAL_SETUP.md)로 자신의 DB를 준비합니다. 다른 사람의 테스트 DB는 필요하지 않습니다.
+
+백엔드가 `127.0.0.1:8000`에서 실행 중이면, 별도 PowerShell에서 다음과 같이 연결합니다.
+
+```powershell
+cd frontend
+$env:VITE_API_BASE_URL = 'http://127.0.0.1:8000/api/v1'
+pnpm dev
+```
+
+접속 주소는 `http://127.0.0.1:5173`입니다. 이미 `frontend/`에 있으면 `cd frontend`는 생략합니다. `.env.local`을 사용해도 되며 변경 후 Vite를 재시작해야 합니다. 다른 포트를 사용하면 API URL과 백엔드 `FRONTEND_ORIGINS`를 함께 맞춥니다.
+
+새 진단 후 Network에서 진단·개인화 안내 요청이 같은 백엔드를 호출하는지 확인합니다. 미충족 탭의 개인화 안내는 로그인 상태와 해당 진단의 소유권을 확인한 뒤 표시합니다. 이전 스냅샷은 최신 시드로 자동 재판정하지 않습니다.
+
 ## Source layout
 
 - src/app contains the application shell and page selection.

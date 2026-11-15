@@ -224,7 +224,7 @@ export default function ResultPage({
             </p>
             <p>
               <strong>신청 불가</strong> 모든 경로에서 부족한 조건이 있어요.
-              카드에서 대표 경로와 다른 신청 경로의 부족한 조건 및 충족 기준을 확인하세요.
+              카드에서 현재 진단이 선택한 미충족 조건과 충족 기준을 확인하세요.
             </p>
           </section>
         </aside>
@@ -306,6 +306,9 @@ export default function ResultPage({
                   key={policy.id}
                   index={index}
                   policy={policy}
+                  guideTarget={key.length === 64 && policy.pathReview === "reviewed" && policy.paths?.length
+                    ? { snapshot: "diagnosis", profile_key: key, checked_at: snapshot.checkedAt, policy_id: policy.id }
+                    : undefined}
                   saved={savedIds.has(policy.id)}
                   toggle={() => toggleSaved(policy, key)}
                   onEdit={onEdit}

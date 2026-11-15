@@ -2,7 +2,9 @@ import { useId, useState } from "react"
 import { safeOfficialUrl } from "../../services/analysisSession"
 import { conditionStep } from "../../services/profileSummary"
 import type { PolicyRow } from "../../services/policyResults"
-import { samePolicyText, stateChangeGuide } from "../../services/conditionGuidance"
+import { samePolicyText, stateChangeGuide, guideTargetKey } from "../../services/conditionGuidance"
+import PersonalizedGuideAccess from "./PersonalizedGuideAccess"
+import type { ConditionGuideTarget } from "../../types/welfareApi"
 
 export const statusLabels = {
   eligible: "자동 비교상 충족",
@@ -117,8 +119,9 @@ const groupsOf = (tab: ConditionTab, rows: ConditionItem[]): [string, ConditionI
       ] as [string, ConditionItem[]][]).filter(([, group]) => group.length > 0)
     : [["", rows]]
 // 선택된 탭의 조건만 표시한다. 판정과 조건 선택은 백엔드 결과를 그대로 사용한다.
-export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedAt }: {
+export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedAt, guideTarget }: {
   policy: PolicyRow; tab: ConditionTab; onEdit?: (step: number) => void; busy?: boolean; savedAt?: string
+  guideTarget?: ConditionGuideTarget
 }) {
   const items: Record<ConditionTab, ConditionItem[]> = {
     passed: policy.confirmedConditions ?? [],
@@ -127,7 +130,8 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
   }
   const shown = items[tab]
   return (
-    <>
+    <PersonalizedGuideAccess key={tab === "failed" && guideTarget ? guideTargetKey(guideTarget) : tab}
+      target={tab === "failed" ? guideTarget : undefined}>{(personalGuides) => <>
       <p className="condition-panel-title">
         {conditionTabs.find(([kind]) => kind === tab)![1]} 조건 <b>{shown.length}</b>
       </p>
@@ -171,7 +175,8 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
                         <dd>{c.required || c.evidence || "공식 안내에서 확인해주세요."}</dd>
                       </div>
                     </dl>
-                    <ConditionChangeNotice condition={c} failed={tab === "failed"} />
+                    <ConditionChangeNotice condition={personalGuides.has(i)
+                      ? { ...c, conditionGuide: personalGuides.get(i), guideKind: "state_change" } : c} failed={tab === "failed"} />
                     {c.evidence && !samePolicyText(c.evidence, c.required || c.evidence) && (
                       <details className="condition-evidence">
                         <summary>정책 원문 근거</summary>
@@ -202,7 +207,7 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
           저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
         </p>
       )}
-    </>
+    </>}</PersonalizedGuideAccess>
   )
 }
 export default function AnalysisPolicyCard({
@@ -211,6 +216,7 @@ export default function AnalysisPolicyCard({
   toggle,
   savedAt,
   onEdit,
+  guideTarget,
   busy = false,
   index = 0,
 }: {
@@ -219,6 +225,7 @@ export default function AnalysisPolicyCard({
   toggle: () => void
   savedAt?: string
   onEdit?: (step: number) => void
+  guideTarget?: ConditionGuideTarget
   busy?: boolean
   index?: number
 }) {
@@ -290,7 +297,7 @@ export default function AnalysisPolicyCard({
         </div>
       </header>
       <div id={panelId} hidden={tab === null} className="condition-panel" data-kind={tab ?? undefined}>
-        {tab && <PolicyConditionPanel policy={policy} tab={tab} onEdit={onEdit} busy={busy} savedAt={savedAt} />}
+        {tab && <PolicyConditionPanel policy={policy} tab={tab} onEdit={onEdit} busy={busy} savedAt={savedAt} guideTarget={guideTarget} />}
       </div>
       <footer className="policy-card-actions">
         {url ? (

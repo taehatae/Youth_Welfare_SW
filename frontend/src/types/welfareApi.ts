@@ -229,3 +229,18 @@ export interface WelfareAnalysis {
 
   reverse: ReverseRecommendationsResponse
 }
+
+// 매번 본인 확인 후에만 조회하며 진단/관심 정책 스냅샷에 합치지 않는다.
+export interface ConditionGuideTarget {
+  snapshot: "current" | "diagnosis"
+  profile_key: string
+  checked_at: string
+  policy_id: string
+}
+
+export interface PrivateConditionGuides {
+  profile_key: string
+  checked_at: string
+  policy_id: string
+  items: { gap_index: number; condition_guide: string; guide_kind: "state_change" }[]
+}

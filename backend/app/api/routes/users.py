@@ -10,7 +10,8 @@ from app.schemas.user import (
 from app.models.account import Account
 from app.services.auth_service import current_account, throttle, verify_password
 from app.services.account_service import AccountService
-from app.schemas.account import WorkspaceState, SavedPoliciesInput, ProfileViewInput, SavedPolicyToggle, SavedPolicyUpdate
+from app.schemas.account import (WorkspaceState, SavedPoliciesInput, ProfileViewInput, SavedPolicyToggle,
+                                SavedPolicyUpdate, ConditionGuideViewInput, ConditionGuideViewResponse)
 from app.services.saved_policy_service import SavedPolicyService
 from app.services.profile_privacy import public_state, profile_key
 
@@ -47,13 +48,33 @@ def get_profile(db: Session = Depends(get_db), account: Account = Depends(curren
 @router.post("/profile/view", response_model=UserProfileCreate | None)
 def view_profile(data: ProfileViewInput, request: Request, db: Session = Depends(get_db), account: Account = Depends(current_account)):
     # 조회할 때마다 검증한다. 로그인 쿠키만으로 재사용할 수 있는 조회 권한을 발급하지 않는다.
+    _verify_profile_access(data, request, db, account)
+    repository = AccountService().repository
+    snapshot = repository.state(db, account).get(data.snapshot)
+    return snapshot["profile"] if snapshot else repository.profile(db, account)
+
+
+def _verify_profile_access(data: ProfileViewInput, request: Request, db: Session, account: Account):
     throttle(request, db)
     valid = verify_password(data.password, account.password_hash)
     if data.username != account.username or not valid:
         raise HTTPException(403, "현재 로그인한 계정의 아이디와 비밀번호를 확인해주세요.")
-    repository = AccountService().repository
-    snapshot = repository.state(db, account).get(data.snapshot)
-    return snapshot["profile"] if snapshot else repository.profile(db, account)
+
+
+@router.post("/condition-guides/view", response_model=ConditionGuideViewResponse)
+def view_condition_guides(data: ConditionGuideViewInput,
+                         db: Session = Depends(get_db), account: Account = Depends(current_account)):
+    # 로그인 세션의 계정에 속한 진단만 조회한다. 프로필 열람의 별도 재인증과는 구분한다.
+    snapshot = AccountService().repository.state(db, account).get(data.snapshot)
+    if (not snapshot or not snapshot.get("profile") or snapshot.get("checkedAt") != data.checked_at
+            or profile_key(account, snapshot["profile"]) != data.profile_key):
+        raise HTTPException(409, "진단 결과가 변경됐어요. 최신 결과에서 다시 확인해주세요.")
+    if not any(a.get("policy_id") == data.policy_id
+               for a in snapshot.get("analysis", {}).get("matched", {}).get("analysis_results", [])):
+        raise HTTPException(404, "이 진단에서 정책을 찾지 못했어요.")
+    from app.services.personalized_condition_guidance import snapshot_guides
+    return ConditionGuideViewResponse(profile_key=data.profile_key, checked_at=data.checked_at,
+        policy_id=data.policy_id, items=snapshot_guides(db, snapshot, data.policy_id))
 
 
 @router.get("/state", response_model=WorkspaceState)

@@ -13,3 +13,4 @@
 .condition-evidence > p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; padding: 8px; background: #f5f7fb; border-radius: 5px; }
 .condition-evidence > summary:focus-visible { outline: 2px solid #2456d8; outline-offset: 2px; }
 .condition-scope-note { font-size: 12px; line-height: 1.8; color: #536580; margin-bottom: 12px; overflow-wrap: anywhere; }
+.private-guide-controls { margin-bottom: 12px; }
