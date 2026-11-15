@@ -53,7 +53,7 @@ export default function ResultPage({
         <PageHeading
           eyebrow="내 조건에서 시작하는 복지 역설계"
           title="내 조건으로 정책 조회"
-          description="내 정보를 입력하면 정책별 부족한 조건과 확인할 행동을 살펴볼 수 있어요."
+          description="내 정보를 입력하면 정책별 부족한 조건과 충족에 필요한 기준을 살펴볼 수 있어요."
         />
         <div className="interface-empty">
           <h2>먼저 내 조건을 알려주세요</h2>
@@ -224,7 +224,7 @@ export default function ResultPage({
             </p>
             <p>
               <strong>신청 불가</strong> 모든 경로에서 부족한 조건이 있어요.
-              카드에서 가장 가까운 경로와 부족한 조건을 확인하세요.
+              카드에서 대표 경로와 다른 신청 경로의 부족한 조건 및 충족 기준을 확인하세요.
             </p>
           </section>
         </aside>

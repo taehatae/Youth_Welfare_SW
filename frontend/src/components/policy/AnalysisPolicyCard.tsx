@@ -2,6 +2,7 @@ import { useId, useState } from "react"
 import { safeOfficialUrl } from "../../services/analysisSession"
 import { conditionStep } from "../../services/profileSummary"
 import type { PolicyRow } from "../../services/policyResults"
+import { samePolicyText, stateChangeGuide } from "../../services/conditionGuidance"
 
 export const statusLabels = {
   eligible: "자동 비교상 충족",
@@ -51,7 +52,7 @@ const pathBrief = (policy: PolicyRow): string | null => {
   const failedTypes = path.conditions
     .filter((c) => c.status === "failed")
     .map((c) => c.condition_type)
-  return `가장 가까운 경로 '${path.label}': ${failedTypes.join(", ")} 부족`
+  return `${policy.matchedPathId === path.path_id ? "대표 경로" : "경로"} '${path.label}': ${failedTypes.join(", ")} 미충족`
 }
 export const resultReason = (policy: PolicyRow): string => {
   if (policy.paths?.length && policy.recommendationReason)
@@ -95,7 +96,17 @@ const conditionTabs: [ConditionTab, string][] = [
   ["failed", "미충족"],
   ["review", "추가 확인"],
 ]
-type ConditionItem = { field: string; current: string; required: string; guide?: string }
+type ConditionItem = { field: string; current: string; required: string; guide?: string; conditionGuide?: string;
+  guideKind?: "state_change" | null; evidence?: string }
+export function ConditionChangeNotice({ condition, failed }: {
+  condition: ConditionItem; failed: boolean
+}) {
+  const guide = stateChangeGuide(condition.conditionGuide, condition.guideKind,
+    condition.required, condition.evidence, failed)
+  return guide ? (
+    <div className="condition-fulfillment-guide"><strong>역설계 안내</strong><p>{guide}</p></div>
+  ) : null
+}
 const isCheck = (c: ConditionItem) => c.field === "확인 사항"
 // 추가 확인은 '입력하면 비교할 수 있는 조건'과 '공식 안내에서 확인할 사항'을 나눠 보여준다.
 const groupsOf = (tab: ConditionTab, rows: ConditionItem[]): [string, ConditionItem[]][] =>
@@ -105,6 +116,95 @@ const groupsOf = (tab: ConditionTab, rows: ConditionItem[]): [string, ConditionI
         ["공식 안내에서 확인해야 해요", rows.filter(isCheck)],
       ] as [string, ConditionItem[]][]).filter(([, group]) => group.length > 0)
     : [["", rows]]
+// 선택된 탭의 조건만 표시한다. 판정과 조건 선택은 백엔드 결과를 그대로 사용한다.
+export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedAt }: {
+  policy: PolicyRow; tab: ConditionTab; onEdit?: (step: number) => void; busy?: boolean; savedAt?: string
+}) {
+  const items: Record<ConditionTab, ConditionItem[]> = {
+    passed: policy.confirmedConditions ?? [],
+    failed: policy.conditions.filter((c) => c.status === "미충족"),
+    review: policy.conditions.filter((c) => c.status === "추가 확인"),
+  }
+  const shown = items[tab]
+  return (
+    <>
+      <p className="condition-panel-title">
+        {conditionTabs.find(([kind]) => kind === tab)![1]} 조건 <b>{shown.length}</b>
+      </p>
+      {tab === "failed" && !!policy.paths?.length && (
+        <p className="condition-scope-note">{policy.blockedByCommon?.length
+          ? "모든 신청 경로에 공통인 미충족 조건만 표시합니다. 경로별 다른 미충족 조건은 생략될 수 있습니다."
+          : "표시된 미충족 조건은 현재 진단에서 선택된 신청 경로 기준이며, 다른 경로의 모든 조건을 뜻하지 않습니다."}</p>
+      )}
+      {shown.length ? (
+        groupsOf(tab, shown).map(([title, rows]) => (
+          <section key={title || "all"} className="condition-group">
+            {title && (
+              <p className="condition-group-title">
+                {title} <b>{rows.length}</b>
+              </p>
+            )}
+            <ul>
+              {rows.map((c, i) => {
+                return isCheck(c) ? (
+                  // 입력값으로 비교할 수 없는 확인 사항은 기준 문장만 한 칸에 보여준다.
+                  <li key={`check-${i}`} className="condition-item" data-check>
+                    <span className="condition-no" aria-hidden="true">{i + 1}</span>
+                    <p>{c.required || c.guide || "공식 안내에서 확인해주세요."}</p>
+                  </li>
+                ) : (
+                  <li key={`${c.field}-${i}`} className="condition-item">
+                    <strong>
+                      {fieldName(c.field)}
+                      <OrNote field={c.field} />
+                    </strong>
+                    <dl>
+                      {/* 저장된 결과는 내 정보가 '프로필 보호 중'으로 가려져 있어 기준만 보여준다. */}
+                      {c.current && c.current !== "프로필 보호 중" && (
+                        <div>
+                          <dt>내 정보</dt>
+                          <dd>{c.current}</dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt>정책 요구 기준</dt>
+                        <dd>{c.required || c.evidence || "공식 안내에서 확인해주세요."}</dd>
+                      </div>
+                    </dl>
+                    <ConditionChangeNotice condition={c} failed={tab === "failed"} />
+                    {c.evidence && !samePolicyText(c.evidence, c.required || c.evidence) && (
+                      <details className="condition-evidence">
+                        <summary>정책 원문 근거</summary>
+                        <p>{c.evidence}</p>
+                      </details>
+                    )}
+                    {tab !== "passed" && onEdit && c.field !== "external_review" && (
+                      <button
+                        className="condition-edit"
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onEdit(conditionStep(c.field))}
+                      >
+                        관련 입력 확인 →
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        ))
+      ) : (
+        <p className="reverse-card-note">이 결과에는 조건별 상세 내역이 없어요.</p>
+      )}
+      {savedAt && (
+        <p className="comparison-time">
+          저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
+        </p>
+      )}
+    </>
+  )
+}
 export default function AnalysisPolicyCard({
   policy,
   saved,
@@ -125,17 +225,9 @@ export default function AnalysisPolicyCard({
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
   const failed = policy.conditions.filter((c) => c.status === "미충족")
-  const review = policy.conditions.filter((c) => c.status === "추가 확인")
-  const confirmed = policy.confirmedConditions ?? []
   const [tab, setTab] = useState<ConditionTab | null>(null)
   const panelId = useId()
   const passed = metCountOf(policy)
-  const items: Record<ConditionTab, ConditionItem[]> = {
-    passed: confirmed,
-    failed,
-    review,
-  }
-  const shown = tab ? items[tab] : []
   return (
     <article
       className="reverse-card"
@@ -198,72 +290,7 @@ export default function AnalysisPolicyCard({
         </div>
       </header>
       <div id={panelId} hidden={tab === null} className="condition-panel" data-kind={tab ?? undefined}>
-        {tab && (
-          <>
-            <p className="condition-panel-title">
-              {conditionTabs.find(([kind]) => kind === tab)![1]} 조건 <b>{shown.length}</b>
-            </p>
-            {shown.length ? (
-              groupsOf(tab, shown).map(([title, rows]) => (
-                <section key={title || "all"} className="condition-group">
-                  {title && (
-                    <p className="condition-group-title">
-                      {title} <b>{rows.length}</b>
-                    </p>
-                  )}
-                  <ul>
-                    {rows.map((c, i) =>
-                      isCheck(c) ? (
-                        // 입력값으로 비교할 수 없는 확인 사항은 기준 문장만 한 칸에 보여준다.
-                        <li key={`check-${i}`} className="condition-item" data-check>
-                          <span className="condition-no" aria-hidden="true">{i + 1}</span>
-                          <p>{c.required || c.guide || "공식 안내에서 확인해주세요."}</p>
-                        </li>
-                      ) : (
-                        <li key={`${c.field}-${i}`} className="condition-item">
-                          <strong>
-                            {fieldName(c.field)}
-                            <OrNote field={c.field} />
-                          </strong>
-                          <dl>
-                            {/* 저장된 결과는 내 정보가 '프로필 보호 중'으로 가려져 있어 기준만 보여준다. */}
-                            {c.current && c.current !== "프로필 보호 중" && (
-                              <div>
-                                <dt>내 정보</dt>
-                                <dd>{c.current}</dd>
-                              </div>
-                            )}
-                            <div>
-                              <dt>기준</dt>
-                              <dd>{c.required || "공식 안내에서 확인해주세요."}</dd>
-                            </div>
-                          </dl>
-                          {tab !== "passed" && onEdit && c.field !== "external_review" && (
-                            <button
-                              className="condition-edit"
-                              type="button"
-                              disabled={busy}
-                              onClick={() => onEdit(conditionStep(c.field))}
-                            >
-                              관련 입력 확인 →
-                            </button>
-                          )}
-                        </li>
-                      ),
-                    )}
-                  </ul>
-                </section>
-              ))
-            ) : (
-              <p className="reverse-card-note">이 결과에는 조건별 상세 내역이 없어요.</p>
-            )}
-            {savedAt && (
-              <p className="comparison-time">
-                저장 당시 결과 · {new Date(savedAt).toLocaleDateString("ko-KR")}
-              </p>
-            )}
-          </>
-        )}
+        {tab && <PolicyConditionPanel policy={policy} tab={tab} onEdit={onEdit} busy={busy} savedAt={savedAt} />}
       </div>
       <footer className="policy-card-actions">
         {url ? (

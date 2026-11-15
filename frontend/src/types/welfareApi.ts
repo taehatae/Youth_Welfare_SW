@@ -108,6 +108,12 @@ export interface ConditionAnalysis {
   source_field: string
 
   source_text: string
+
+  condition_guide?: string
+
+  guide_kind?: "state_change" | null
+
+  reason_code?: string | null
 }
 
 export interface PolicyAnalysis {
@@ -163,6 +169,13 @@ export interface EligibilityPathCondition {
 
   // 모든 경로에 공통인 조건(이전 결과에는 없음)
   common?: boolean
+
+  // 백엔드가 생성한 조건 단위 안내. 이전 스냅샷에는 없을 수 있다.
+  condition_guide?: string
+
+  reason_code?: string | null
+
+  guide_kind?: "state_change" | null
 }
 
 export interface EligibilityPathAnalysis {

@@ -341,6 +341,54 @@ class EligibilityMatchingService:
         return None
 
     @staticmethod
+    def _profile_condition_guidance(
+        condition: WelfareEligibilityCondition,
+        eligibility_conditions: dict[str, Any] | None,
+        comparison: bool | None,
+    ) -> dict:
+        """기존 매처가 실제 비교한 단일 프로필 사실만 안내한다. 판정을 새로 만들지 않는다."""
+        if (comparison is not False or condition.condition_type != "target_group"
+                or not condition.comparison_ready or condition.parse_status != "parsed"
+                or condition.operator != "equals"):
+            return {}
+        expected = EligibilityConditionService.normalize_simple_profile_status_requirement(condition.source_text)
+        if expected != (condition.unit, condition.value_text):
+            return {}
+        fields = {"gender": "성별", "disability_status": "등록 장애인", "student_status": "재학 여부",
+                  "basic_benefit_status": "기초생활보장 수급자", "near_poverty_status": "차상위계층",
+                  "single_parent_support_status": "한부모가족"}
+        field = fields.get(condition.unit)
+        if field is None:
+            return {}
+        profile = eligibility_conditions if isinstance(eligibility_conditions, dict) else {}
+        additional = profile.get("additional_conditions")
+        values = profile if condition.unit in {"gender", "disability_status", "student_status"} else \
+            additional if isinstance(additional, dict) else {}
+        raw = values.get(condition.unit)
+        if not isinstance(raw, str):
+            return {}
+        if condition.unit == "gender":
+            labels = {"MALE": "남성", "FEMALE": "여성"}
+            if raw not in labels or condition.value_text not in labels:
+                return {}
+            normalized = {"field": field, "operator": "one_of", "values": [labels[condition.value_text]],
+                          "kind": "requirement", "value": None, "upper_value": None, "unit": ""}
+            current = labels[raw]
+        else:
+            if raw not in {"YES", "NO"} or condition.value_text not in {"YES", "NO"}:
+                return {}
+            normalized = {"field": field, "operator": "is_true", "values": [], "value": None,
+                          "upper_value": None, "unit": "",
+                          "kind": "requirement" if condition.value_text == "YES" else "exclusion"}
+            current = raw == "YES"
+        from app.services import structured_condition_service
+        guide = structured_condition_service.condition_guide(normalized, current, comparison)
+        if guide.get("guide_kind") == "state_change":
+            guide["condition_guide"] += f" 이 안내는 실제 비교한 {field} 항목에 한정되며, 같은 원문의 다른 요건까지 충족한다는 뜻은 아닙니다."
+            return guide
+        return {}
+
+    @staticmethod
     def _profile_review_message(condition: WelfareEligibilityCondition) -> str:
         kind = condition.unit
         if condition.condition_type == "employment" and condition.unit != "employment_exclusion":
@@ -554,6 +602,9 @@ class EligibilityMatchingService:
             "action_guide": action_guide,
             "source_field": condition.source_field,
             "source_text": condition.source_text,
+            "condition_guide": "",
+            "guide_kind": None,
+            "reason_code": None,
         }
 
     @classmethod
@@ -822,6 +873,7 @@ class EligibilityMatchingService:
                             else "공식 신청 안내에서 적용 기준과 예외를 확인하세요."
                         ),
                     )
+                    result.update(self._profile_condition_guidance(condition, eligibility_conditions, comparison))
                     evaluated.append(result)
                     if not comparison:
                         gaps.append(result)

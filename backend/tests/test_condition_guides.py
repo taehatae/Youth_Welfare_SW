@@ -30,7 +30,7 @@ def guide(c, current):
     (condition("본인 연소득", "lte", 42_999_999, unit="원"), 43_000_000, "requirement_not_met", "42,999,999원 이하"),
     (condition("가구 월소득 중위소득 대비", "lte", 100, unit="%"), 120, "requirement_not_met", "기준 중위소득 100% 이하"),
     (condition("가구 소득인정액", "lte", 50, unit="%"), 60, "requirement_not_met", "가구 소득인정액"),
-    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", "requirement_not_met", "부산광역시 거주 요건"),
+    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", "requirement_not_met", "부산광역시로 변경되면"),
     (condition("고용 상태", "one_of", values=["재직"]), "미취업", "requirement_not_met", "재직"),
     (condition("학교 구분", "one_of", values=["대학", "대학원"]), "고등학교", "requirement_not_met", "대학 또는 대학원"),
     (condition("재학 여부", "is_true"), False, "requirement_not_met", "재학"),
