@@ -1,0 +1,954 @@
+{
+ "batch": 6,
+ "policies": {
+  "WLF00000027": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-면허조건|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-면허조건|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-면허조건|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-수급자|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "등록-수급자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "미등록-영구장애|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "미등록-영구장애|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000031": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000038": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "수권유족|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "제사주관자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000047": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000055": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "수급자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "수급가구원|c0": {
+     "ok": false,
+     "note": "이건 차상위 계층 내용인데 ?"
+    },
+    "수급가구원|k0": {
+     "ok": false,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모|c0": {
+     "ok": false,
+     "note": "이것도 차상위 계층인데 한부모일 경우를 이야기하는거 아니야 ?"
+    }
+   }
+  },
+  "WLF00000058": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000063": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "본인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "본인|k0": {
+     "ok": false,
+     "note": "「학점인정 등에 관한 법률」에 따라 평가인정을 받은 학습과정을 운영하는 교육훈련기관, 「국민 평생 직업능력 개발법」에 따라 학위과정을 운영하는 기능대학"
+    },
+    "자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000075": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비창업|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000090": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000091": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "저소득한부모|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득한부모|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득한부모|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득한부모|c3": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득한부모|c4": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득한부모|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "위기임산부|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "위기임산부|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "소득무관시설|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000747": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000751": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000812": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000815": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보호결정|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "비보호예외|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000922": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비창업|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000975": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성기업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비창업|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001020": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k4": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k5": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k6": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001021": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": false,
+     "note": "막내나이 18세 이하로 판별 가능하지 않음 ?"
+    },
+    "등록장애|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "질환|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "입양후발견|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001073": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "본인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "본인|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "본인|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001101": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "피해자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "피해자|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|2": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|3": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|4": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001122": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001141": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001145": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001172": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "실업급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "실업급여|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "국취참여|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "상담|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001176": {
+   "done": true,
+   "missing": "폐암 대장암 누락",
+   "items": {
+    "자궁경부암|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "자궁경부암|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "위암|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "간암|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "간암|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "유방암|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "유방암|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001187": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003173": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003175": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "다문화가족|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "다문화가족|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "지원자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003192": {
+   "done": true,
+   "missing": "무상지원 대상자에 기초생활수급자, 차상위 본인부담 경감 대상자 있는데 이건 왜 조건으로 안넣었는지 ?\n정책 자체의 신청조건이 아니라 그런가",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "한국어교육|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "부모교육|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀생활|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "자녀생활|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003196": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003200": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003204": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "청소년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보호자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003208": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003232": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "농업인안전보험|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "농업인안전보험|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "농작업근로자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003234": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003238": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반건강검진|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003247": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "중위100|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "개별심사|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "개별심사|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003251": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "비재학|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "야간·장기휴학|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003268": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "위탁아동|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "연장보호|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일시위탁|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003270": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "입양·위탁아동|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "18세이상|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  }
+ },
+ "saved_at": "2026-11-15T11:06:27.534Z"
+}
