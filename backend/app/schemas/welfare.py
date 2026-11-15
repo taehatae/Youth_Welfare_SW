@@ -65,6 +65,9 @@ class PathConditionResult(BaseModel):
     evidence: str = ""
     # 모든 경로에 공통인 조건이면 True(화면에서 한 번만 보여준다)
     common: bool = False
+    # 이전 저장 결과에는 없어도 된다. 안내는 조건 단위이며 최종 선정 보장이 아니다.
+    condition_guide: str = ""
+    reason_code: str | None = None
 
 
 class EligibilityPathResult(BaseModel):

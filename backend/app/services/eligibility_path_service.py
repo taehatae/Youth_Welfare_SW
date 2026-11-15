@@ -80,9 +80,12 @@ def _evaluate_path(path: EligibilityPath, common: EligibilityPath | None, values
     rows = []
     for c in (common.conditions if common else []) + path.conditions:
         cond = _condition(c)
-        rows.append({"condition_type": c.field, "status": _status(base.matches(cond, values.get(c.field))),
-                     "current_value": base.show(c.field, values.get(c.field)), "required_value": base.describe(cond),
-                     "evidence": c.evidence, "common": common is not None and c in common.conditions})
+        current = values.get(c.field)
+        result = base.matches(cond, current)
+        rows.append({"condition_type": c.field, "status": _status(result),
+                     "current_value": base.show(c.field, current), "required_value": base.describe(cond),
+                     "evidence": c.evidence, "common": common is not None and c in common.conditions,
+                     **base.condition_guide(cond, current, result)})
     # 미충족이 있으면 불가, 미충족 없이 충족이 하나라도 있으면 가능(입력하지 않은 조건은 '추가 확인'으로 안내),
     # 충족도 미충족도 없을 때(비교 조건이 없거나 모두 미입력)만 확인 필요다.
     statuses = {r["status"] for r in rows}
