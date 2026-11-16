@@ -108,6 +108,12 @@ export interface ConditionAnalysis {
   source_field: string
 
   source_text: string
+
+  condition_guide?: string
+
+  guide_kind?: "state_change" | null
+
+  reason_code?: string | null
 }
 
 export interface PolicyAnalysis {
@@ -163,6 +169,13 @@ export interface EligibilityPathCondition {
 
   // 모든 경로에 공통인 조건(이전 결과에는 없음)
   common?: boolean
+
+  // 백엔드가 생성한 조건 단위 안내. 이전 스냅샷에는 없을 수 있다.
+  condition_guide?: string
+
+  reason_code?: string | null
+
+  guide_kind?: "state_change" | null
 }
 
 export interface EligibilityPathAnalysis {
@@ -215,4 +228,19 @@ export interface WelfareAnalysis {
   matched: MatchedPoliciesResponse
 
   reverse: ReverseRecommendationsResponse
+}
+
+// 매번 본인 확인 후에만 조회하며 진단/관심 정책 스냅샷에 합치지 않는다.
+export interface ConditionGuideTarget {
+  snapshot: "current" | "diagnosis"
+  profile_key: string
+  checked_at: string
+  policy_id: string
+}
+
+export interface PrivateConditionGuides {
+  profile_key: string
+  checked_at: string
+  policy_id: string
+  items: { gap_index: number; condition_guide: string; guide_kind: "state_change" }[]
 }

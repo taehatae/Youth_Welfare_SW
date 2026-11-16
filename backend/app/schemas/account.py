@@ -90,6 +90,26 @@ class ProfileViewInput(LoginInput):
     snapshot: Literal["current", "diagnosis"] = "current"
 
 
+class ConditionGuideViewInput(BaseModel):
+    snapshot: Literal["current", "diagnosis"] = "current"
+    profile_key: str = Field(min_length=64, max_length=64)
+    checked_at: str = Field(min_length=1, max_length=100)
+    policy_id: str = Field(min_length=1, max_length=100)
+
+
+class PersonalizedConditionGuide(BaseModel):
+    gap_index: int = Field(ge=0)
+    condition_guide: str
+    guide_kind: Literal["state_change"] = "state_change"
+
+
+class ConditionGuideViewResponse(BaseModel):
+    profile_key: str
+    checked_at: str
+    policy_id: str
+    items: list[PersonalizedConditionGuide] = Field(default_factory=list)
+
+
 class SavedPolicyToggle(BaseModel):
     profileKey: str = Field(min_length=64, max_length=64)
     policyId: str = Field(min_length=1, max_length=100)

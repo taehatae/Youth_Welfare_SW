@@ -32,6 +32,9 @@ export interface PolicyRow {
     required: string
     status: string
     guide: string
+    conditionGuide?: string
+    guideKind?: "state_change" | null
+    evidence?: string
   }[]
 
   recommendationStatus?: RecommendationStatus
@@ -98,7 +101,18 @@ export const profileKey = (profile: UserProfileInput) => stable(profile)
 export function policyResults(snapshot: Snapshot): PolicyRow[] {
   const rows = new Map<string, PolicyRow>()
 
-  for (const p of snapshot.analysis.matched.analysis_results ?? [])
+  for (const p of snapshot.analysis.matched.analysis_results ?? []) {
+    // 요약에 대응하는 대표 경로 조건만 연결한다. 다른 경로의 비슷한 조건은 추정하지 않는다.
+    const representative = p.eligibility_paths?.find((path) => path.path_id === p.matched_path_id)
+      ?? p.eligibility_paths?.[0]
+    const conditionDetail = (c: (typeof p.gap_conditions)[number]) => {
+      if (c.source_field !== "eligibility_path") return undefined
+      const matches = representative?.conditions.filter((r) =>
+        r.condition_type === c.condition_type && r.status === c.status &&
+        r.required_value === c.required_value && (r.evidence || r.required_value) === c.source_text,
+      ) ?? []
+      return matches.length === 1 ? matches[0] : undefined
+    }
     rows.set(p.policy_id, {
       id: p.policy_id,
       title: p.title,
@@ -154,6 +168,10 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
           required: c.required_value,
           status: "미충족",
           guide: c.action_guide || c.message,
+          conditionGuide: conditionDetail(c)?.condition_guide
+            ?? (c.guide_kind === "state_change" ? c.condition_guide : undefined),
+          guideKind: conditionDetail(c)?.guide_kind ?? c.guide_kind ?? undefined,
+          evidence: c.source_text,
         })),
 
         ...p.review_conditions.map((c) => ({
@@ -162,9 +180,11 @@ export function policyResults(snapshot: Snapshot): PolicyRow[] {
           required: c.required_value,
           status: "추가 확인",
           guide: c.action_guide || c.message,
+          evidence: c.source_text,
         })),
       ],
     })
+  }
 
   for (const p of snapshot.analysis.matched.policies) {
     const existing = rows.get(p.policy_id)

@@ -6,6 +6,8 @@
 """
 import hashlib
 import json
+import re
+from decimal import Decimal, InvalidOperation
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -209,13 +211,14 @@ def _matches_range(condition: dict, value: tuple) -> bool | None:
 def describe(condition: dict) -> str:
     field, operator, unit = condition["field"], condition["operator"], condition["unit"]
     value, upper = condition["value"], condition["upper_value"]
-    number = lambda x: f"{x / 10000:,.0f}만원" if unit == "원" else f"{x:g}{unit}"
+    number = lambda x: (f"{x / 10000:,.0f}만원" if x % 10000 == 0 else f"{_exact_number(x)}원") \
+        if unit == "원" else f"{_exact_number(x)}{unit}"
     if field == "가구 소득인정액":
-        number = lambda x: f"기준 중위소득 {x:g}%"
+        number = lambda x: f"기준 중위소득 {_exact_number(x)}%"
     if field == "가구 월소득 중위소득 대비":
-        number = lambda x: f"기준 중위소득 {x:g}%"
+        number = lambda x: f"기준 중위소득 {_exact_number(x)}%"
     if field == "도시근로자 월평균소득 대비 가구소득":
-        number = lambda x: f"{x:g}%"
+        number = lambda x: f"{_exact_number(x)}%"
     if operator == "gte":
         return f"{field} {number(value)} 이상"
     if operator == "lte":
@@ -223,8 +226,192 @@ def describe(condition: dict) -> str:
     if operator == "between":
         return f"{field} {number(value)} ~ {number(upper)}"
     if operator == "one_of":
-        return f"{field}: {', '.join(condition['values'][:5])}{' 등' if len(condition['values']) > 5 else ''}"
+        return f"{field}: {', '.join(condition['values'])}"
     return f"{field} 해당자 제외" if condition["kind"] == "exclusion" else f"{field} 해당"
+
+
+def _exact_number(value: int | float) -> str:
+    """정책 기준값은 반올림하거나 유효 숫자를 줄이지 않는다."""
+    text = format(Decimal(str(value)), ",f")
+    return text.rstrip("0").rstrip(".") if "." in text else text
+
+
+def _guide_requirement(c: dict) -> str | None:
+    """구조를 확인할 수 있는 조건만 설명한다. 비교나 정책 해석은 수행하지 않는다."""
+    field, op = c.get("field"), c.get("operator")
+    if not isinstance(field, str) or not field or c.get("kind") not in ("requirement", "exclusion"):
+        return None
+    if op == "is_true":
+        return "재학 상태" if field == "재학 여부" else f"'{field}' 해당 상태"
+    if op == "one_of":
+        options = c.get("values")
+        if not isinstance(options, list) or not options or not all(isinstance(v, str) and v.strip() for v in options):
+            return None
+        choices = " 또는 ".join(options)
+        return f"{choices} 거주 요건" if field == "거주지" else f"{field}: {choices}"
+    if op not in ("gte", "lte", "between"):
+        return None
+    numbers = [c.get("value")] + ([c.get("upper_value")] if op == "between" else [])
+    try:
+        if any(isinstance(n, bool) or not isinstance(n, (int, float)) or not Decimal(str(n)).is_finite() for n in numbers):
+            return None
+    except InvalidOperation:
+        return None
+    if op == "between" and numbers[0] > numbers[1]:
+        return None
+    unit = c.get("unit", "")
+    if not isinstance(unit, str):
+        return None
+    def number(n):
+        prefix = "기준 중위소득 " if field in ("가구 소득인정액", "가구 월소득 중위소득 대비") and unit == "%" else ""
+        return f"{prefix}{_exact_number(n)}{unit}"
+    if field == "만 나이":
+        lower = f"만 {_exact_number(numbers[0])}세"
+        return f"{lower} 이상 {_exact_number(numbers[1])}세 이하" if op == "between" else \
+            f"{lower} {'이상' if op == 'gte' else '이하'}"
+    bounds = f"{number(numbers[0])} 이상 {number(numbers[1])} 이하" if op == "between" else \
+        f"{number(numbers[0])} {'이상' if op == 'gte' else '이하'}"
+    return f"{field} {bounds}"
+
+
+_CHANGE_UNITS = {
+    "만 나이": "세", "막내 자녀 나이": "세", "본인 월소득": "원", "본인 연소득": "원",
+    **{field: "원" for field in MONEY_FIELDS},
+    "가구 소득인정액": "%", "가구 월소득 중위소득 대비": "%", "도시근로자 월평균소득 대비 가구소득": "%",
+    "가구원 수": "명", "자녀 수": "명", "혼인 기간": "년", "신용점수(KCB)": "점", "신용점수(NICE)": "점",
+}
+_CHANGE_BOOLEANS = {
+    "재학 여부", "등록 장애인", "중증 장애인", "본인 명의 주택 보유", "세대원 전원 무주택", "부모와 따로 거주",
+    "기초생활보장 수급자", "기초생활보장 수급 가구", "차상위계층", "한부모가족", "자립준비청년", "구직 등록",
+    "6세 이하 자녀", "임신 중", "맞벌이", *BENEFIT_TYPES, *SPECIAL_TARGETS,
+}
+_CHANGE_CHOICES = {
+    "고용 상태": set(EMPLOYMENT_LABELS.values()), "학교 구분": set(SCHOOL_LABELS.values()),
+    "주거 형태": set(HOUSING_LABELS.values()), "혼인 상태": set(MARRIAGE_LABELS.values()),
+    "국적": {"대한민국", "외국인"}, "성별": {"남성", "여성"},
+}
+_CHANGE_REGION = re.compile(
+    r"(?:서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|"
+    r"경기도|강원특별자치도|충청북도|충청남도|전북특별자치도|전라남도|경상북도|경상남도|제주특별자치도)"
+    r"(?: [가-힣]+[시군구]){0,2}"
+)
+
+
+def _numeric_change(c: dict, current: Any) -> tuple[str, Decimal, Decimal] | None:
+    """내부 계산 전용 (방향, 경계 목표값, 차이). 차이와 현재 값은 응답/스냅샷에 넣지 않는다."""
+    if c.get("kind") != "requirement" or c.get("operator") not in ("gte", "lte", "between"):
+        return None
+    if _CHANGE_UNITS.get(c.get("field")) != c.get("unit") or _guide_requirement(c) is None:
+        return None
+    if isinstance(current, bool) or not isinstance(current, (int, float)):
+        return None
+    value = Decimal(str(current))
+    if not value.is_finite():
+        return None
+    lower = Decimal(str(c["value"]))
+    upper = Decimal(str(c["upper_value"])) if c["operator"] == "between" else lower
+    if c["operator"] in ("gte", "between") and value < lower:
+        return "increase", lower, lower - value
+    if c["operator"] in ("lte", "between") and value > upper:
+        return "decrease", upper, value - upper
+    return None
+
+
+def _state_change_guide(c: dict, current: Any, required: str) -> str | None:
+    """검증된 단일 조건의 미충족 원인과 목표 상태. 자유 텍스트를 재파싱하지 않는다."""
+    field, op, exclusion = c["field"], c["operator"], c["kind"] == "exclusion"
+    if op in ("gte", "lte", "between"):
+        if _CHANGE_UNITS.get(field) != c.get("unit") or isinstance(current, bool) or not isinstance(current, (int, float)):
+            return None
+        if not Decimal(str(current)).is_finite():
+            return None
+        if exclusion:
+            def number(n):
+                if field == "만 나이":
+                    return f"만 {_exact_number(n)}세"
+                prefix = "기준 중위소득 " if field in ("가구 소득인정액", "가구 월소득 중위소득 대비") and c["unit"] == "%" else ""
+                return f"{field} {prefix}{_exact_number(n)}{c['unit']}"
+            outside = (f"{number(c['value'])} 미만 또는 {number(c['upper_value'])} 초과" if op == "between"
+                       else f"{number(c['value'])} {'미만' if op == 'gte' else '초과'}")
+            text = (f"입력 상태가 제외 조건의 구간에 해당합니다. {required}에 해당하면 제외되므로, "
+                    f"{outside}인 상태에서는 이 조건의 제외 기준을 벗어납니다. 상태 변경이 가능하다는 보장은 아닙니다.")
+            if field == "만 나이" and op == "gte":
+                text += " 시간이 지나도 나이가 낮아지지 않으므로 시간 경과만으로는 이 조건을 벗어날 수 없습니다."
+            return text
+        change = _numeric_change(c, current)
+        if change is None:
+            return None
+        direction, _, _ = change  # 차액을 노출하면 목표값으로 현재 입력을 역산할 수 있다.
+        if field == "만 나이":
+            if direction == "decrease":
+                return (f"입력 연령이 상한을 초과합니다. {required}가 기준이지만, 시간이 지나도 "
+                        "나이 증가로는 해당 연령 조건을 충족할 수 없습니다.")
+            return f"입력 연령이 하한보다 낮습니다. 나이가 증가해 {required}가 되면 해당 연령 조건을 충족할 수 있습니다."
+        cause, movement = ("하한보다 낮", "높아져") if direction == "increase" else ("상한보다 높", "낮아져")
+        return (f"입력된 {field} 값이 정책 {cause}아 미충족입니다. 같은 항목의 값이 "
+                f"{movement} {required} 기준에 들면 이 조건을 충족할 수 있습니다.")
+    if op == "is_true" and field in _CHANGE_BOOLEANS and isinstance(current, bool):
+        if exclusion:
+            target = "재학하지 않는 상태" if field == "재학 여부" else f"'{field}'에 해당하지 않는 상태"
+            return f"{required}에 해당하면 제외됩니다. {target}로 변경되면 이 조건의 제외 기준을 벗어납니다."
+        target = "재학 중인 상태" if field == "재학 여부" else f"'{field}'에 해당하는 상태"
+        return f"입력 상태가 요구 자격과 일치하지 않습니다. {target}로 변경되면 이 조건을 충족할 수 있습니다. 실제 자격은 공식 확인이 필요합니다."
+    if op == "one_of" and isinstance(current, str) and current.strip() and current != "UNKNOWN":
+        options = c["values"]
+        known = field in _CHANGE_CHOICES and all(option in _CHANGE_CHOICES[field] for option in options)
+        known = known or field == "거주지" and all(_CHANGE_REGION.fullmatch(option) for option in options)
+        if not known:
+            return None
+        choices = " 또는 ".join(options)
+        subject = field + ("가" if field in {"거주지", "고용 상태", "주거 형태", "혼인 상태"} else "이")
+        if exclusion:
+            return (f"{required}에 해당하면 제외됩니다. {subject} {choices}에 해당하지 않는 상태로 "
+                    "변경되면 이 조건의 제외 기준을 벗어납니다.")
+        target = choices if field == "거주지" else f"정책이 요구하는 {choices} 상태"
+        return f"입력된 {subject} 허용 대상과 다릅니다. {subject} {target}로 변경되면 이 조건을 충족할 수 있습니다."
+    return None
+
+
+def condition_guide(condition: dict, current: Any, result: bool | None) -> dict:
+    """현재 비교값으로 미충족 원인과 상태 변화를 계산하고 기존 비교 결과에 덧붙인다.
+
+    reason_code는 조건 단위의 설명이며, 정책 전체의 자격이나 신청 결과를 뜻하지 않는다.
+    현재 값·정확한 차액은 반환하지 않는다. 미지원 변화는 기존 required_value/evidence를 보존한다.
+    """
+    required = _guide_requirement(condition)
+    if required is None:
+        return {"condition_guide": "", "reason_code": "unsupported_condition"}
+    if result is False:
+        text = _state_change_guide(condition, current, required)
+        if text is None:
+            return {"condition_guide": "", "reason_code": "change_unavailable"}
+        code = "exclusion_applies" if condition["kind"] == "exclusion" else "requirement_not_met"
+        if condition["field"] == "만 나이" and condition["kind"] == "requirement":
+            code = "age_above_maximum" if _numeric_change(condition, current)[0] == "decrease" else "age_below_minimum"
+        return {"condition_guide": text, "reason_code": code, "guide_kind": "state_change"}
+    exclusion = condition["kind"] == "exclusion"
+    requirement = f"{required}에 해당하면 제외됩니다." if exclusion else f"{required} 기준을 만족해야 합니다."
+    if result is None:
+        code = "input_missing" if current is None else "comparison_uncertain"
+        detail = "정보가 입력되지 않아 비교하지 않았습니다." if current is None else "현재 입력 범위만으로 충족 여부를 확정할 수 없습니다."
+        return {"condition_guide": f"{requirement} {detail}", "reason_code": code}
+    if exclusion:
+        detail = "입력 정보가 제외 기준에 해당합니다." if result is False else "입력 정보는 해당 제외 기준에 해당하지 않습니다."
+        return {"condition_guide": f"{requirement} {detail}",
+                "reason_code": "exclusion_applies" if result is False else "exclusion_not_applicable"}
+    code = "condition_met" if result is True else "requirement_not_met"
+    if condition["field"] == "만 나이":
+        text = f"{required}이면 연령 요건을 충족합니다."
+        if result is False:
+            above = condition["operator"] == "lte" or (condition["operator"] == "between" and current > condition["upper_value"])
+            code = "age_above_maximum" if above else "age_below_minimum"
+            if above:
+                text += " 현재 연령이 상한을 초과하며, 나이 증가만으로는 해당 연령 요건을 충족할 수 없습니다."
+    else:
+        text = f"{required}이 필요합니다." if condition["field"] == "거주지" else requirement
+        if result is True:
+            text += " 입력 정보 기준으로 이 조건을 충족합니다."
+    return {"condition_guide": text, "reason_code": code}
 
 
 def show(field: str, value: Any) -> str:
