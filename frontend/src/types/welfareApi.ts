@@ -170,6 +170,15 @@ export interface EligibilityPathCondition {
   // 모든 경로에 공통인 조건(이전 결과에는 없음)
   common?: boolean
 
+  // 정의상 다시 충족할 수 없는 미충족(나이·혼인 기간 상한 초과 등). 이전 결과에는 없음
+  impossible?: boolean
+
+  // 미충족 조건의 개선 난이도(추천 경로 계산용). 이전 결과에는 없음
+  difficulty?: number | null
+
+  // 난이도 종류(apply·money·time·life·family·identity·other). 사용자 가중치를 곱할 때 쓴다
+  difficulty_group?: string | null
+
   // 백엔드가 생성한 조건 단위 안내. 이전 스냅샷에는 없을 수 있다.
   condition_guide?: string
 
@@ -192,6 +201,14 @@ export interface EligibilityPathAnalysis {
   conditions: EligibilityPathCondition[]
 
   checks: string[]
+
+  // 사실 기반 순위(0이 가장 가까움, 같은 값은 우열 없음)와 다시 충족할 수 없는 경로 여부. 이전 결과에는 없음
+  rank?: number | null
+
+  impossible?: boolean
+
+  // 미충족 조건 개선 난이도의 합(낮을수록 추천). 이전 결과에는 없음
+  difficulty?: number | null
 }
 
 export type RecommendationStatus =
@@ -242,5 +259,7 @@ export interface PrivateConditionGuides {
   profile_key: string
   checked_at: string
   policy_id: string
-  items: { gap_index: number; condition_guide: string; guide_kind: "state_change" }[]
+  // gap_index: 대표 경로 미충족 순번. 경로별 안내는 path_id + condition_index(경로 조건 순번)로 가리킨다.
+  items: { gap_index?: number | null; path_id?: string | null; condition_index?: number | null
+    condition_guide: string; guide_kind: "state_change" }[]
 }

@@ -63,24 +63,21 @@ def personalized_guide(c: dict, current, profile: dict | None = None) -> str | N
             direction, _, delta = movement
             unit = "%p" if c["unit"] == "%" else c["unit"]
             amount = f"{base._exact_number(delta)}{unit}"
-            target = base._guide_requirement(c)
-            if c["field"] == "만 나이":
-                detail = (f"나이가 {amount} 증가해 {target} 범위에 들면 해당 연령 조건을 충족할 수 있습니다."
-                          if direction == "increase" else
-                          f"연령 상한보다 {amount} 높습니다. 정책 기준은 {target}이며, 시간이 지나도 나이 증가로는 해당 연령 조건을 충족할 수 없습니다.")
+            target = base._guide_bounds(c)
+            if c["field"] in base.TIME_FIELDS:
+                years = f"{base._exact_number(delta)}년"
+                detail = (f"{years} 뒤 {base._josa(target, '이/가')} 되면 이 조건을 충족합니다." if direction == "increase" else
+                          f"{target} 기준보다 {amount} 많고, 시간이 지나도 줄지 않아 이 조건은 충족할 수 없습니다.")
             else:
-                detail = f"같은 항목의 값이 {amount} {'높아져' if direction == 'increase' else '낮아져'} {target} 기준에 들면 이 조건을 충족할 수 있습니다."
-        elif c["operator"] == "one_of":
-            options = " 또는 ".join(c["values"])
-            subject = c["field"] + ("가" if c["field"] in {"주거 형태", "거주지", "고용 상태", "혼인 상태"} else "이")
-            detail = (f"{subject} {options}에 해당하지 않는 상태여야 이 제외 조건에 해당하지 않습니다."
-                      if c["kind"] == "exclusion" else
-                      f"{subject} {options}로 변경되면 해당 조건을 충족할 수 있습니다.")
+                count = c["unit"] == "명"
+                move = ("늘어나면" if count else "높아지면") if direction == "increase" else ("줄어들면" if count else "낮아지면")
+                detail = (f"{amount} {move} "
+                          f"{target} 기준에 들어 이 조건을 충족합니다.")
         if c["field"] == "본인 명의 주택 보유" and c["kind"] == "exclusion":
             detail = "본인 명의 주택을 보유하지 않는 상태여야 이 제외 조건에 해당하지 않습니다."
         elif c["field"] == "세대원 전원 무주택" and c["kind"] == "requirement":
             detail = "세대원 전원이 주택을 보유하지 않는 상태여야 이 조건을 충족합니다. 본인 주택 미보유나 월세·전세만으로 세대원 전원 무주택이 확인되지는 않습니다."
-        return f"{intro} {detail} 이 안내는 해당 비교 조건에 한정되며 정책 전체의 신청 자격이나 실제 상태 변경 가능성을 보장하지 않습니다."
+        return f"{intro} {detail}"
     except (TypeError, ValueError, ArithmeticError, KeyError):
         return None
 
@@ -132,4 +129,37 @@ def snapshot_guides(db: Session, snapshot: dict, policy_id: str) -> list[dict]:
         text = personalized_guide(c, current, profile)
         if text:
             result.append({"gap_index": index, "condition_guide": text, "guide_kind": "state_change"})
+    result += _path_guides(analysis, record, common, values, profile, same_year)
     return result
+
+
+def _path_guides(analysis: dict, record, common, values: dict, profile: dict, same_year: bool) -> list[dict]:
+    """모든 경로의 미충족 조건에 맞춤 안내를 붙인다. 저장 행과 현재 경로 조건이 순서·항목·기준까지 같을 때만."""
+    out = []
+    for stored in analysis.get("eligibility_paths", []):
+        if stored.get("path_id") == COMMON_PATH:
+            conditions = common.conditions if common else []
+        else:
+            selected = next((p for p in record.paths if p.path_key == stored.get("path_id")), None)
+            if selected is None:
+                continue
+            conditions = (common.conditions if common else []) + selected.conditions
+        rows = stored.get("conditions", [])
+        if len(rows) != len(conditions):
+            continue
+        for index, (row, raw) in enumerate(zip(rows, conditions)):
+            if row.get("status") != "failed":
+                continue
+            c = paths._condition(raw)
+            if c["field"] != row.get("condition_type") or base.describe(c) != row.get("required_value"):
+                continue
+            if not same_year and ("소득" in c["field"] and c["unit"] == "%"):
+                continue
+            current = values.get(c["field"])
+            if row.get("current_value") != base.show(c["field"], current):
+                continue
+            text = personalized_guide(c, current, profile)
+            if text:
+                out.append({"gap_index": None, "path_id": stored["path_id"], "condition_index": index,
+                            "condition_guide": text, "guide_kind": "state_change"})
+    return out

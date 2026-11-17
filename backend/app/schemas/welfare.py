@@ -74,6 +74,12 @@ class PathConditionResult(BaseModel):
     reason_code: str | None = None
     # 기준 반복 문장과 구분한다. 이전 안내는 상태 변화로 인증하지 않는다.
     guide_kind: Literal["state_change"] | None = None
+    # 정의상 다시 충족할 수 없는 미충족(나이·혼인 기간 상한 초과 등). 이런 경로는 화면에서 숨긴다.
+    impossible: bool = False
+    # 미충족 조건의 개선 난이도(추천 경로 계산용). 충족·미입력이거나 다시 충족할 수 없으면 None
+    difficulty: float | None = None
+    # 난이도 종류(apply·money·time·life·family·identity·other). 화면에서 사용자 가중치를 곱한다.
+    difficulty_group: str | None = None
 
 
 class EligibilityPathResult(BaseModel):
@@ -84,6 +90,11 @@ class EligibilityPathResult(BaseModel):
     status: Literal["eligible", "needs_review", "ineligible"]
     conditions: list[PathConditionResult] = Field(default_factory=list)
     checks: list[str] = Field(default_factory=list)
+    # 사실 기반 순위(0이 가장 가까움, 같은 값은 우열 없음)와 다시 충족할 수 없는 경로 여부. 이전 결과에는 없다.
+    rank: int | None = None
+    impossible: bool = False
+    # 미충족 조건 개선 난이도의 합. 이전 결과에는 없다.
+    difficulty: float | None = None
 
 
 class EligibilityAnalysis(BaseModel):

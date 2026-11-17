@@ -29,51 +29,58 @@ test("경로에서 가져온 안내도 미충족 카드에서 숨기지 않는�
 
 const panel = (p, tab = "failed") => renderToStaticMarkup(h(Card.PolicyConditionPanel, { policy: p, tab, onEdit() {} }))
 
-test("미충족 탭에 요구 기준·역설계 안내·관련 입력 버튼을 순서대로 한 번 표시한다", () => {
+test("미충족 탭은 조건 카드 대신 역설계 문장과 입력 확인만 한 번 표시한다", () => {
   const html = panel(policy)
-  assert.ok(html.indexOf(condition.required) < html.indexOf(guide))
-  assert.ok(html.indexOf(guide) < html.indexOf("관련 입력 확인"))
-  assert.equal((html.match(/condition-fulfillment-guide/g) ?? []).length, 1)
-  assert.doesNotMatch(html, /프로필 보호 중|<dt>내 정보<\/dt>/)
-  assert.match(html, /선택된 신청 경로/)
+  assert.equal((html.match(new RegExp(guide, "g")) ?? []).length, 1)
+  assert.ok(html.indexOf(guide) < html.indexOf("입력 확인"))
+  assert.doesNotMatch(html, /정책 요구 기준|프로필 보호 중|<dt>내 정보<\/dt>|다음 중 하나만/)
 })
 
-test("미충족 네 개를 제한 없이 각각의 안내와 함께 표시한다", () => {
-  const conditions = Array.from({ length: 4 }, (_, i) => ({ ...condition, field: `조건${i}`, required: `기준${i}`,
-    conditionGuide: `조건${i} 상태가 달라져 기준${i}에 도달하면 이 조건을 충족할 수 있습니다.` }))
-  const html = panel({ ...policy, conditions })
-  assert.equal((html.match(/condition-fulfillment-guide/g) ?? []).length, 4)
-  for (const c of conditions) assert.ok(html.includes(c.conditionGuide))
+test("한 경로의 미충족 네 개를 각각의 역설계 문장으로 모두 표시한다", () => {
+  const rows = Array.from({ length: 4 }, (_, i) => ({ ...policy.paths[0].conditions[0], condition_type: `조건${i}`,
+    required_value: `기준${i}`, condition_guide: `조건${i} 상태가 달라져 기준${i}에 도달하면 이 조건을 충족할 수 있습니다.` }))
+  const html = panel({ ...policy, paths: [{ ...policy.paths[0], conditions: rows }] })
+  assert.equal((html.match(/class="path-guide-line"/g) ?? []).length, 4)
+  for (const r of rows) assert.ok(html.includes(r.condition_guide))
 })
 
-test("충족과 추가 확인 탭에는 역설계 영역을 만들지 않고 checks를 미충족으로 바꾸지 않는다", () => {
-  const p = { ...policy, confirmedConditions: [{ ...condition, field: "확인된 연령" }], conditions: [condition,
-    { ...condition, field: "미입력 고용", status: "추가 확인" },
-    { field: "확인 사항", current: "", required: "기관 심사 확인", status: "추가 확인", guide: "" }] }
+test("충족·추가 확인 탭도 경로 카드로: 충족은 기준 목록, 추가 확인은 입력할 정보와 공식 확인 사항을 나눠 보여준다", () => {
+  const passedRow = { ...policy.paths[0].conditions[0], condition_type: "만 나이", required_value: "만 나이 19세 이상", status: "passed" }
+  const missing = { ...policy.paths[0].conditions[0], condition_type: "미입력 고용", required_value: "고용 상태: 재직", status: "needs_review" }
+  const p = { ...policy, paths: [{ ...policy.paths[0], conditions: [passedRow, missing], checks: ["기관 심사 확인"], status: "needs_review" }] }
   const passed = panel(p, "passed"), review = panel(p, "review"), failed = panel(p)
-  assert.match(passed, /확인된 연령/)
-  assert.match(review, /미입력 고용|기관 심사 확인/)
-  assert.doesNotMatch(passed + review, /condition-fulfillment-guide/)
-  assert.doesNotMatch(failed, /미입력 고용|기관 심사 확인/)
+  assert.match(passed, /✓ 만 나이 19세 이상/)
+  assert.ok(review.indexOf("정보를 입력하면 비교할 수 있어요") < review.indexOf("고용 상태: 재직"))
+  assert.ok(review.indexOf("공식 안내에서 확인할 사항") < review.indexOf("기관 심사 확인"))
+  assert.equal((review.match(/공식 안내에서 확인/g) ?? []).length, 1)
+  assert.doesNotMatch(passed + review, /condition-fulfillment-guide|정책 요구 기준/)
+  assert.doesNotMatch(failed, /기관 심사 확인|고용 상태: 재직/)
+  assert.match(failed, /미충족 조건이 없어요/)
 })
 
-test("공통 조건에서 막힌 결과는 백엔드가 반환한 gap만 표시하고 생략 범위를 설명한다", () => {
-  const p = { ...policy, blockedByCommon: ["만 나이"], paths: [...policy.paths, {
-    ...policy.paths[0], path_id: "other", conditions: [...policy.paths[0].conditions,
-      { ...policy.paths[0].conditions[0], condition_type: "다른 경로 고용", required_value: "미반환 고용 기준" }],
-  }] }
+test("가장 가까운 경로 카드에 공통 미충족까지 번호로 모두 보여주고 나머지 경로는 '다른 경로 확인하기'에 접는다", () => {
+  const common = { ...policy.paths[0].conditions[0], common: true }
+  const own = (type, required) => ({ ...policy.paths[0].conditions[0], condition_type: type, required_value: required,
+    condition_guide: `${type} 안내`, guide_kind: "state_change" })
+  const p = { ...policy, matchedPathId: "b", paths: [
+    { ...policy.paths[0], path_id: "a", label: "가", rank: 1, conditions: [common, own("고용", "고용 기준"), own("재산", "재산 기준")] },
+    { ...policy.paths[0], path_id: "b", label: "나", rank: 0, conditions: [common, own("소득", "소득 기준")], checks: ["서류 심사"] },
+  ] }
   const before = JSON.stringify(p), html = panel(p)
-  assert.match(html, /공통인 미충족 조건만 표시/)
-  assert.match(html, /다른 미충족 조건은 생략될 수/)
-  assert.doesNotMatch(html, /다른 경로 고용|미반환 고용 기준/)
+  const best = html.indexOf("추천 · 개선 난이도가 가장 낮아요"), more = html.indexOf("다른 경로 확인하기 (1)")
+  assert.ok(best > -1 && more > best && html.indexOf("가 경로") > more)
+  assert.ok(html.indexOf("공통</span>") > best && html.indexOf("공통</span>") < more)
+  assert.ok(html.indexOf("소득 안내") < more)
+  assert.match(html, /위 2개를 모두 충족하면 이 경로의 비교 조건을 모두 충족해요/)
+  assert.match(html, /추가 확인 1개는/)
+  for (const t of ["고용 안내", "재산 안내"]) assert.ok(html.indexOf(t) > more)
   assert.equal(JSON.stringify(p), before)
 })
 
-test("원문이 기준과 같으면 중복하지 않고 안내가 없어도 기준과 입력 확인을 유지한다", () => {
-  const p = { ...policy, conditions: [{ ...condition, conditionGuide: undefined, guideKind: undefined,
-    evidence: condition.required }] }
-  const html = panel(p)
+test("안내가 없고 원문이 기준과 같으면 기준 문장을 한 번만 쓰고 원문 버튼을 만들지 않는다", () => {
+  const r = { ...policy.paths[0].conditions[0], condition_guide: "", guide_kind: null, evidence: condition.required }
+  const html = panel({ ...policy, paths: [{ ...policy.paths[0], conditions: [r] }] })
   assert.equal((html.match(/만 26세 이상/g) ?? []).length, 1)
-  assert.doesNotMatch(html, /condition-fulfillment-guide|정책 원문 근거/)
-  assert.match(html, /관련 입력 확인/)
+  assert.doesNotMatch(html, /<summary>원문<\/summary>/)
+  assert.match(html, /입력 확인/)
 })

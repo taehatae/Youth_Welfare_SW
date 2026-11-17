@@ -26,7 +26,7 @@ test("로그인 전용 응답은 메모리에만 두며 기본 응답 객체를 
   const ticket = session.begin(target)
   assert.equal(session.read(target).size, 0) // 요청 중 재렌더가 응답 수락을 취소하지 않아야 한다.
   assert.equal(session.accept(target, ticket, response), true)
-  assert.match(session.read(target).get(0), /3,000,000원/)
+  assert.match(session.read(target).get("gap:0"), /3,000,000원/)
   assert.equal(JSON.stringify(response), before)
 })
 
@@ -86,6 +86,18 @@ test("자동 조회 중 화면 종료·진단 전환 시 이전 응답과 오류
   complete(response)
   await next
   assert.equal(loader.read(other).guides.size, 0)
+})
+
+test("같은 진단을 다시 확인하는 동안 기존 안내를 유지해 깜빡이지 않는다", async () => {
+  let complete
+  const loader = Guidance.createPrivateGuideLoader(() => new Promise(resolve => { complete = resolve }), () => {})
+  let loading = loader.load(target)
+  complete(response); await loading
+  loading = loader.load(target)
+  assert.equal(loader.read(target).guides.size, 1)
+  assert.notEqual(loader.read(target).status, "loading")
+  complete(response); await loading
+  assert.equal(loader.read(target).guides.size, 1)
 })
 
 test("계정 전환·로그아웃 알림은 메모리와 진행 중 응답을 무효화한다", async () => {
@@ -168,4 +180,72 @@ test("브라우저가 탭 간 알림을 차단해도 기존 로그인·로그아
     await signOut()
     assert.equal(cleared, 1)
   } finally { stop?.(); globalThis.window = previousWindow; globalThis.fetch = previousFetch }
+})
+
+test("경로별 맞춤 안내는 경로 id와 조건 순번으로 연결하고 잘못된 위치는 거절한다", () => {
+  const session = Guidance.createPrivateGuideSession()
+  const items = [{ gap_index: 0, condition_guide: "대표", guide_kind: "state_change" },
+    { gap_index: null, path_id: "신혼부부", condition_index: 2, condition_guide: "신혼 경로", guide_kind: "state_change" }]
+  assert.equal(session.accept(target, session.begin(target), { ...response, items }), true)
+  assert.equal(session.read(target).get(Guidance.pathConditionKey("신혼부부", 2)), "신혼 경로")
+  assert.equal(session.read(target).get(Guidance.gapKey(0)), "대표")
+  for (const bad of [{ path_id: "x", condition_index: -1 }, { gap_index: 1, path_id: "x", condition_index: 0 }, { path_id: "", condition_index: 0 }])
+    assert.equal(session.accept(target, session.begin(target), { ...response, items: [{ ...bad, condition_guide: "x", guide_kind: "state_change" }] }), false)
+})
+
+test("경로 카드: 순위 0 하나만 추천, 나머지는 같은 내용끼리 합치고, 다시 충족할 수 없는 경로는 숨긴다", () => {
+  const row = (condition_type, status, extra = {}) => ({ condition_type, required_value: condition_type + " 기준", status,
+    current_value: "", evidence: "", ...extra })
+  const path = (label, rank, conditions, extra = {}) => ({ path_id: label, label, kind: "유형", priority: null,
+    status: "ineligible", conditions, checks: [], rank, ...extra })
+  const age = row("만 나이", "failed", { common: true })
+  const { best, others, hidden } = Guidance.pathCards([
+    path("청년", 3, [age, row("가구 소득", "failed"), row("고용 상태", "failed"), row("혼인 상태", "passed")]),
+    path("장애인", 1, [age, row("혼인 기간", "failed")]),
+    path("신혼", 0, [age, row("혼인 기간", "failed", { difficulty: 3, difficulty_group: "time" })], { difficulty: 3 }),
+    path("예비신혼", 2, [age, row("혼인 기간", "failed")]),
+    path("청소년", 4, [row("만 나이", "failed", { impossible: true })], { impossible: true }),
+  ])
+  assert.deepEqual(best.map((c) => [c.label, c.difficulty]), [["신혼", 3]])
+  assert.deepEqual(others.map((c) => c.labels), [["장애인", "예비신혼"], ["청년"]])
+  assert.equal(hidden, 1)
+  assert.deepEqual(others[1].failed.map((l) => [l.field, l.key, l.common]),
+    [["만 나이", "path:청년:0", true], ["가구 소득", "path:청년:1", false], ["고용 상태", "path:청년:2", false]])
+  const all = Guidance.pathCards([path("청소년", 0, [row("만 나이", "failed")], { impossible: true })])
+  assert.equal(all.allImpossible, true)
+  assert.deepEqual(all.best.map((c) => c.label), ["청소년"])
+})
+
+test("대표 경로 밖의 조건은 같은 조건끼리 합치고 경로 이름을 붙인다", () => {
+  const row = (condition_type, required_value, status) => ({ condition_type, required_value, status, current_value: "", evidence: "" })
+  const path = (label, conditions, checks = []) => ({ path_id: label, label, kind: "유형", priority: null, status: "ineligible", conditions, checks })
+  const paths = [
+    path("청년", [row("만 나이", "만 나이 19세 ~ 39세", "passed"), row("혼인 상태", "혼인 상태: 미혼", "failed")], ["공통 확인"]),
+    path("신혼부부", [row("혼인 상태", "혼인 상태: 기혼", "passed"), row("본인 총재산", "본인 총재산 1억원 이하", "failed")], ["공통 확인", "혼인 7년 이내"]),
+    path("대학생", [row("재학 여부", "재학 여부 해당", "failed"), row("본인 총재산", "본인 총재산 1억원 이하", "failed")]),
+  ]
+  const { conditions, checks } = Guidance.otherPathDetails(paths, "청년")
+  assert.deepEqual(conditions.map((c) => [c.required, c.status, c.labels]), [
+    ["혼인 상태: 기혼", "passed", ["신혼부부"]],
+    ["본인 총재산 1억원 이하", "failed", ["신혼부부", "대학생"]],
+    ["재학 여부 해당", "failed", ["대학생"]],
+  ])
+  assert.deepEqual(checks, [{ text: "혼인 7년 이내", labels: ["신혼부부"] }])
+  assert.deepEqual(Guidance.otherPathDetails([paths[0]], "청년"), { conditions: [], checks: [] })
+})
+
+
+test("사용자가 조건 종류별 난이도를 바꾸면 추천 경로가 다시 정해진다", () => {
+  const row = (condition_type, difficulty, difficulty_group) => ({ condition_type, required_value: condition_type + " 기준",
+    status: "failed", current_value: "", evidence: "", difficulty, difficulty_group })
+  const path = (label, rank, conditions) => ({ path_id: label, label, kind: "유형", priority: null, status: "ineligible",
+    conditions, checks: [], rank, difficulty: conditions.reduce((s, c) => s + c.difficulty, 0) })
+  const paths = [path("신혼부부", 0, [row("가구 총재산", 3.6, "money"), row("자동차가액", 2.8, "money")]),
+                 path("청년", 1, [row("혼인 상태", 8, "family")])]
+  const base = { apply: 3, money: 3, time: 3, life: 3, family: 3, identity: 3 }
+  assert.equal(Guidance.pathCards(paths, "failed", base).best[0].label, "신혼부부")
+  // 금액 조건을 '아주 어려움'(×4)으로 바꾸면 6.4×4=25.6 > 8 이라 청년 경로가 추천된다.
+  const hardMoney = Guidance.pathCards(paths, "failed", { ...base, money: 5 })
+  assert.equal(hardMoney.best[0].label, "청년")
+  assert.equal(hardMoney.others[0].difficulty, 25.6)
 })

@@ -23,14 +23,14 @@ def guide(c, current):
 
 @pytest.mark.parametrize("c,current,code,text", [
     (condition("만 나이", "gte", 26, unit="세"), 25, "age_below_minimum", "만 26세 이상"),
-    (condition("만 나이", "lte", 25, unit="세"), 26, "age_above_maximum", "나이 증가"),
+    (condition("만 나이", "lte", 25, unit="세"), 26, "age_above_maximum", "시간이 지나도"),
     (condition("만 나이", "between", 19, 34, unit="세"), 18, "age_below_minimum", "만 19세 이상 34세 이하"),
-    (condition("만 나이", "between", 19, 34, unit="세"), 35, "age_above_maximum", "상한"),
-    (condition("본인 월소득", "lte", 2_500_000, unit="원"), 3_000_000, "requirement_not_met", "2,500,000원 이하"),
-    (condition("본인 연소득", "lte", 42_999_999, unit="원"), 43_000_000, "requirement_not_met", "42,999,999원 이하"),
+    (condition("만 나이", "between", 19, 34, unit="세"), 35, "age_above_maximum", "기준을 넘었"),
+    (condition("본인 월소득", "lte", 2_500_000, unit="원"), 3_000_000, "requirement_not_met", "250만원 이하"),
+    (condition("본인 연소득", "lte", 42_999_999, unit="원"), 43_000_000, "requirement_not_met", "4,300만원 미만"),
     (condition("가구 월소득 중위소득 대비", "lte", 100, unit="%"), 120, "requirement_not_met", "기준 중위소득 100% 이하"),
     (condition("가구 소득인정액", "lte", 50, unit="%"), 60, "requirement_not_met", "가구 소득인정액"),
-    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", "requirement_not_met", "부산광역시로 변경되면"),
+    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", "requirement_not_met", "부산광역시로 바뀌면"),
     (condition("고용 상태", "one_of", values=["재직"]), "미취업", "requirement_not_met", "재직"),
     (condition("학교 구분", "one_of", values=["대학", "대학원"]), "고등학교", "requirement_not_met", "대학 또는 대학원"),
     (condition("재학 여부", "is_true"), False, "requirement_not_met", "재학"),
@@ -62,8 +62,9 @@ def test_actual_durunuri_threshold_excerpt_is_not_rounded(value, expected):
     # WLF00000095 검수본: 270만원 미만을 원 단위 lte로 저장한 값이다.
     c = condition("본인 월소득", "lte", 2_699_999, unit="원")
     assert base.matches(c, value) is expected
-    assert "2,699,999원" in base.describe(c)
-    assert "2,699,999원 이하" in guide(c, value)["condition_guide"]
+    # 비교는 저장값 그대로 하고, 화면 문구는 원문 표현(270만원 미만)으로 되돌린다.
+    assert base.describe(c) == "본인 월소득 270만원 미만"
+    assert "270만원 미만" in guide(c, value)["condition_guide"]
 
 
 def test_synthetic_one_of_preserves_every_option():
@@ -94,7 +95,7 @@ def test_synthetic_exclusion_guides_do_not_reverse_direction(c, hit, miss):
     applied, clear = guide(c, hit), guide(c, miss)
     assert applied["reason_code"] == "exclusion_applies"
     assert clear["reason_code"] == "exclusion_not_applicable"
-    assert "해당하면 제외" in applied["condition_guide"]
+    assert "제외됩니다" in applied["condition_guide"]
     assert "제외 기준에 해당하지" in clear["condition_guide"]
 
 
@@ -106,7 +107,7 @@ def test_synthetic_missing_and_imprecise_values_are_not_failures():
     result = guide(c, (100_000_000, 199_999_999))
     assert result["reason_code"] == "comparison_uncertain"
     assert "확정할 수 없습니다" in result["condition_guide"]
-    assert "122,000,000원" in result["condition_guide"]
+    assert "1억 2,200만원" in result["condition_guide"]
 
 
 def test_synthetic_false_and_zero_are_real_values():
@@ -223,7 +224,7 @@ def test_actual_durunuri_guides_and_masking_do_not_replicate_private_income():
     result = actual_analysis(policy, N(age=25, region="개인 거주지", income_level=3_456_789, employment_status="EMPLOYED"))
     masked = hide_input_values(EligibilityAnalysis.model_validate(result).model_dump())
     rows = [c for p in masked["eligibility_paths"] for c in p["conditions"]]
-    assert any("2,699,999원" in row["condition_guide"] for row in rows)
+    assert any("270만원 미만" in row["condition_guide"] for row in rows)
     for row in rows:
         assert row["current_value"] == "프로필 보호 중"
         assert "3456789" not in row["condition_guide"] and "3,456,789" not in row["condition_guide"]

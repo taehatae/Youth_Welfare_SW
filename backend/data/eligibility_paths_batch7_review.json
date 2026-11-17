@@ -1,0 +1,352 @@
+{
+ "batch": 7,
+ "policies": {
+  "WLF00003271": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "생애최초|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "생애최초|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "2자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "2자녀|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003272": {
+   "done": false,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": null,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": null,
+     "note": ""
+    },
+    "의상자|k0": {
+     "ok": null,
+     "note": ""
+    },
+    "의사자유족|k0": {
+     "ok": null,
+     "note": ""
+    },
+    "장제|k0": {
+     "ok": null,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005024": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00005031": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00005445": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00005446": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00005856": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00005858": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006196": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006207": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006215": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006217": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006225": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006226": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006227": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006235": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006237": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006241": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006245": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006246": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006248": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006252": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006254": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006255": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006258": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006263": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006264": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006265": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006267": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006268": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006271": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006272": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006273": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006274": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006275": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006276": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006277": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006278": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006282": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006283": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006288": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006290": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006293": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006295": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006296": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006297": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006305": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006307": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006315": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006316": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006318": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  },
+  "WLF00006319": {
+   "done": false,
+   "missing": "",
+   "items": {}
+  }
+ },
+ "saved_at": "2026-11-15T12:48:31.319Z"
+}
