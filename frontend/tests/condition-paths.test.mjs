@@ -47,22 +47,20 @@ test("대표 경로의 정확히 일치하는 안내만 미충족 카드로 연�
   const before = JSON.stringify(s), html = panel(s)
   assert.match(html, /2,699,999원 이하로 낮아지면/)
   assert.match(html, /재학 상태에 해당하면 제외됩니다/)
-  assert.equal((html.match(/condition-fulfillment-guide/g) ?? []).length, 2)
+  assert.equal((html.match(/class="path-guide-line"/g) ?? []).length, 2)
   assert.equal(JSON.stringify(s), before)
 })
 
-test("다른 원문·다른 OR 경로·모호한 중복 일치의 안내를 잘못 연결하지 않는다", () => {
-  const first = row("만 나이", "failed", { condition_guide: "다른 경로의 안내", guide_kind: "state_change" })
-  const selected = { ...first, condition_guide: "선택된 경로의 상태 변화 안내" }
-  const s = snapshot({ eligibility_paths: [path("A", [first]), path("B", [selected])], matched_path_id: "B",
-    gap_conditions: [summary(selected)] })
-  assert.match(panel(s), /선택된 경로의 상태 변화 안내/)
-  assert.doesNotMatch(panel(s), /다른 경로의 안내/)
-  s.analysis.matched.analysis_results[0].gap_conditions[0].source_text = "다른 원문"
-  assert.doesNotMatch(panel(s), /condition-fulfillment-guide/)
-  s.analysis.matched.analysis_results[0].gap_conditions[0] = summary(selected)
-  s.analysis.matched.analysis_results[0].eligibility_paths[1].conditions.push({ ...selected })
-  assert.doesNotMatch(panel(s), /condition-fulfillment-guide/)
+test("추천 경로는 하나만 크게 보이고, 다른 경로 안내는 '다른 경로 확인하기' 안의 자기 카드에만 붙는다", () => {
+  const first = row("만 나이", "failed", { condition_guide: "A 경로의 안내", guide_kind: "state_change" })
+  const selected = { ...first, required_value: "만 나이 다른 기준", condition_guide: "B 경로의 안내" }
+  const s = snapshot({ eligibility_paths: [{ ...path("A", [first]), rank: 1 }, { ...path("B", [selected]), rank: 0 }],
+    matched_path_id: "B", gap_conditions: [summary(selected)] })
+  const html = panel(s)
+  assert.equal((html.match(/추천 · 개선 난이도가 가장 낮아요/g) ?? []).length, 1)
+  const more = html.indexOf("다른 경로 확인하기 (1)")
+  assert.ok(html.indexOf("B 경로의 안내") < more && html.indexOf("A 경로의 안내") > more)
+  assert.match(html, /추천 기준 보기/)
 })
 
 test("경로 상세 UI는 없어져도 모든 OR 데이터·대표 경로·판정·점수·공통 차단 정보는 유지한다", () => {
@@ -79,11 +77,16 @@ test("경로 상세 UI는 없어져도 모든 OR 데이터·대표 경로·판�
   assert.equal(JSON.stringify(s), before)
 })
 
-test("공통 조건 표시가 없는 이전 경로에서도 gap 목록을 임의로 합치거나 확장하지 않는다", () => {
+test("다른 경로 중 미충족 내용이 똑같은 경로는 카드 하나로 합치고 경로 이름을 함께 적는다", () => {
   const c = row("연령", "failed", { condition_guide: "현재 상태가 달라지면 연령 요건을 충족합니다.", guide_kind: "state_change" })
-  const s = snapshot({ eligibility_paths: [path("A", [c]), path("B", [c])], gap_conditions: [summary(c)] })
+  const best = row("소득", "failed", { condition_guide: "소득 안내", guide_kind: "state_change" })
+  const s = snapshot({ eligibility_paths: [{ ...path("추천", [best]), rank: 0 }, { ...path("A", [c]), rank: 1 }, { ...path("B", [c]), rank: 2 }],
+    gap_conditions: [summary(best)] })
   assert.equal(policyResults(s)[0].conditions.length, 1)
-  assert.equal((panel(s).match(/condition-fulfillment-guide/g) ?? []).length, 1)
+  const html = panel(s)
+  assert.equal((html.match(/class="path-guide-line"/g) ?? []).length, 2)
+  assert.match(html, /A · B 경로/)
+  assert.match(html, /다른 경로 확인하기 \(1\)/)
 })
 
 test("checks만 있는 경로는 확인 사항 탭에 유지하고 미충족으로 세지 않는다", () => {

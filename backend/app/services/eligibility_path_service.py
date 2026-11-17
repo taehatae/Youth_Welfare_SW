@@ -77,12 +77,17 @@ def _status(result: bool | None) -> str:
 
 
 def _evaluate_path(path: EligibilityPath, common: EligibilityPath | None, values: dict) -> dict:
-    rows = []
+    rows, impossible, score = [], 0, 0.0
     for c in (common.conditions if common else []) + path.conditions:
         cond = _condition(c)
         current = values.get(c.field)
         result = base.matches(cond, current)
-        rows.append({"condition_type": c.field, "status": _status(result),
+        never = result is False and base.impossible_failure(cond, current)
+        impossible += never
+        hard = base.difficulty(cond, current) if result is False else None
+        score += hard or 0.0
+        rows.append({"condition_type": c.field, "status": _status(result), "impossible": never, "difficulty": hard,
+                     "difficulty_group": base.difficulty_group(cond) if hard is not None else None,
                      "current_value": base.show(c.field, current), "required_value": base.describe(cond),
                      "evidence": c.evidence, "common": common is not None and c in common.conditions,
                      **base.condition_guide(cond, current, result)})
@@ -91,7 +96,21 @@ def _evaluate_path(path: EligibilityPath, common: EligibilityPath | None, values
     statuses = {r["status"] for r in rows}
     status = "ineligible" if "failed" in statuses else "eligible" if "passed" in statuses else "needs_review"
     return {"path_id": path.path_key, "label": path.label, "kind": path.kind, "priority": path.priority,
-            "status": status, "conditions": rows, "checks": (common.checks if common else []) + (path.checks or [])}
+            "status": status, "conditions": rows, "checks": (common.checks if common else []) + (path.checks or []),
+            "impossible": impossible > 0,
+            # 미충족 조건 개선 난이도의 합(추천 경로 기준). 표는 structured_condition_service.difficulty
+            "difficulty": round(score, 2)}
+
+
+def _rank_paths(paths: list[dict]) -> None:
+    """경로 순위(0이 추천 경로). 판정(가능 > 확인 필요 > 불가) → 다시 충족할 수 없는 경로는 뒤로
+    → 개선 난이도 합이 낮은 순 → 미충족 수 → 미입력 수 → 원문 경로 순서."""
+    count = lambda p, s: sum(r["status"] == s for r in p["conditions"])
+    order = sorted(range(len(paths)), key=lambda i: (RANK[paths[i]["status"]], paths[i]["impossible"],
+                                                     paths[i]["difficulty"], count(paths[i], "failed"),
+                                                     count(paths[i], "needs_review"), i))
+    for rank, i in enumerate(order):
+        paths[i]["rank"] = rank
 
 
 def _row(r: dict, message: str, guide: str) -> dict:
@@ -116,7 +135,9 @@ def analyze(service, user, profile: dict | None, record: PolicyEligibility | Non
     if not paths:
         paths = [_evaluate_path(common, None, values)] if common else []
     count = lambda p, s: sum(r["status"] == s for r in p["conditions"])
-    best = min(paths, key=lambda p: (RANK[p["status"]], count(p, "failed"), count(p, "needs_review"), -count(p, "passed")))
+    _rank_paths(paths)
+    # 대표 경로: 순위가 가장 높은 경로. 같은 순위가 여럿이면 원문 경로 순서상 첫 번째.
+    best = min(paths, key=lambda p: p["rank"])
     status = best["status"]
     # 모든 경로가 같은 공통 조건에서 막히면 그 조건을 보여준다.
     blocked = [r for r in best["conditions"] if r["common"] and r["status"] == "failed"] if status == "ineligible" else []

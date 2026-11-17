@@ -98,7 +98,10 @@ class ConditionGuideViewInput(BaseModel):
 
 
 class PersonalizedConditionGuide(BaseModel):
-    gap_index: int = Field(ge=0)
+    # 대표 경로 미충족 목록의 순번. 경로별 안내는 None이고 path_id·condition_index로 가리킨다.
+    gap_index: int | None = Field(default=None, ge=0)
+    path_id: str | None = None
+    condition_index: int | None = Field(default=None, ge=0)
     condition_guide: str
     guide_kind: Literal["state_change"] = "state_change"
 

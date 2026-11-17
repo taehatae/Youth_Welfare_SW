@@ -5,7 +5,7 @@ import { subscribeApiIdentityChange, viewConditionGuides } from "../../services/
 
 // 맞춤 안내는 정책/스냅샷/영구 저장소에 합치지 않고 열린 미충족 탭에서만 사용한다.
 export default function PersonalizedGuideAccess({ target, children }: {
-  target?: ConditionGuideTarget; children: (guides: ReadonlyMap<number, string>) => ReactNode
+  target?: ConditionGuideTarget; children: (guides: ReadonlyMap<string, string>) => ReactNode
 }) {
   const loader = useRef<ReturnType<typeof createPrivateGuideLoader> | null>(null)
   const key = target ? guideTargetKey(target) : ""
@@ -16,13 +16,13 @@ export default function PersonalizedGuideAccess({ target, children }: {
     const current = createPrivateGuideLoader(viewConditionGuides, () => { if (active) update(n => n + 1) })
     loader.current = current
     const clear = () => current.clear()
+    // 다른 창을 잠깐 누르는 것(blur)으로는 지우지 않는다. 탭을 숨기거나 떠날 때만 지운다.
     const reload = () => {
-      if (!document.hidden && document.hasFocus()) void current.load(target)
+      if (!document.hidden) void current.load(target)
       else clear()
     }
     const visibility = () => { if (document.hidden) clear(); else reload() }
     const unsubscribe = subscribeApiIdentityChange(() => current.clear("로그인 상태가 변경됐어요. 로그인한 계정을 확인한 뒤 결과를 다시 열어주세요."))
-    window.addEventListener("blur", clear)
     window.addEventListener("focus", reload)
     window.addEventListener("pagehide", clear)
     window.addEventListener("pageshow", reload)
@@ -33,7 +33,6 @@ export default function PersonalizedGuideAccess({ target, children }: {
     return () => {
       active = false; current.clear(); loader.current = null; unsubscribe()
       window.clearInterval(timer)
-      window.removeEventListener("blur", clear)
       window.removeEventListener("focus", reload)
       window.removeEventListener("pagehide", clear)
       window.removeEventListener("pageshow", reload)
@@ -43,10 +42,10 @@ export default function PersonalizedGuideAccess({ target, children }: {
   const state = target ? loader.current?.read(target) : null
   return <>
     {target && <div className="private-guide-controls">
-      <p className="condition-scope-note">맞춤 안내는 로그인한 계정의 진단 당시 입력값을 기준으로 설명합니다.</p>
+      <p className="condition-scope-note">역설계 안내는 조건 하나를 기준으로 한 설명이며 신청 자격을 보장하지 않아요. 진단 당시 입력값 기준이에요.</p>
       {state?.status === "loading" && <p role="status" className="condition-scope-note">맞춤 안내를 불러오는 중이에요.</p>}
       {state?.error && <p role="alert" className="auth-error">{state.error}</p>}
     </div>}
-    {children(state?.guides ?? new Map<number, string>())}
+    {children(state?.guides ?? new Map<string, string>())}
   </>
 }

@@ -29,26 +29,26 @@ def test_synthetic_numeric_change_is_calculated_exactly_internally(c, current, d
 
 
 @pytest.mark.parametrize("c,current,parts,code", [
-    (condition("만 나이", "gte", 26, unit="세"), 25, ["하한보다 낮", "나이가 증가", "만 26세 이상"], "age_below_minimum"),
-    (condition("만 나이", "lte", 25, unit="세"), 26, ["상한을 초과", "시간이 지나", "충족할 수 없습니다"], "age_above_maximum"),
-    (condition("만 나이", "between", 18, 20, unit="세"), 17, ["하한보다 낮", "만 18세 이상 20세 이하"], "age_below_minimum"),
-    (condition("만 나이", "between", 18, 20, unit="세"), 21, ["상한을 초과", "충족할 수 없습니다"], "age_above_maximum"),
-    (condition("본인 월소득", "lte", 2_699_999, unit="원"), 3_000_000, ["본인 월소득", "상한보다 높", "낮아져", "2,699,999원 이하"], "requirement_not_met"),
-    (condition("가구 소득인정액", "lte", 50, unit="%"), 70, ["가구 소득인정액", "기준 중위소득 50% 이하", "낮아져"], "requirement_not_met"),
-    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", ["거주지가", "부산광역시", "변경되면"], "requirement_not_met"),
-    (condition("고용 상태", "one_of", values=["재직", "중소기업 재직"]), "미취업", ["입력된 고용 상태", "재직 또는 중소기업 재직", "변경되면"], "requirement_not_met"),
-    (condition("학교 구분", "one_of", values=["대학"]), "고등학교", ["학교 구분", "대학", "변경되면"], "requirement_not_met"),
-    (condition("재학 여부", "is_true"), False, ["재학 중인 상태", "변경되면"], "requirement_not_met"),
-    (condition("재학 여부", "is_true", kind="exclusion"), True, ["재학하지 않는 상태", "해당하면 제외"], "exclusion_applies"),
-    (condition("만 나이", "lte", 18, kind="exclusion", unit="세"), 18, ["만 18세 초과", "제외 조건"], "exclusion_applies"),
-    (condition("본인 월소득", "gte", 2_500_000, kind="exclusion", unit="원"), 3_000_000, ["2,500,000원 미만", "제외 조건"], "exclusion_applies"),
+    (condition("만 나이", "gte", 26, unit="세"), 25, ["시간이 지나", "만 26세 이상"], "age_below_minimum"),
+    (condition("만 나이", "lte", 25, unit="세"), 26, ["기준을 넘었", "시간이 지나도", "충족할 수 없습니다"], "age_above_maximum"),
+    (condition("만 나이", "between", 18, 20, unit="세"), 17, ["시간이 지나", "만 18세 이상 20세 이하"], "age_below_minimum"),
+    (condition("만 나이", "between", 18, 20, unit="세"), 21, ["기준을 넘었", "충족할 수 없습니다"], "age_above_maximum"),
+    (condition("본인 월소득", "lte", 2_699_999, unit="원"), 3_000_000, ["본인 월소득이", "기준보다 높", "270만원 미만"], "requirement_not_met"),
+    (condition("가구 소득인정액", "lte", 50, unit="%"), 70, ["가구 소득인정액이", "기준 중위소득 50% 이하", "기준보다 높"], "requirement_not_met"),
+    (condition("거주지", "one_of", values=["부산광역시"]), "서울특별시", ["거주지가", "부산광역시로", "바뀌면"], "requirement_not_met"),
+    (condition("고용 상태", "one_of", values=["재직", "중소기업 재직"]), "미취업", ["고용 상태가", "재직 또는 중소기업 재직으로", "바뀌면"], "requirement_not_met"),
+    (condition("학교 구분", "one_of", values=["대학"]), "고등학교", ["학교 구분이", "대학으로", "바뀌면"], "requirement_not_met"),
+    (condition("재학 여부", "is_true"), False, ["재학 중", "충족합니다"], "requirement_not_met"),
+    (condition("재학 여부", "is_true", kind="exclusion"), True, ["재학하지 않는 상태", "제외됩니다"], "exclusion_applies"),
+    (condition("만 나이", "lte", 18, kind="exclusion", unit="세"), 18, ["만 18세 초과", "제외 조건에 해당하지 않습니다"], "exclusion_applies"),
+    (condition("본인 월소득", "gte", 2_500_000, kind="exclusion", unit="원"), 3_000_000, ["2,500,000원 미만", "제외 조건에 해당하지 않습니다"], "exclusion_applies"),
 ])
 def test_synthetic_failed_condition_explains_cause_and_changed_state(c, current, parts, code):
     result = explain(c, current)
     assert result.get("guide_kind") == "state_change"
     assert result["reason_code"] == code
     assert all(part in result["condition_guide"] for part in parts)
-    assert "이 조건" in result["condition_guide"] or "연령 조건" in result["condition_guide"]
+    assert "조건" in result["condition_guide"]
 
 
 @pytest.mark.parametrize("current", [18, 20])
@@ -77,13 +77,14 @@ def test_not_enrolled_is_not_a_verified_graduate():
 def test_excluded_age_lower_bound_does_not_promise_that_time_reverses_age():
     result = explain(condition("만 나이", "gte", 19, unit="세", kind="exclusion"), 26)
     assert "만 19세 미만" in result["condition_guide"]
-    assert "시간 경과만으로는 이 조건을 벗어날 수 없습니다" in result["condition_guide"]
+    assert "시간이 지나도 줄지 않는 값이라 이 제외 조건을 벗어날 수 없습니다" in result["condition_guide"]
 
 
 def test_excluded_numeric_interval_preserves_both_strict_exit_alternatives():
     c = condition("본인 월소득", "between", 2_000_001, 2_699_999, kind="exclusion", unit="원")
     text = explain(c, 2_500_000)["condition_guide"]
-    assert "2,000,001원 미만 또는 본인 월소득 2,699,999원 초과" in text
+    # 저장값(2,000,001·2,699,999)은 원문 표현(200만원 초과·270만원 미만)으로 되돌려 반대 구간을 안내한다.
+    assert "본인 월소득 2,000,000원 이하 또는 본인 월소득 2,700,000원 이상" in text
     assert base.matches(c, 2_000_000) is True and base.matches(c, 2_700_000) is True
     assert base.matches(c, 2_000_001) is False and base.matches(c, 2_699_999) is False
 
@@ -122,7 +123,7 @@ def test_actual_durunuri_policy_uses_private_income_to_compute_public_change():
     result = EligibilityAnalysis.model_validate(actual_analysis(policy, user)).model_dump()
     income_rows = [c for p in result["eligibility_paths"] for c in p["conditions"] if c["condition_type"] == "본인 월소득"]
     assert income_rows and all(c["status"] == "failed" and c.get("guide_kind") == "state_change" for c in income_rows)
-    assert all("낮아져" in c["condition_guide"] and "2,699,999원 이하" in c["condition_guide"] for c in income_rows)
+    assert all("기준보다 높" in c["condition_guide"] and "270만원 미만" in c["condition_guide"] for c in income_rows)
     public = json.dumps(hide_input_values(result), ensure_ascii=False)
     assert "3,456,789" not in public and "756,790" not in public and "개인 상세 주소" not in public
 

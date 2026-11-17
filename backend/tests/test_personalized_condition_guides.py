@@ -52,7 +52,7 @@ def test_session_authenticated_age_guide_without_credentials_preserves_public_an
     assert response.status_code == 200
     assert response.headers["cache-control"] == "no-store"
     text = response.json()["items"][0]["condition_guide"]
-    assert "25세" in text and "26세" in text and "1세" in text
+    assert "25세" in text and "26세" in text and "1년 뒤" in text
     assert response.json()["items"][0]["gap_index"] == 0
     assert response.json()["items"][0]["guide_kind"] == "state_change"
     db.expire_all()
@@ -72,7 +72,7 @@ def test_private_guide_checks_owned_snapshot_and_policy(setup, monkeypatch, chan
 
 
 @pytest.mark.parametrize("field,op,value,values,kind,parts", [
-    ("본인 월소득", "lte", 2500000, [], "requirement", ["3,000,000원", "2,500,000원", "500,000원"]),
+    ("본인 월소득", "lte", 2500000, [], "requirement", ["3,000,000원", "250만원 이하", "500,000원 낮아지면"]),
     ("주거 형태", "one_of", None, ["전세"], "requirement", ["월세", "전세"]),
     ("고용 상태", "one_of", None, ["재직"], "requirement", ["미취업", "재직"]),
     ("성별", "one_of", None, ["여성"], "requirement", ["남성", "여성"]),
@@ -146,8 +146,8 @@ def test_same_policy_different_input_changes_private_text_and_stale_request_is_r
     assert view(client, request).status_code == 409
     new = public["current"]
     second = view(client, {**request, "profile_key": new["profileKey"], "checked_at": new["checkedAt"]}).json()["items"][0]["condition_guide"]
-    assert "25세" in first and "1세" in first
-    assert "24세" in second and "2세" in second
+    assert "25세" in first and "1년 뒤" in first
+    assert "24세" in second and "2년 뒤" in second
     assert first != second
 
 
@@ -210,7 +210,7 @@ def test_age_upper_limit_does_not_suggest_that_time_will_reduce_age(setup, monke
     client, db = setup
     _, _, request = prepare(client, db, monkeypatch, operator="lte", value=25, profile={"age": 26})
     text = view(client, request).json()["items"][0]["condition_guide"]
-    assert "26세" in text and "1세" in text and "나이 증가로는" in text
+    assert "26세" in text and "1세 많고" in text and "시간이 지나도 줄지 않아" in text
 
 
 @pytest.mark.parametrize("value", [None, "UNKNOWN", ""])
@@ -253,9 +253,9 @@ def test_ambiguous_source_connection_and_changed_target_do_not_personalize(setup
 
 @pytest.mark.parametrize("sid,parts", [
     ("WLF00000781", ["남성", "여성"]),
-    ("WLF00000078", ["25세", "24세", "나이 증가로는"]),
+    ("WLF00000078", ["25세", "24세 이하", "시간이 지나도 줄지 않아"]),
     ("WLF00004649", ["본인 명의 주택", "보유하지 않는 상태"]),
-    ("WLF00000095", ["3,000,000원", "2,699,999원", "300,001원"]),
+    ("WLF00000095", ["3,000,000원", "270만원 미만", "300,001원 낮아지면"]),
 ])
 def test_actual_reviewed_policy_guides_use_synthetic_profile_without_changing_analysis(setup, monkeypatch, tmp_path, sid, parts):
     import json
@@ -286,3 +286,33 @@ def test_actual_reviewed_policy_guides_use_synthetic_profile_without_changing_an
     assert client.get("/api/v1/users/state").json() == state
     public = next(a for a in snap["analysis"]["matched"]["analysis_results"] if a["policy_id"] == sid)
     assert public["path_review"] == "reviewed" and public["status"] == "ineligible"
+
+
+def test_private_guides_cover_every_path_not_only_the_representative_one(setup, monkeypatch, tmp_path):
+    import json
+    from app.services import eligibility_path_service as paths
+    from tests.test_condition_guides import REVIEWED, SOURCES
+    client, db = setup
+    monkeypatch.setattr(settings, "use_eligibility_paths", True)
+    sid = next(p["serv_id"] for p in REVIEWED if p["name"].startswith("행복주택"))
+    raw = SOURCES[sid]
+    db.add(WelfareService(serv_id=sid, serv_name=raw["serv_name"], detail_url=raw.get("detail_url", ""),
+        target_details=raw["target_details"], selection_criteria=raw["selection_criteria"]))
+    db.commit()
+    seed = tmp_path / "happy-house.json"
+    seed.write_text(json.dumps({"policies": [p for p in REVIEWED if p["serv_id"] == sid]}), encoding="utf-8")
+    paths.seed_from_file(db, seed)
+    signup(client)
+    snap = client.post("/api/v1/welfare/diagnose", json={"age": 30, "region": "서울특별시", "income_level": 6500000,
+        "employment_status": "EMPLOYED", "eligibility_conditions": {"marital_status": "MARRIED", "household_size": 3,
+        "owns_home": "NO", "additional_conditions": {"asset_amount_won": 400000000, "personal_asset_amount_won": 200000000}}}).json()["current"]
+    analysis = next(a for a in snap["analysis"]["matched"]["analysis_results"] if a["policy_id"] == sid)
+    items = client.post("/api/v1/users/condition-guides/view", json={"snapshot": "current", "profile_key": snap["profileKey"],
+        "checked_at": snap["checkedAt"], "policy_id": sid}).json()["items"]
+    by_path = {(i["path_id"], i["condition_index"]): i["condition_guide"] for i in items if i.get("path_id")}
+    other = [k for k in by_path if k[0] != analysis["matched_path_id"]]
+    assert other, "대표 경로가 아닌 경로에도 맞춤 안내가 있어야 한다"
+    for (path_id, index), text in by_path.items():
+        stored = next(p for p in analysis["eligibility_paths"] if p["path_id"] == path_id)["conditions"][index]
+        assert stored["status"] == "failed"
+    assert any("400,000,000원" in t or "200,000,000원" in t for t in by_path.values())

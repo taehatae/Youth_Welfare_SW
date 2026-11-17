@@ -14,3 +14,44 @@
 .condition-evidence > summary:focus-visible { outline: 2px solid #2456d8; outline-offset: 2px; }
 .condition-scope-note { font-size: 12px; line-height: 1.8; color: #536580; margin-bottom: 12px; overflow-wrap: anywhere; }
 .private-guide-controls { margin-bottom: 12px; }
+.other-paths { margin-top: 18px; padding-top: 14px; border-top: 1px dashed #d4deeb; }
+.other-checks ul { display: grid; gap: 8px; margin-top: 8px; }
+.other-checks small { font-size: 11px; color: #68788f; }
+.path-guides { display: grid; gap: 12px; }
+.path-guide { padding: 14px 16px; background: #fff; border: 1px solid #e3e9f2; border-radius: 10px; }
+
+.path-guide[data-common] { border-color: #ecd2c8; background: #fffaf8; }
+.path-guide h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.path-guide-badge { font-size: 11px; font-weight: 700; color: #fff; background: #2456d8; border-radius: 999px; padding: 2px 9px; }
+.path-guide ul { display: grid; gap: 8px; }
+.path-guide-line { padding-left: 12px; border-left: 3px solid #d46b50; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.path-guide-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; margin-top: 2px; font-size: 11px; color: #536580; }
+.path-guide-actions summary { cursor: pointer; }
+.path-guide-actions details p { margin-top: 4px; padding: 6px 8px; background: #f5f7fb; border-radius: 5px; white-space: pre-wrap; }
+.path-guide-actions button { color: #2456d8; text-decoration: underline; font-size: 11px; }
+.path-guide-note { margin-top: 8px; font-size: 12px; color: #536580; }
+.path-guide[data-best] { border: 2px solid #2456d8; padding: 18px; }
+.path-guide h4 small { font-size: 11px; font-weight: 400; color: #68788f; }
+.path-guide ol { display: grid; gap: 8px; list-style: decimal; padding-left: 18px; }
+.path-guide-line[data-check] { border-left-color: #c3912f; }
+.path-guide-common { display: inline-block; font-size: 10px; font-weight: 700; color: #805a00; background: #fff3d6; border-radius: 4px; padding: 1px 6px; margin-right: 6px; }
+.path-guide-conclusion { margin-top: 10px; font-size: 13px; font-weight: 600; color: #1d3c78; line-height: 1.7; }
+.other-path-cards { display: grid; gap: 10px; }
+.other-path-cards > summary { cursor: pointer; font-size: 13px; font-weight: 700; color: #2456d8; padding: 10px 0; }
+.other-path-cards[open] > summary { margin-bottom: 10px; }
+.other-path-cards .path-guide { margin-bottom: 10px; background: #fafbfd; }
+.difficulty-rules { font-size: 12px; color: #536580; }
+.difficulty-rules > summary { cursor: pointer; padding: 4px 0; }
+.difficulty-rules p { margin: 6px 0; line-height: 1.7; }
+.difficulty-rules ul { display: grid; gap: 4px; }
+.difficulty-rules b { display: inline-block; min-width: 64px; color: #1d3c78; }
+.path-guide-sub { margin: 10px 0 6px; font-size: 12px; font-weight: 700; color: #536580; }
+.path-guide-checks { display: grid; gap: 6px; padding-left: 12px; border-left: 3px solid #c3912f; font-size: 13px; line-height: 1.7; list-style: disc inside; }
+.path-guide-passed { display: grid; gap: 4px; font-size: 13px; line-height: 1.7; color: #1f5b45; }
+.difficulty-editor { display: grid; gap: 8px; margin: 8px 0; }
+.difficulty-editor li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px; background: #fff; border: 1px solid #e3e9f2; border-radius: 8px; flex-wrap: wrap; }
+.difficulty-editor li div { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.difficulty-editor b { min-width: 0; font-size: 13px; }
+.difficulty-editor small { font-size: 11px; color: #68788f; overflow-wrap: anywhere; }
+.difficulty-editor select { padding: 6px 8px; border: 1px solid #c5d3e6; border-radius: 6px; background: #fff; font-size: 12px; }
+.difficulty-reset { font-size: 12px; color: #2456d8; text-decoration: underline; }
