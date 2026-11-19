@@ -57,7 +57,7 @@ test("추천 경로는 하나만 크게 보이고, 다른 경로 안내는 '다�
   const s = snapshot({ eligibility_paths: [{ ...path("A", [first]), rank: 1 }, { ...path("B", [selected]), rank: 0 }],
     matched_path_id: "B", gap_conditions: [summary(selected)] })
   const html = panel(s)
-  assert.equal((html.match(/추천 · 개선 난이도가 가장 낮아요/g) ?? []).length, 1)
+  assert.equal((html.match(/class="path-guide-badge">대표 경로</g) ?? []).length, 1)
   const more = html.indexOf("다른 경로 확인하기 (1)")
   assert.ok(html.indexOf("B 경로의 안내") < more && html.indexOf("A 경로의 안내") > more)
   assert.match(html, /추천 기준 보기/)

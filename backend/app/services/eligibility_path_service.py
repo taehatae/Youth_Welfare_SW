@@ -174,6 +174,7 @@ def analyze(service, user, profile: dict | None, record: PolicyEligibility | Non
         reason = f"가장 가까운 경로 '{best['label']}'에서 {fields(shown)} 조건이 부족합니다." if multiple \
             else f"{fields(shown)} 조건을 충족하지 않습니다."
     evaluated = count(best, "passed") + count(best, "failed")
+    from app.services.eligibility_snapshot_context import create_context
     return {
         **(legacy or {}),
         "policy_id": service.serv_id,
@@ -196,4 +197,5 @@ def analyze(service, user, profile: dict | None, record: PolicyEligibility | Non
         "preferences": record.preferences or [],
         # 원문을 다시 읽고 경로로 정리한 정책(reviewed)과 기존 정답지에서 옮긴 정책(converted)을 구분한다.
         "path_review": "converted" if record.drafted_by == "converted" else "reviewed",
+        "evaluation_context": create_context(service, record),
     }

@@ -72,9 +72,9 @@ def view_condition_guides(data: ConditionGuideViewInput,
     if not any(a.get("policy_id") == data.policy_id
                for a in snapshot.get("analysis", {}).get("matched", {}).get("analysis_results", [])):
         raise HTTPException(404, "이 진단에서 정책을 찾지 못했어요.")
-    from app.services.personalized_condition_guidance import snapshot_guides
+    from app.services.personalized_condition_guidance import snapshot_details
     return ConditionGuideViewResponse(profile_key=data.profile_key, checked_at=data.checked_at,
-        policy_id=data.policy_id, items=snapshot_guides(db, snapshot, data.policy_id))
+        policy_id=data.policy_id, **snapshot_details(db, snapshot, data.policy_id))
 
 
 @router.get("/state", response_model=WorkspaceState)

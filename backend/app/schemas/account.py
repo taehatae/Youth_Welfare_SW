@@ -106,11 +106,20 @@ class PersonalizedConditionGuide(BaseModel):
     guide_kind: Literal["state_change"] = "state_change"
 
 
+class PrivateConditionDifficulty(BaseModel):
+    path_id: str
+    condition_index: int = Field(ge=0)
+    difficulty: float | None = Field(default=None, ge=0, allow_inf_nan=False)
+    difficulty_group: str | None = None
+
+
 class ConditionGuideViewResponse(BaseModel):
     profile_key: str
     checked_at: str
     policy_id: str
     items: list[PersonalizedConditionGuide] = Field(default_factory=list)
+    difficulties: list[PrivateConditionDifficulty] = Field(default_factory=list)
+    unavailable_reason: str | None = None
 
 
 class SavedPolicyToggle(BaseModel):

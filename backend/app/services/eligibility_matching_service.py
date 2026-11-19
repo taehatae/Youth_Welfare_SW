@@ -1048,6 +1048,7 @@ class EligibilityMatchingService:
             "blocked_by_common": [],
             "preferences": [],
             "path_review": None,
+            "evaluation_context": None,
             "policy_id": service.serv_id,
             "title": service.serv_name,
             "status": status,

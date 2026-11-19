@@ -2,10 +2,10 @@ import { useId, useState } from "react"
 import { safeOfficialUrl } from "../../services/analysisSession"
 import { conditionStep } from "../../services/profileSummary"
 import type { PolicyRow } from "../../services/policyResults"
-import { samePolicyText, stateChangeGuide, guideTargetKey, gapKey, otherPathDetails, pathCards, type GuideLine, type PathCard, type PathTab } from "../../services/conditionGuidance"
+import { samePolicyText, stateChangeGuide, guideTargetKey, gapKey, otherPathDetails, pathCards, type GuideLine, type PathCard, type PathTab, type PrivateDifficulties } from "../../services/conditionGuidance"
 import PersonalizedGuideAccess from "./PersonalizedGuideAccess"
 import DifficultySettings from "./DifficultySettings"
-import { useDifficultyPrefs } from "../../services/difficultyPrefs"
+import { useDifficultyPrefs, getDifficultyPrefs } from "../../services/difficultyPrefs"
 import type { ConditionGuideTarget } from "../../types/welfareApi"
 
 export const statusLabels = {
@@ -43,10 +43,10 @@ export const isUnverified = (policy: PolicyRow) =>
 const STATUS_OF_TAB = { passed: "passed", failed: "failed", review: "needs_review" } as const
 // 탭 숫자: 대표 경로 결과 + 다른 경로에서 합친 조건(+ 다른 경로의 확인 사항).
 // 미충족·추가 확인 숫자는 가장 가까운 경로 기준이다(카드에 크게 보이는 경로와 같게).
-const tabCounts = (policy: PolicyRow) => {
+const tabCounts = (policy: PolicyRow, scores?: PrivateDifficulties) => {
   const base = policy.counts ?? { passed: 0, failed: 0, review: 0 }
   const other = otherPathDetails(policy.paths, policy.matchedPathId)
-  const best = pathCards(policy.paths).best[0]
+  const best = pathCards(policy.paths, "failed", getDifficultyPrefs(), scores, policy.matchedPathId).best[0]
   if (!best) return { ...base, passed: base.passed + other.conditions.filter((c) => c.status === STATUS_OF_TAB.passed).length }
   return { passed: best.passedLines.length, failed: best.failed.length, review: best.review.length + best.checks.length }
 }
@@ -63,10 +63,10 @@ const pathBrief = (policy: PolicyRow): string | null => {
   }
   if (policy.blockedByCommon?.length)
     return `공통 조건 미충족: ${policy.blockedByCommon.join(", ")}`
-  const { best } = pathCards(paths)
+  const { best } = pathCards(paths, "failed", getDifficultyPrefs(), undefined, policy.matchedPathId)
   if (best[0]?.failed.length) {
     const fields = [...new Set(best[0].failed.map((l) => l.field))].join(", ")
-    return `추천 경로 '${best[0].label}': ${fields} 미충족 · 경로 ${paths.length}개`
+    return `대표 경로 '${best[0].label}': ${fields} 미충족 · 경로 ${paths.length}개`
   }
   const failedTypes = path.conditions
     .filter((c) => c.status === "failed")
@@ -157,16 +157,19 @@ function GuideItem({ line, text, personal, onEdit, busy, showCommon = false }: {
   )
 }
 // 경로 카드 하나. 미충족 탭은 고칠 조건 전부를, 추가 확인 탭은 입력할 정보와 확인 사항을 보여준다.
-function PathCardView({ card, tab, single, best, personal, onEdit, busy }: {
+function PathCardView({ card, tab, single, best, scored, personal, onEdit, busy }: {
   card: PathCard; tab: PathTab; single: boolean; best: boolean
+  scored: boolean
   personal: ReadonlyMap<string, string>; onEdit?: (step: number) => void; busy: boolean
 }) {
   const reviewCount = card.review.length + card.checks.length
+  const failedConditions = card.failed.length > 1 ? `위 ${card.failed.length}개를 모두` : "이 조건을"
+  const rankedRecommendation = tab === "failed" && scored && card.failed.length > 0 && !card.impossible
   return (
     <section className="path-guide" data-best={best || undefined}>
       {!single && (
         <h4>
-          {best && <span className="path-guide-badge">{card.failed.length ? "추천 · 개선 난이도가 가장 낮아요" : "가장 가까운 경로"}</span>}
+          {best && <span className="path-guide-badge">{rankedRecommendation ? "현재 설정 기준 추천 경로" : "대표 경로"}</span>}
           {card.labels.join(' · ')} 경로
           <small>{card.labels.length > 1 ? `경로 ${card.labels.length}개 · ` : ''}미충족 {card.failed.length}개{card.labels.length > 1 ? '' : ` · 추가 확인 ${reviewCount}개`}{tab === "failed" && card.difficulty ? ` · 난이도 ${card.difficulty}점` : ""}</small>
         </h4>
@@ -176,8 +179,10 @@ function PathCardView({ card, tab, single, best, personal, onEdit, busy }: {
           <>
             <ol>{card.failed.map((l) => <GuideItem key={l.key} line={l} personal={personal} onEdit={onEdit} busy={busy} showCommon={!single} />)}</ol>
             <p className="path-guide-conclusion">
-              {card.failed.length > 1 ? `위 ${card.failed.length}개를 모두 충족하면` : "이 조건을 충족하면"} 이 경로의 비교 조건을 모두 충족해요.
-              {reviewCount > 0 && card.labels.length === 1 && ` 추가 확인 ${reviewCount}개는 '추가 확인' 탭에서 볼 수 있어요.`}
+              {card.hasUnverifiedComparisons
+                ? `${failedConditions} 충족해도 아직 확인하지 못한 비교 조건이 있어요. ${card.labels.length > 1 ? "경로별로 추가 확인이 필요해요." : "'추가 확인' 탭에서 확인하세요."}`
+                : `${failedConditions} 충족하면 ${card.labels.length > 1 ? "이 경로들의" : "이 경로의"} 비교 조건을 모두 충족해요.`}
+              {card.hasOfficialChecks && " 별도 확인 사항은 공식 안내에서 확인하세요."}
             </p>
           </>
         ) : (
@@ -220,14 +225,15 @@ function PathCardView({ card, tab, single, best, personal, onEdit, busy }: {
   )
 }
 // 경로가 있는 정책의 미충족·추가 확인 탭: 가장 가까운 경로만 크게, 나머지는 '다른 경로 확인하기'에 접어 둔다.
-function PathCards({ policy, tab, personal, onEdit, busy = false }: {
+function PathCards({ policy, tab, personal, scores, onEdit, busy = false }: {
   policy: PolicyRow; tab: PathTab; personal: ReadonlyMap<string, string>
+  scores: PrivateDifficulties
   onEdit?: (step: number) => void; busy?: boolean
 }) {
-  const { best, others, hidden, allImpossible } = pathCards(policy.paths, tab)
+  const { best, others, hidden, allImpossible, scored } = pathCards(policy.paths, tab, getDifficultyPrefs(), scores, policy.matchedPathId)
   const single = (policy.paths?.length ?? 0) < 2
   const view = (card: PathCard, isBest: boolean) => (
-    <PathCardView key={card.pathId} card={card} tab={tab} single={single} best={isBest && !single}
+    <PathCardView key={card.pathId} card={card} tab={tab} single={single} best={isBest && !single} scored={scored}
       personal={personal} onEdit={onEdit} busy={busy} />
   )
   return (
@@ -235,7 +241,7 @@ function PathCards({ policy, tab, personal, onEdit, busy = false }: {
       {allImpossible && <p className="condition-scope-note">시간이 지나도 다시 충족할 수 없는 조건 때문에 이 정책에는 해당하지 않아요.</p>}
       {best.map((c) => view(c, true))}
       {tab === "failed" && !single && best[0]?.failed.length > 0 && (
-        <DifficultySettings />
+        <DifficultySettings disabled={!scored} />
       )}
       {!!others.length && (
         <details className="other-path-cards">
@@ -266,13 +272,13 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
   const mainLabel = policy.paths?.find((p) => p.path_id === policy.matchedPathId)?.label
   return (
     <PersonalizedGuideAccess key={tab === "failed" && guideTarget ? guideTargetKey(guideTarget) : tab}
-      target={tab === "failed" ? guideTarget : undefined}>{(personalGuides) => <>
+      target={tab === "failed" ? guideTarget : undefined}>{(personalGuides, scores) => <>
       <p className="condition-panel-title">
         {conditionTabs.find(([kind]) => kind === tab)![1]} 조건{" "}
-        <b>{pathMode ? tabCounts(policy)[tab] : shown.length + otherRows.length + (tab === "review" ? other.checks.length : 0)}</b>
+        <b>{pathMode ? tabCounts(policy, scores)[tab] : shown.length + otherRows.length + (tab === "review" ? other.checks.length : 0)}</b>
       </p>
       {pathMode && (
-        <PathCards policy={policy} tab={tab} personal={personalGuides} onEdit={onEdit} busy={busy} />
+        <PathCards policy={policy} tab={tab} personal={personalGuides} scores={scores} onEdit={onEdit} busy={busy} />
       )}
       {pathMode ? null : shown.length ? (
         groupsOf(tab, shown).map(([title, rows]) => (

@@ -29,6 +29,38 @@ test("경로에서 가져온 안내도 미충족 카드에서 숨기지 않는�
 
 const panel = (p, tab = "failed") => renderToStaticMarkup(h(Card.PolicyConditionPanel, { policy: p, tab, onEdit() {} }))
 
+test("미확인 비교 조건과 공식 확인 사항을 각각 안내하고 비교 조건 전체 충족을 단정하지 않는다", () => {
+  const main = policy.paths[0]
+  const missing = { ...main.conditions[0], condition_type: "혼인 상태", status: "needs_review" }
+  const html = panel({ ...policy, paths: [{ ...main, conditions: [...main.conditions, missing], checks: ["서류 심사"] }] })
+  assert.match(html, /이 조건을 충족해도 아직 확인하지 못한 비교 조건이 있어요/)
+  assert.match(html, /별도 확인 사항은 공식 안내에서 확인하세요/)
+  assert.doesNotMatch(html, /비교 조건을 모두 충족해요/)
+})
+
+test("합쳐 보이는 경로 중 하나에 미확인 비교 조건이 있으면 전체 충족을 단정하지 않는다", () => {
+  const main = policy.paths[0], same = main.conditions[0]
+  const missing = { ...same, condition_type: "혼인 상태", status: "needs_review" }
+  const html = panel({ ...policy, paths: [
+    { ...main, rank: 0 },
+    { ...main, path_id: "a", label: "가", rank: 1, conditions: [same] },
+    { ...main, path_id: "b", label: "나", rank: 2, conditions: [same, missing] },
+  ] })
+  const others = html.slice(html.indexOf("가 · 나 경로"))
+  assert.match(others, /경로별로 추가 확인이 필요해요/)
+  assert.doesNotMatch(others, /비교 조건을 모두 충족해요/)
+})
+
+test("전용 점수가 없으면 이전 응답에 점수가 있어도 대표 경로만 표시한다", () => {
+  const main = policy.paths[0], failed = { ...main.conditions[0], difficulty: 5 }
+  const html = panel({ ...policy, paths: [
+    { ...main, rank: 0, conditions: [failed], difficulty: 5 },
+    { ...main, path_id: "alt", label: "대안", rank: 1, conditions: [failed], difficulty: 1 },
+  ] })
+  assert.match(html, /class="path-guide-badge">대표 경로</)
+  assert.doesNotMatch(html, /난이도가 가장 낮아요|현재 설정 기준 추천 경로|난이도 [0-9.]+점/)
+})
+
 test("미충족 탭은 조건 카드 대신 역설계 문장과 입력 확인만 한 번 표시한다", () => {
   const html = panel(policy)
   assert.equal((html.match(new RegExp(guide, "g")) ?? []).length, 1)
@@ -67,12 +99,12 @@ test("가장 가까운 경로 카드에 공통 미충족까지 번호로 모두 
     { ...policy.paths[0], path_id: "b", label: "나", rank: 0, conditions: [common, own("소득", "소득 기준")], checks: ["서류 심사"] },
   ] }
   const before = JSON.stringify(p), html = panel(p)
-  const best = html.indexOf("추천 · 개선 난이도가 가장 낮아요"), more = html.indexOf("다른 경로 확인하기 (1)")
+  const best = html.indexOf('class="path-guide-badge">대표 경로'), more = html.indexOf("다른 경로 확인하기 (1)")
   assert.ok(best > -1 && more > best && html.indexOf("가 경로") > more)
   assert.ok(html.indexOf("공통</span>") > best && html.indexOf("공통</span>") < more)
   assert.ok(html.indexOf("소득 안내") < more)
   assert.match(html, /위 2개를 모두 충족하면 이 경로의 비교 조건을 모두 충족해요/)
-  assert.match(html, /추가 확인 1개는/)
+  assert.match(html, /별도 확인 사항은 공식 안내에서 확인하세요/)
   for (const t of ["고용 안내", "재산 안내"]) assert.ok(html.indexOf(t) > more)
   assert.equal(JSON.stringify(p), before)
 })

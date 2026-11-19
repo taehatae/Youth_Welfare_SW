@@ -1,4 +1,4 @@
-import type { ConditionGuideTarget, EligibilityPathAnalysis, PrivateConditionGuides } from "../types/welfareApi"
+import type { ConditionGuideTarget, EligibilityPathAnalysis, PrivateConditionGuides, PrivateConditionDifficulty } from "../types/welfareApi"
 import { getDifficultyPrefs, weighted, type DifficultyPrefs } from "./difficultyPrefs"
 
 // 안내를 생성하거나 조건을 재판정하지 않는다. 백엔드가 인증한 변화 안내의 표시만 결정한다.
@@ -20,6 +20,12 @@ export function stateChangeGuide(
 export const gapKey = (index: number) => `gap:${index}`
 export const pathConditionKey = (pathId: string, index: number) => `path:${pathId}:${index}`
 const validIndex = (n: unknown): n is number => Number.isInteger(n) && (n as number) >= 0
+export type PrivateDifficulties = ReadonlyMap<string, PrivateConditionDifficulty>
+const difficultyKey = (r: PrivateConditionDifficulty) => pathConditionKey(r.path_id, r.condition_index)
+const validDifficulty = (r: PrivateConditionDifficulty) => r != null && typeof r === "object" && typeof r.path_id === "string" && !!r.path_id
+  && validIndex(r.condition_index) && (r.difficulty === null ||
+    (typeof r.difficulty === "number" && Number.isFinite(r.difficulty) && r.difficulty >= 0))
+  && (r.difficulty_group === null || ["apply", "money", "time", "life", "family", "identity", "other"].includes(r.difficulty_group))
 function guideKey(r: PrivateConditionGuides["items"][number]): string | null {
   if (validIndex(r.gap_index) && r.path_id == null) return gapKey(r.gap_index)
   if (r.gap_index == null && typeof r.path_id === "string" && r.path_id && validIndex(r.condition_index))
@@ -35,7 +41,14 @@ export function createPrivateGuideSession() {
   let generation = 0
   let activeKey = ""
   let items = new Map<string, string>()
-  const clear = () => { generation++; activeKey = ""; items = new Map() }
+  let difficulties = new Map<string, PrivateConditionDifficulty>()
+  let unavailableReason: string | null = null
+  const clear = () => {
+    generation++; activeKey = ""
+    // 이전 렌더/비동기 콜백이 잡고 있는 참조에서도 읽을 수 없게 비운다.
+    items.clear(); difficulties.clear()
+    items = new Map(); difficulties = new Map(); unavailableReason = null
+  }
   return {
     clear,
     begin(target: ConditionGuideTarget) {
@@ -50,13 +63,26 @@ export function createPrivateGuideSession() {
           response.profile_key !== target.profile_key || response.checked_at !== target.checked_at || response.policy_id !== target.policy_id ||
           !Array.isArray(response.items) || response.items.some((r) => guideKey(r) === null ||
             r.guide_kind !== "state_change" || typeof r.condition_guide !== "string" || !r.condition_guide.trim()) ||
-          new Set(response.items.map(guideKey)).size !== response.items.length) return false
+          new Set(response.items.map(guideKey)).size !== response.items.length ||
+          !Array.isArray(response.difficulties ?? []) || (response.difficulties ?? []).some(r => !validDifficulty(r)) ||
+          new Set((response.difficulties ?? []).map(difficultyKey)).size !== (response.difficulties ?? []).length) return false
+      items.clear(); difficulties.clear()
       items = new Map(response.items.map((r) => [guideKey(r)!, r.condition_guide]))
+      difficulties = new Map((response.difficulties ?? []).map(r => [difficultyKey(r), { ...r }]))
+      unavailableReason = response.unavailable_reason ?? null
       return true
     },
     read(target: ConditionGuideTarget): ReadonlyMap<string, string> {
       if (guideTargetKey(target) !== activeKey) clear()
       return items
+    },
+    readDifficulties(target: ConditionGuideTarget): PrivateDifficulties {
+      if (guideTargetKey(target) !== activeKey) clear()
+      return difficulties
+    },
+    reason(target: ConditionGuideTarget) {
+      if (guideTargetKey(target) !== activeKey) clear()
+      return unavailableReason
     },
   }
 }
@@ -94,7 +120,8 @@ export function createPrivateGuideLoader(
       }
       changed()
     },
-    read(target: ConditionGuideTarget) { return { guides: session.read(target), status, error } },
+    read(target: ConditionGuideTarget) { return { guides: session.read(target),
+      difficulties: session.readDifficulties(target), unavailableReason: session.reason(target), status, error } },
   }
 }
 
@@ -102,7 +129,7 @@ export type GuideLine = { key: string; field: string; required: string; evidence
   guideKind?: "state_change" | null; common: boolean }
 export type PathCard = { pathId: string; label: string; labels: string[]; rank: number; impossible: boolean; statusRank: number
   difficulty: number | null; failed: GuideLine[]; review: GuideLine[]; checks: string[]; passed: string[]
-  passedLines: GuideLine[] }
+  passedLines: GuideLine[]; hasUnverifiedComparisons: boolean; hasOfficialChecks: boolean }
 export type PathTab = "failed" | "review" | "passed"
 
 
@@ -115,7 +142,13 @@ function mergeSame(cards: PathCard[], tab: PathTab): PathCard[] {
   const out: PathCard[] = [], seen = new Map<string, PathCard>()
   for (const card of cards) {
     const key = signature(card, tab), found = seen.get(key)
-    if (found) { found.labels.push(card.label); found.passed = []; continue }
+    if (found) {
+      found.labels.push(card.label)
+      found.passed = []
+      found.hasUnverifiedComparisons ||= card.hasUnverifiedComparisons
+      found.hasOfficialChecks ||= card.hasOfficialChecks
+      continue
+    }
     const copy = { ...card, labels: [card.label] }
     seen.set(key, copy); out.push(copy)
   }
@@ -128,17 +161,26 @@ function mergeSame(cards: PathCard[], tab: PathTab): PathCard[] {
 // 시간이 지나도 다시 충족할 수 없는 경로(나이 상한 초과 등)는 숨긴다. 모든 경로가 그렇다면 이유를 보여주려고 남긴다.
 const STATUS_RANK: Record<string, number> = { eligible: 0, needs_review: 1, ineligible: 2 }
 export function pathCards(paths: EligibilityPathAnalysis[] | undefined, tab: PathTab = "failed",
-  prefs: DifficultyPrefs = getDifficultyPrefs()) {
-  const cards: PathCard[] = (paths ?? []).map((path) => {
+  prefs: DifficultyPrefs = getDifficultyPrefs(), privateScores: PrivateDifficulties = new Map(), matchedPathId?: string | null) {
+  const cards: PathCard[] = (paths ?? []).map((path, pathIndex) => {
     const pick = (status: string) => path.conditions.flatMap((c, i) => c.status === status ? [{
       key: pathConditionKey(path.path_id, i), field: c.condition_type, required: c.required_value, evidence: c.evidence,
       guide: c.condition_guide, guideKind: c.guide_kind, common: !!c.common }] : [])
       .sort((a, b) => Number(b.common) - Number(a.common))
-    const failed = pick("failed")
-    const score = path.conditions.reduce((sum, c) => sum + (c.status === "failed" ? weighted(c.difficulty, c.difficulty_group, prefs) : 0), 0)
+    const failed = pick("failed"), review = pick("needs_review")
+    const failedRows = path.conditions.flatMap((c, i) => c.status === "failed" ? [{ c, i }] : [])
+    const complete = failedRows.every(({ c, i }) => {
+      const score = privateScores.get(pathConditionKey(path.path_id, i))
+      return score != null && (score.difficulty != null || c.impossible === true)
+    })
+    const score = complete ? failedRows.reduce((sum, { i }) => {
+      const row = privateScores.get(pathConditionKey(path.path_id, i))!
+      return sum + weighted(row.difficulty, row.difficulty_group, prefs)
+    }, 0) : null
     return { pathId: path.path_id, label: path.label, labels: [path.label], impossible: !!path.impossible,
-      difficulty: path.difficulty == null ? null : Math.round(score * 100) / 100, statusRank: STATUS_RANK[path.status] ?? 2,
-      rank: path.rank ?? failed.length, failed, review: pick("needs_review"), checks: path.checks, passedLines: pick("passed"),
+      difficulty: score == null ? null : Math.round(score * 100) / 100, statusRank: STATUS_RANK[path.status] ?? 2,
+      rank: path.rank ?? (path.path_id === matchedPathId ? -1 : pathIndex), failed, review, checks: path.checks, passedLines: pick("passed"),
+      hasUnverifiedComparisons: review.length > 0, hasOfficialChecks: path.checks.length > 0,
       passed: path.conditions.filter((c) => c.status === "passed").map((c) => c.condition_type) }
   })
   const possible = cards.filter((c) => !c.impossible)
@@ -150,7 +192,7 @@ export function pathCards(paths: EligibilityPathAnalysis[] | undefined, tab: Pat
       // 난이도 점수가 없는 이전 결과가 섞이면 다시 매기지 않고 백엔드 순위를 따른다.
       || (scored ? (a.difficulty ?? 0) - (b.difficulty ?? 0) || a.failed.length - b.failed.length : 0)
       || a.rank - b.rank || i - j).map(([c]) => c)
-  return { best: sorted.slice(0, 1), others: mergeSame(sorted.slice(1), tab),
+  return { best: sorted.slice(0, 1), others: mergeSame(sorted.slice(1), tab), scored,
     hidden: possible.length ? cards.length - possible.length : 0, allImpossible: !possible.length && !!cards.length }
 }
 
