@@ -131,6 +131,8 @@ class EligibilityAnalysis(BaseModel):
     blocked_by_common: list[str] = Field(default_factory=list)
     preferences: list[str] = Field(default_factory=list)
     path_review: Literal["reviewed", "converted"] | None = None
+    # 서버 진단 연결 검증용. 기본 API 응답에서는 비운다. 이전 스냅샷은 None.
+    evaluation_context: dict | None = None
 
 
 class MatchedPoliciesResponse(BaseModel):

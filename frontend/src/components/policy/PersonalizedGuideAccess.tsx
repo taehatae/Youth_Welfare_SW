@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import type { ConditionGuideTarget } from "../../types/welfareApi"
-import { createPrivateGuideLoader, guideTargetKey } from "../../services/conditionGuidance"
+import { createPrivateGuideLoader, guideTargetKey, type PrivateDifficulties } from "../../services/conditionGuidance"
 import { subscribeApiIdentityChange, viewConditionGuides } from "../../services/welfareApi"
 
 // 맞춤 안내는 정책/스냅샷/영구 저장소에 합치지 않고 열린 미충족 탭에서만 사용한다.
 export default function PersonalizedGuideAccess({ target, children }: {
-  target?: ConditionGuideTarget; children: (guides: ReadonlyMap<string, string>) => ReactNode
+  target?: ConditionGuideTarget; children: (guides: ReadonlyMap<string, string>, difficulties: PrivateDifficulties) => ReactNode
 }) {
   const loader = useRef<ReturnType<typeof createPrivateGuideLoader> | null>(null)
   const key = target ? guideTargetKey(target) : ""
@@ -45,7 +45,8 @@ export default function PersonalizedGuideAccess({ target, children }: {
       <p className="condition-scope-note">역설계 안내는 조건 하나를 기준으로 한 설명이며 신청 자격을 보장하지 않아요. 진단 당시 입력값 기준이에요.</p>
       {state?.status === "loading" && <p role="status" className="condition-scope-note">맞춤 안내를 불러오는 중이에요.</p>}
       {state?.error && <p role="alert" className="auth-error">{state.error}</p>}
+      {state?.unavailableReason && <p className="condition-scope-note">저장 당시 조건과 현재 조건의 동일성을 확인할 수 없어 맞춤 안내·난이도 재계산을 생략했어요. 기존 진단 결과는 그대로 표시합니다.</p>}
     </div>}
-    {children(state?.guides ?? new Map<string, string>())}
+    {children(state?.guides ?? new Map<string, string>(), state?.difficulties ?? new Map())}
   </>
 }

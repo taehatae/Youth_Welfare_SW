@@ -9,6 +9,7 @@ from app.repositories.account_repository import AccountRepository
 from app.schemas.account import WorkspaceState
 from app.schemas.user import UserProfileCreate
 from app.services.eligibility_matching_service import EligibilityMatchingService
+from app.services.profile_privacy import without_difficulty
 
 
 class AccountService:
@@ -30,7 +31,7 @@ class AccountService:
         profile = profile.model_copy(update={"eligibility_conditions": profile.eligibility_conditions or {}})
         try:
             user = self.repository.save_profile(db, account, profile) if is_diagnosis else db.get(User, account.profile_id)
-            result = self.matching.analyze_user(db, user, profile.eligibility_conditions)
+            result = without_difficulty(self.matching.analyze_user(db, user, profile.eligibility_conditions))
             # 상세 링크는 전체 분석 결과에 제공된다.
             urls = {row["policy_id"]: row["detail_url"] for row in result["analysis_results"]}
             for policy in result["policies"]:

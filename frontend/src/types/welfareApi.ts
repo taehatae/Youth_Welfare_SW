@@ -262,4 +262,14 @@ export interface PrivateConditionGuides {
   // gap_index: 대표 경로 미충족 순번. 경로별 안내는 path_id + condition_index(경로 조건 순번)로 가리킨다.
   items: { gap_index?: number | null; path_id?: string | null; condition_index?: number | null
     condition_guide: string; guide_kind: "state_change" }[]
+  difficulties?: PrivateConditionDifficulty[]
+  unavailable_reason?: string | null
+}
+
+// 로그인 전용 응답의 메모리 데이터. PolicyRow/스냅샷에 병합하지 않는다.
+export interface PrivateConditionDifficulty {
+  path_id: string
+  condition_index: number
+  difficulty: number | null
+  difficulty_group: string | null
 }

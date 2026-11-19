@@ -68,6 +68,4 @@ welfare-policies.json (정책 원문)
 ## 작업 규칙
 
 - **커밋·푸시는 그 요청에서 명시적으로 부탁받았을 때만 한다.** 수정 요청은 수정·검증까지만 하고 커밋 여부를 묻는다.
-- 작업 브랜치는 `Jang`, PR은 `dev`로.
-- `.claude/`, `optimizer_comparison.*`, `presentation/`은 커밋하지 않는다.
 - 응답은 한국어로, 짧고 쉬운 문장으로.

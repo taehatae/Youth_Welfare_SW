@@ -206,7 +206,8 @@ test("경로 카드: 순위 0 하나만 추천, 나머지는 같은 내용끼리
     path("예비신혼", 2, [age, row("혼인 기간", "failed")]),
     path("청소년", 4, [row("만 나이", "failed", { impossible: true })], { impossible: true }),
   ])
-  assert.deepEqual(best.map((c) => [c.label, c.difficulty]), [["신혼", 3]])
+  // 정책 객체의 과거 점수는 사용하지 않는다. 전용 점수 전에는 저장 순위를 유지한다.
+  assert.deepEqual(best.map((c) => [c.label, c.difficulty]), [["신혼", null]])
   assert.deepEqual(others.map((c) => c.labels), [["장애인", "예비신혼"], ["청년"]])
   assert.equal(hidden, 1)
   assert.deepEqual(others[1].failed.map((l) => [l.field, l.key, l.common]),
@@ -243,9 +244,12 @@ test("사용자가 조건 종류별 난이도를 바꾸면 추천 경로가 다�
   const paths = [path("신혼부부", 0, [row("가구 총재산", 3.6, "money"), row("자동차가액", 2.8, "money")]),
                  path("청년", 1, [row("혼인 상태", 8, "family")])]
   const base = { apply: 3, money: 3, time: 3, life: 3, family: 3, identity: 3 }
-  assert.equal(Guidance.pathCards(paths, "failed", base).best[0].label, "신혼부부")
+  const privateScores = new Map(paths.flatMap(p => p.conditions.map((c, i) =>
+    [Guidance.pathConditionKey(p.path_id, i), { path_id: p.path_id, condition_index: i,
+      difficulty: c.difficulty, difficulty_group: c.difficulty_group }])))
+  assert.equal(Guidance.pathCards(paths, "failed", base, privateScores).best[0].label, "신혼부부")
   // 금액 조건을 '아주 어려움'(×4)으로 바꾸면 6.4×4=25.6 > 8 이라 청년 경로가 추천된다.
-  const hardMoney = Guidance.pathCards(paths, "failed", { ...base, money: 5 })
+  const hardMoney = Guidance.pathCards(paths, "failed", { ...base, money: 5 }, privateScores)
   assert.equal(hardMoney.best[0].label, "청년")
   assert.equal(hardMoney.others[0].difficulty, 25.6)
 })

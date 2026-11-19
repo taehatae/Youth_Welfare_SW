@@ -1,12 +1,8 @@
 """로그인 전용 설명. 반환 문장은 공개 진단/스냅샷에 넣거나 로그·DB에 저장하지 않는다."""
-from datetime import date, datetime
-from types import SimpleNamespace
-
 from sqlalchemy.orm import Session
 
-from app.models.eligibility_path import COMMON_PATH, PolicyEligibility
+from app.models.eligibility_path import PolicyEligibility
 from app.models.welfare_service import WelfareService
-from app.services import eligibility_path_service as paths
 from app.services import structured_condition_service as base
 
 
@@ -82,84 +78,53 @@ def personalized_guide(c: dict, current, profile: dict | None = None) -> str | N
         return None
 
 
-def snapshot_guides(db: Session, snapshot: dict, policy_id: str) -> list[dict]:
-    """저장 진단과 현 구조가 정확히 연결되는 gap만 설명하고 저장 결과를 바꾸지 않는다."""
+
+def snapshot_details(db: Session, snapshot: dict, policy_id: str) -> dict:
+    """검증된 진단에서만 안내/점수를 일시 생성한다. 저장이나 재판정은 하지 않는다."""
+    from app.services.eligibility_snapshot_context import validate_snapshot
+    empty = {"items": [], "difficulties": [], "unavailable_reason": None}
     analyses = snapshot.get("analysis", {}).get("matched", {}).get("analysis_results", [])
-    analysis = next((a for a in analyses if a.get("policy_id") == policy_id), None)
-    if not analysis:
-        return []
-    stored_path = next((p for p in analysis.get("eligibility_paths", [])
-                        if p["path_id"] == analysis.get("matched_path_id")), None)
+    found = [a for a in analyses if a.get("policy_id") == policy_id]
     record = db.get(PolicyEligibility, policy_id)
     service = db.get(WelfareService, policy_id)
-    if (not stored_path or not record or not service or record.status != "reviewed"
-            or record.drafted_by == "converted" or record.source_sha256 != base.source_hash(service)):
-        return []
-    selected = next((p for p in record.paths if p.path_key == stored_path["path_id"]), None)
-    common = next((p for p in record.paths if p.path_key == COMMON_PATH), None)
-    profile = snapshot.get("profile")
-    if selected is None or not isinstance(profile, dict):
-        return []
-    try:
-        values = base.user_values(SimpleNamespace(**profile), profile.get("eligibility_conditions"))
-        same_year = datetime.fromisoformat(snapshot["checkedAt"].replace("Z", "+00:00")).year == date.today().year
-    except (TypeError, ValueError, KeyError, AttributeError):
-        return []
-    conditions = (common.conditions if common and common is not selected else []) + selected.conditions
-    result = []
-    for index, gap in enumerate(analysis.get("gap_conditions", [])):
-        if gap.get("source_field") != "eligibility_path" or gap.get("status") != "failed":
-            continue
-        def matches_row(r):
-            return (r.get("condition_type") == gap.get("condition_type") and r.get("status") == "failed"
-                    and r.get("required_value") == gap.get("required_value")
-                    and (r.get("evidence") or r.get("required_value")) == gap.get("source_text"))
-        stored = [r for r in stored_path["conditions"] if matches_row(r)]
-        candidates = [c for c in conditions if c.field == gap.get("condition_type")
-                      and base.describe(paths._condition(c)) == gap.get("required_value")
-                      and (c.evidence or base.describe(paths._condition(c))) == gap.get("source_text")]
-        if len(stored) != 1 or len(candidates) != 1:
-            continue
-        c = paths._condition(candidates[0])
-        if not same_year and ("소득" in c["field"] and c["unit"] == "%"):
+    if (len(found) != 1 or not record or not service or record.status != "reviewed"
+            or record.drafted_by == "converted"):
+        return {**empty, "unavailable_reason": "policy_unavailable"}
+    analysis = found[0]
+    validated, reason = validate_snapshot(snapshot, analysis, service, record)
+    if validated is None:
+        return {**empty, "unavailable_reason": reason}
+    verified, values = validated
+    items, difficulties = [], []
+    for path_id, index, c, row in verified:
+        if row.get("status") != "failed":
             continue
         current = values.get(c["field"])
-        if stored[0].get("current_value") != base.show(c["field"], current):
+        hard = base.difficulty(c, current)
+        difficulties.append({"path_id": path_id, "condition_index": index, "difficulty": hard,
+                             "difficulty_group": base.difficulty_group(c) if hard is not None else None})
+        text = personalized_guide(c, current, snapshot["profile"])
+        if not text:
             continue
-        text = personalized_guide(c, current, profile)
-        if text:
-            result.append({"gap_index": index, "condition_guide": text, "guide_kind": "state_change"})
-    result += _path_guides(analysis, record, common, values, profile, same_year)
-    return result
+        items.append({"gap_index": None, "path_id": path_id, "condition_index": index,
+                      "condition_guide": text, "guide_kind": "state_change"})
+        if path_id != analysis.get("matched_path_id"):
+            continue
+        for gap_index, gap in enumerate(analysis.get("gap_conditions", [])):
+            if (gap.get("source_field") == "eligibility_path" and gap.get("status") == "failed"
+                    and gap.get("condition_type") == row["condition_type"]
+                    and gap.get("required_value") == row["required_value"]
+                    and gap.get("source_text") == (row["evidence"] or row["required_value"])):
+                matches = [r for pid, _, _, r in verified if pid == path_id and r.get("status") == "failed"
+                           and r["condition_type"] == gap["condition_type"]
+                           and r["required_value"] == gap["required_value"]
+                           and (r["evidence"] or r["required_value"]) == gap["source_text"]]
+                if len(matches) == 1:
+                    items.append({"gap_index": gap_index, "condition_guide": text, "guide_kind": "state_change"})
+    # 기존 클라이언트의 대표 gap 안내 순서는 유지한다.
+    items.sort(key=lambda item: (item.get("gap_index") is None, item.get("gap_index") or 0))
+    return {"items": items, "difficulties": difficulties, "unavailable_reason": None}
 
 
-def _path_guides(analysis: dict, record, common, values: dict, profile: dict, same_year: bool) -> list[dict]:
-    """모든 경로의 미충족 조건에 맞춤 안내를 붙인다. 저장 행과 현재 경로 조건이 순서·항목·기준까지 같을 때만."""
-    out = []
-    for stored in analysis.get("eligibility_paths", []):
-        if stored.get("path_id") == COMMON_PATH:
-            conditions = common.conditions if common else []
-        else:
-            selected = next((p for p in record.paths if p.path_key == stored.get("path_id")), None)
-            if selected is None:
-                continue
-            conditions = (common.conditions if common else []) + selected.conditions
-        rows = stored.get("conditions", [])
-        if len(rows) != len(conditions):
-            continue
-        for index, (row, raw) in enumerate(zip(rows, conditions)):
-            if row.get("status") != "failed":
-                continue
-            c = paths._condition(raw)
-            if c["field"] != row.get("condition_type") or base.describe(c) != row.get("required_value"):
-                continue
-            if not same_year and ("소득" in c["field"] and c["unit"] == "%"):
-                continue
-            current = values.get(c["field"])
-            if row.get("current_value") != base.show(c["field"], current):
-                continue
-            text = personalized_guide(c, current, profile)
-            if text:
-                out.append({"gap_index": None, "path_id": stored["path_id"], "condition_index": index,
-                            "condition_guide": text, "guide_kind": "state_change"})
-    return out
+def snapshot_guides(db: Session, snapshot: dict, policy_id: str) -> list[dict]:
+    return snapshot_details(db, snapshot, policy_id)["items"]

@@ -15,10 +15,20 @@ def profile_key(account: Account, profile: dict) -> str:
 
 def hide_input_values(value):
     if isinstance(value, dict):
-        return {key: "프로필 보호 중" if key in {"current_value", "current"} and isinstance(item, str)
+        return {key: None if key in {"difficulty", "evaluation_context"}
+                else "프로필 보호 중" if key in {"current_value", "current"} and isinstance(item, str)
                 else hide_input_values(item) for key, item in value.items()}
     if isinstance(value, list):
         return [hide_input_values(item) for item in value]
+    return value
+
+
+def without_difficulty(value):
+    """새 분석의 영구 저장 투영. 원본과 진단 당시 프로필/검증 지문은 보존한다."""
+    if isinstance(value, dict):
+        return {k: None if k == "difficulty" else without_difficulty(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [without_difficulty(v) for v in value]
     return value
 
 
