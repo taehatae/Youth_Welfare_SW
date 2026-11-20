@@ -84,6 +84,12 @@ export default function HomePage({
                 내 자격 진단하기 <span aria-hidden="true">↗</span>
               </button>
               <button
+                onClick={() => setPage("quick")}
+                className="youth-secondary"
+              >
+                로그인 없이 간편 정책 찾기 <span aria-hidden="true">→</span>
+              </button>
+              <button
                 onClick={() => setPage("dashboard")}
                 className="youth-secondary"
               >

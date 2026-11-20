@@ -6,6 +6,7 @@ from app.api.routes.users import router as users_router
 from app.api.routes.welfare import router as welfare_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.policies import router as policies_router
+from app.api.routes.quick_finder import router as quick_finder_router
 from app.core.config import settings
 from app.database.connection import Base, engine
 
@@ -64,6 +65,7 @@ app.add_middleware(
 # API Router 등록
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(policies_router, prefix="/api/v1")
+app.include_router(quick_finder_router, prefix="/api/v1")
 app.include_router(
     users_router,
     prefix="/api/v1",
