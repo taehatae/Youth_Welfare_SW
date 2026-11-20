@@ -1,4 +1,5 @@
 import type { CatalogResponse, CatalogDetail } from "../types/policyCatalog"
+import type { QuickAnswers, QuickCategory, QuickCategoryDetail, QuickEvaluateResponse } from "../types/quickFinder"
 import type { UserProfileInput, MatchedPolicy, ConditionGuideTarget, PrivateConditionGuides } from "../types/welfareApi"
 import { isSnapshot, type Snapshot } from "./analysisSession"
 import { restoreSavedPolicies, type SavedPolicy, type TrackingStatus } from "./policyResults"
@@ -119,6 +120,12 @@ export const viewAccountProfile = (username: string, password: string, snapshot:
 export const viewConditionGuides = (target: ConditionGuideTarget) =>
   request<PrivateConditionGuides>("/users/condition-guides/view", { method: "POST", cache: "no-store", body: JSON.stringify(target) })
 
-export const loadPolicyCatalog = (query: string, category: string, page: number) =>
+// 간편 정책 찾기: 로그인 없이 쓰는 공개 API. 서버는 입력값과 결과를 저장하지 않는다.
+export const loadQuickCategories = () => request<{ categories: QuickCategory[] }>("/quick-finder/categories")
+export const loadQuickCategory = (id: string) => request<QuickCategoryDetail>("/quick-finder/categories/" + encodeURIComponent(id))
+export const evaluateQuick = (category: string, answers: QuickAnswers) =>
+  request<QuickEvaluateResponse>("/quick-finder/evaluate", { method: "POST", cache: "no-store", body: JSON.stringify({ category, answers }) })
+
+export const loadPolicyCatalog =(query: string, category: string, page: number) =>
   request<CatalogResponse>("/policies?" + new URLSearchParams({ q: query, category, page: String(page), page_size: "12" }))
 export const loadPolicyDetail = (id: string) => request<CatalogDetail>("/policies/" + encodeURIComponent(id))

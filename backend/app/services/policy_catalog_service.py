@@ -18,15 +18,26 @@ CATEGORIES = {
 }
 
 
+def source_categories(interest_categories: str | None) -> list[str]:
+    return [part.strip() for part in re.split(r"[,|]", interest_categories or "") if part.strip()]
+
+
+def categories_of(interest_categories: str | None) -> list[str]:
+    """복지로 관심분야 원문 → 화면 분야 키. 정책 찾기와 간편 정책 찾기가 같은 분류를 쓴다."""
+    source = source_categories(interest_categories)
+    categories = [key for key, (_, fields) in CATEGORIES.items() if fields.intersection(source)]
+    known = set().union(*(fields for _, fields in CATEGORIES.values()))
+    if not categories or set(source) - known:
+        categories.append("other")
+    return categories
+
+
 class PolicyCatalogService:
     repository = PolicyCatalogRepository()
 
     def item(self, row):
-        source = [part.strip() for part in re.split(r"[,|]", row.interest_categories or "") if part.strip()]
-        categories = [key for key, (_, fields) in CATEGORIES.items() if fields.intersection(source)]
-        known = set().union(*(fields for _, fields in CATEGORIES.values()))
-        if not categories or set(source) - known:
-            categories.append("other")
+        source = source_categories(row.interest_categories)
+        categories = categories_of(row.interest_categories)
         return CatalogPolicy(id=row.serv_id, title=row.serv_name, summary=row.summary,
             categories=categories, source_categories=source, department=row.department,
             organization=row.organization, support_type=row.support_type, detail_url=row.detail_url,
