@@ -238,7 +238,7 @@ def describe(condition: dict) -> str:
 def _won_text(value) -> str:
     """만원 단위로 떨어지는 금액은 억·만원으로 읽기 쉽게 쓴다. 예: 122,000,000 → 1억 2,200만원."""
     amount = Decimal(str(value))
-    if amount != amount.to_integral() or amount % 10000:
+    if not amount or amount != amount.to_integral() or amount % 10000:
         return f"{_exact_number(amount)}원"
     eok, man = divmod(int(amount) // 10000, 10000)
     if not eok:
