@@ -1,26 +1,71 @@
 # 팀원 PC에서 자격 경로 진단과 역설계 실행하기
 
-2026-11-16 기준: 정책 152개, 저장 조건 1,749개, 사람 검수 60개, 미검수 변환본 92개. 같은 코드·시드·입력값·기준 연도로 실행해야 결과를 비교할 수 있다. 검수 완료는 최종 행정 자격 승인을 뜻하지 않는다.
+2026-11-20 기준으로 원문 정책 152개, 기존 파싱 조건 1,749개, 사람 검수 152개, 자동 변환본 0개다. 신청 경로는 420개이며, 공유 SQLite에는 공통 경로를 포함해 572행과 비교 조건 533개가 있다. 같은 코드·시드·입력값·기준 연도로 실행해야 결과를 비교할 수 있다. 실제 신청 자격은 공식 공고와 담당 기관에서 확인한다.
 
 ## 1. Git으로 전달되는 것
 
 | 파일 | 용도 |
 |---|---|
+| `backend/youth_welfare.db` | Git LFS로 공유하는 정책 적재 초기본. 원문·기존 파싱 조건·자격 경로가 적재되어 있으며 회원·프로필·진단 기록은 비어 있음 |
 | `backend/data/welfare-policies.json` | 정책 원문과 기존 파싱 조건. 서비스 152개 / 조건 1,749개 |
 | `backend/data/eligibility_paths.json` | DB 적재용 자격 경로 152개 |
-| `backend/data/eligibility_paths_reviewed.json` | 사람 검수본 60개. 실행용 전체 시드는 위 파일 |
+| `backend/data/eligibility_paths_reviewed.json` | 사람 검수본 152개. 실행용 전체 시드는 위 파일 |
 | `backend/data/structured_conditions.json` | 자격 경로가 적용되지 않는 경우의 구조화 조건 |
 | `backend/scripts/policy_data.py` | 정책 원문·저장 조건 가져오기 |
 | `backend/scripts/load_eligibility_paths.py` | 자격 경로 가져오기 |
 | `backend/scripts/backup_database.py` | 기존 SQLite 백업·별도 복원 검증 |
 
-SQLite DB, 백업, `.env`, `.tmp-*` 디렉터리는 공유하지 않는다. 팀원은 위 파일로 자신의 DB를 구성하며, 기존 `path_browser.db`를 전달받을 필요가 없다. 외부 복지 API·Ollama·API 키도 이 적재 과정에는 필요 없다.
+Git LFS가 내려받은 실제 SQLite 파일을 사용한다. 공유 초기본에는 테스트 계정이나 진단을 저장하지 않는다. 팀원별 실행 DB, 백업, `.env`, `.tmp-*` 디렉터리는 공유하지 않는다. 공유 초기본 또는 JSON 시드를 사용해 각자 실행용 DB를 준비할 수 있다.
 
-**개인화 안내 코드는 별도 배포 조건이다.** 이 문서를 작성한 시점에는 `personalized_condition_guidance.py`, `PersonalizedGuideAccess.tsx` 등 최신 개인화 구현이 미추적이고, 관련 라우트·타입·클라이언트 수정도 미커밋이다. 현재 원격 Hwang의 `7d9afe9`만 머지하면 이 파일들은 전달되지 않는다. 후속 커밋과 dev 병합에 필요한 코드가 모두 포함됐는지 먼저 확인한다. 이 문서 작업에서는 커밋·푸시하지 않았다.
+PR #23이 반영된 코드는 로그인 전용 맞춤 안내·난이도 API를 제공한다. `evaluation_context`로 진단 당시와 현재 정책 조건의 동일성을 확인할 수 없는 경우 개인화 값은 생략한다.
 
-## 2. 기존 DB의 변경 범위와 주의사항
+## 2. 일반 개발 실행 준비
 
-서버·동기화 작업을 중단하고 정확한 DB 경로를 확인한 뒤 적재한다. 기존 DB를 삭제하거나 다른 사람의 DB로 덮어쓰지 않는다.
+Windows PowerShell에서 저장소 루트를 기준으로 시작한다.
+
+```powershell
+cd backend
+if (-not (Test-Path .\.venv\Scripts\python.exe)) { py -3 -m venv .venv }
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed.' }
+```
+
+이미 준비한 로컬 DB가 있다면 아래 `$policyDb`에 그 경로를 지정하고 적용된 데이터를 [읽기 전용으로 확인](#4-읽기-전용-확인)한다. 공유 초기본에는 정책과 경로가 모두 적재되어 있으므로, 최초 로컬 실행용 파일이 필요할 때는 SQLite 백업 명령으로 별도 경로에 복사한다. 외부 복지 API·Ollama·API 키는 필요 없다.
+
+```powershell
+# 처음 실행용 복사본을 준비할 때만 실행한다.
+New-Item -ItemType Directory -Force .\.tmp-local-paths | Out-Null
+if (-not (Test-Path -LiteralPath .\.tmp-local-paths\youth_welfare.db)) {
+    .\.venv\Scripts\python.exe -B -m scripts.backup_database backup --source .\youth_welfare.db --destination .\.tmp-local-paths\youth_welfare.db
+    if ($LASTEXITCODE -ne 0) { throw 'Local database copy failed.' }
+}
+```
+
+```powershell
+$policyDb = (Resolve-Path -LiteralPath .\.tmp-local-paths\youth_welfare.db -ErrorAction Stop).Path
+if ($policyDb -eq (Join-Path (Get-Location).Path 'youth_welfare.db')) { throw 'Use a separate local database.' }
+$env:DATABASE_URL = 'sqlite:///' + $policyDb.Replace('\', '/')
+$env:USE_ELIGIBILITY_PATHS = 'true'
+$env:USE_STRUCTURED_CONDITIONS = 'true'
+$env:USE_LLM_JUDGE = 'false'
+$env:FRONTEND_ORIGINS = 'http://localhost:5173,http://127.0.0.1:5173'
+
+# 실제 SQLite 경로와 세 플래그만 확인한다.
+.\.venv\Scripts\python.exe -B -c "from pathlib import Path; from sqlalchemy.engine import make_url; from app.core.config import settings as s; u=make_url(s.database_url); assert u.drivername.startswith('sqlite'); print('SQLite:', Path(u.database).resolve()); print('paths:',s.use_eligibility_paths,'structured:',s.use_structured_conditions,'llm:',s.use_llm_judge)"
+if ($LASTEXITCODE -ne 0) { throw 'Configuration check failed.' }
+```
+
+위 `$env:` 값은 **현재 PowerShell과 그 자식 프로세스에만** 적용된다. 새 터미널에서는 다시 설정하거나 자신의 `backend/.env`에 같은 값을 기록한다. 프로세스 환경변수가 `.env`보다 우선하며, `.env`는 실행 작업 디렉터리에서 찾으므로 `backend/`에서 실행한다. 이미 실행 중인 서버는 설정 변경 후 재시작해야 한다.
+
+- `USE_ELIGIBILITY_PATHS=true`는 경로 판정을 켠다. 적용 가능한 정책은 구조화 조건보다 경로 판정이 우선한다.
+- `USE_STRUCTURED_CONDITIONS=true`는 구조화 조건 판정을 켠다. 경로 판정이 적용되지 않는 정책은 적용 가능한 구조화 분석이나 기존 분석 결과를 유지한다.
+- `USE_LLM_JUDGE=false`로 둔다. LLM 판정이 켜져 있으면 실험용 판정으로 먼저 반환한다.
+
+[읽기 전용 확인](#4-읽기-전용-확인)을 통과하면 [서버 실행](#5-서버-실행과-브라우저-확인)으로 진행한다.
+
+## 3. 별도 DB 재구성 및 명시적 시드 적재
+
+빈 격리 DB를 구성하거나 특정 로컬 DB의 데이터를 의도적으로 갱신할 때만 실행한다. 공유 초기본과 평소 사용하는 계정 DB는 이 절차의 대상에서 제외한다. 대상 DB를 사용하는 서버·동기화 작업을 중단하고 경로와 변경 범위를 먼저 확인한다. 기존 DB를 삭제하거나 다른 사람의 DB로 덮어쓰지 않는다.
 
 | 작업 | 실제 동작 |
 |---|---|
@@ -44,37 +89,16 @@ DB 경로·환경 설정 → 기존 DB 백업 → 테이블 생성
 → 수량·원문 해시 확인 → 서버 실행 → 새 진단
 ```
 
-## 3. dev 코드를 받은 뒤 백엔드 준비
+### 3.1 재구성 대상 지정
 
-Windows PowerShell, 저장소 루트에서 시작한다. 이미 dev 브랜치이며 작업 트리가 안전한 경우에만 `git pull --ff-only origin dev`로 갱신한다. 다른 브랜치의 작업은 기존 팀 통합 절차로 보존한다.
-
-### 3.1 가상환경과 명시적 설정
+`backend/`에서 2장의 가상환경을 사용한다. 아래 경로는 초기화·적재용 별도 DB의 예시다. 공유 초기본을 복사하는 단계는 이 경우 생략한다.
 
 ```powershell
-cd backend
-if (-not (Test-Path .\.venv\Scripts\python.exe)) { py -3 -m venv .venv }
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed.' }
-if (-not (Test-Path .env)) { Copy-Item .env.example .env }
-
-# 팀원 자신의 DB. 운영·개발 DB가 따로 있으면 먼저 의도한 경로로 바꾼다.
-$policyDb = Join-Path (Get-Location).Path 'youth_welfare.db'
+New-Item -ItemType Directory -Force .\.tmp-path-rebuild | Out-Null
+$policyDb = Join-Path (Get-Location).Path '.tmp-path-rebuild\youth_welfare.db'
 $env:DATABASE_URL = 'sqlite:///' + $policyDb.Replace('\', '/')
-$env:USE_ELIGIBILITY_PATHS = 'true'
-$env:USE_STRUCTURED_CONDITIONS = 'true'
-$env:USE_LLM_JUDGE = 'false'
-$env:FRONTEND_ORIGINS = 'http://localhost:5173,http://127.0.0.1:5173'
-
-# 개인정보·API 키 대신 실제 SQLite 경로와 세 플래그만 확인한다.
-.\.venv\Scripts\python.exe -B -c "from pathlib import Path; from sqlalchemy.engine import make_url; from app.core.config import settings as s; u=make_url(s.database_url); assert u.drivername.startswith('sqlite'); print('SQLite:', Path(u.database).resolve()); print('paths:',s.use_eligibility_paths,'structured:',s.use_structured_conditions,'llm:',s.use_llm_judge)"
-if ($LASTEXITCODE -ne 0) { throw 'Configuration check failed.' }
+Write-Output $policyDb
 ```
-
-위 `$env:` 값은 **현재 PowerShell과 그 자식 프로세스에만** 적용된다. 새 터미널에서는 다시 설정하거나 자신의 `backend/.env`에 같은 값을 기록한다. 프로세스 환경변수가 `.env`보다 우선하며, `.env`는 실행 작업 디렉터리에서 찾으므로 `backend/`에서 실행한다. 이미 실행 중인 서버는 설정 변경 후 재시작해야 한다.
-
-- `USE_ELIGIBILITY_PATHS=true`: 경로 판정 활성화. 구조화 조건보다 우선한다.
-- `USE_STRUCTURED_CONDITIONS=true`: 경로가 없거나 원문 해시가 다른 경우 구조화 조건으로 분석하는 설정. 경로 판정 자체의 필수 플래그는 아니지만 동일 환경 재현을 위해 함께 켠다.
-- `USE_LLM_JUDGE=false`: LLM 경로는 먼저 실행되어 자격 경로 처리를 건너뛰므로 꺼 둔다.
 
 ### 3.2 기존 DB 백업과 테이블 생성
 
@@ -125,7 +149,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Eligibility path load failed.' }
 
 `--database` 인자를 받는 정책 import와 달리, 경로 적재는 **`DATABASE_URL` 설정을 사용한다.** 위 명령들을 같은 PowerShell에서 실행해야 같은 DB를 사용한다. 정책 검수 담당자가 만든 시드를 그대로 적재하며, 실행 준비를 위해 `merge_reviewed.py`나 `build_eligibility_paths.py`를 다시 실행할 필요는 없다.
 
-### 3.5 읽기 전용 확인
+## 4. 읽기 전용 확인
 
 현재 수량은 다음과 같다. 향후 검수·정책 데이터가 갱신되면 같은 커밋의 시드와 비교한다.
 
@@ -134,13 +158,13 @@ if ($LASTEXITCODE -ne 0) { throw 'Eligibility path load failed.' }
 | `welfare_services` | 152 |
 | `welfare_eligibility_conditions` | 1,749 |
 | `policy_eligibility` | 152 |
-| 사람 검수 (`drafted_by != converted`) | 60 |
-| 미검수 변환본 (`drafted_by = converted`) | 92 |
-| `eligibility_paths` (`_common` 포함) | 484 |
-| `eligibility_path_conditions` | 407 |
+| 사람 검수 (`drafted_by != converted`) | 152 |
+| 미검수 변환본 (`drafted_by = converted`) | 0 |
+| `eligibility_paths` (`_common` 152행 포함) | 572 |
+| `eligibility_path_conditions` | 533 |
 | 원문 해시 불일치·원문 누락 | 0 |
 
-시드의 `status=reviewed`는 **152개 모두**에 설정되어 있다. 이것만 세어 사람 검수 152개라고 판단하면 안 된다. 엔진은 152개를 읽고 응답의 `path_review`에서 `reviewed` 60개 / `converted` 92개로 구분한다. 결과 화면의 사람 검수 필터와 개인화 전용 API는 이 구분을 사용한다.
+시드의 `status=reviewed`는 엔진에서 사용할 수 있는 상태다. 사람 검수 여부는 검수본과 `drafted_by`를 함께 확인한다. 엔진 응답의 `path_review`는 사람 검수본을 `reviewed`, 자동 변환본을 `converted`로 구분한다.
 
 ```powershell
 @'
@@ -175,11 +199,17 @@ if ($LASTEXITCODE -ne 0) { throw 'Read-only verification failed.' }
 
 이 확인 코드는 기존 사용자 입력값을 조회하지 않는다. `integrity_check`는 `ok`, 외래 키 오류는 0인지 확인한다.
 
-## 4. 서버 실행과 브라우저 확인
+## 5. 서버 실행과 브라우저 확인
 
 ### 백엔드: 위와 같은 PowerShell
 
+실행 전에 4장의 확인을 통과한 별도 로컬 DB를 선택하고 2장의 플래그와 `FRONTEND_ORIGINS`를 적용한다. 3장에서 재구성한 DB를 실행할 때는 2장의 설정 예시에서 `$policyDb`에 재구성한 파일을 지정한다. 기본 SQLite 경로는 `backend/`에서 실행할 때 공유 초기본을 가리킨다.
+
 ```powershell
+if (-not $policyDb -or -not (Test-Path -LiteralPath $policyDb -PathType Leaf)) { throw 'Prepare a local database first.' }
+$policyDb = (Resolve-Path -LiteralPath $policyDb -ErrorAction Stop).Path
+if ($policyDb -eq (Join-Path (Get-Location).Path 'youth_welfare.db')) { throw 'Use a separate local database.' }
+$env:DATABASE_URL = 'sqlite:///' + $policyDb.Replace('\', '/')
 .\.venv\Scripts\python.exe -B -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
@@ -198,14 +228,14 @@ pnpm dev
 
 1. 자신의 로컬 DB에 새 가상 계정을 만들고, 가상 프로필로 **새 진단**을 실행한다.
 2. Network에서 진단과 개인화 안내가 모두 같은 `:8000/api/v1`을 사용하는지 확인한다.
-3. 사람 검수 60개가 `path_review=reviewed`, 나머지 92개가 `converted`인지 확인한다.
+3. 최신 공유 시드와 일치하는 DB에서는 `path_review=reviewed` 152개, `converted` 0개인지 확인한다.
 4. 미충족 탭의 개인화 안내를 확인한다. 가상 예: 만 25세·남성이면 여성청소년 생리용품 지원의 연령/성별 안내, 본인 월소득 3,000,000원이면 두루누리 기준 2,699,999원과의 차액 300,001원을 확인한다.
 5. 로그아웃하면 개인화 안내가 사라지고 전용 API는 401을 반환해야 한다. 다른 계정의 진단 식별자로도 조회할 수 없어야 한다.
 
 기존 진단 스냅샷은 플래그나 시드를 바꿔도 자동으로 갱신되지 않는다. 기존 기록은 보존되며, 레거시 결과에 경로가 나중에 붙는 것은 아니다. `refresh`는 최신 현황 `current`를 갱신하고, 결과 화면이 사용하는 `diagnosis`는 새 진단에서 갱신한다. 이전 결과·변환본·원문/조건 불일치·지원하지 않는 복합 조건에서는 일반 안내가 유지될 수 있다.
 
-## 5. 이 절차의 검증 범위
+## 6. 2026-11-16 초기 적재 검증 기록
 
 커밋된 HEAD의 `backend/`만 임시 디렉터리에 내보내고, 기존 DB·`.env`를 복사하지 않은 상태에서 위 초기화·원문 import·경로 load를 실행했다. 정책 152개 / 저장 조건 1,749개 / 사람 검수 60개 / 변환본 92개, 원문 해시 일치 152개, 무결성 `ok`, 외래 키 오류 0건을 확인했다. 합성 사용자 데이터 6개 테이블(회원·프로필·추가 정보·진단 스냅샷·세션·인증 시도)은 import와 경로 재적재 전후 동일했다.
 
-이는 데이터 배포·적용 절차 검증이며, 전체 정책의 의미적 판정 정확도나 다른 PC의 의존성 설치까지 실기기로 검증한 것은 아니다. 개인화 기능을 사용하려면 해당 구현 코드도 dev에 포함되어야 한다.
+위 수치는 당시 격리 환경의 데이터 배포·적용 기록이다. 전체 정책의 의미적 판정 정확도와 다른 PC의 의존성 설치는 이 검증 범위에 포함되지 않았다.

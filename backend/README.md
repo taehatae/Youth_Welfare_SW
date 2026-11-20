@@ -52,25 +52,15 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
 ## 백엔드 서버 실행
 
-`backend/` 디렉터리에서 실행합니다.
+먼저 [로컬 실행 준비](../docs/eligibility-paths/LOCAL_SETUP.md#2-일반-개발-실행-준비)에서 별도 로컬 SQLite의 절대 경로를 `DATABASE_URL`로 지정하고 경로 판정 플래그를 설정합니다. 같은 PowerShell의 `backend/` 디렉터리에서 [백엔드 실행 명령](../docs/eligibility-paths/LOCAL_SETUP.md#5-서버-실행과-브라우저-확인)을 실행합니다.
 
-```powershell
-python -m uvicorn app.main:app --reload
-```
-
-기본 주소는 `http://127.0.0.1:8000`이며, Swagger UI는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다.
+기본 주소는 `http://127.0.0.1:8000`이며, Swagger UI는 `http://127.0.0.1:8000/docs`에서 확인할 수 있습니다. 앱은 실행 시 설정된 SQLite에 빠진 테이블을 생성할 수 있습니다.
 
 ### 팀원 PC에서 검수 자격 경로·역설계 실행
 
-DB 파일을 공유하지 않고 저장소의 JSON으로 구성합니다. 자세한 명령과 기존 데이터 변경 범위는 **[로컬 실행·적재 가이드](../docs/eligibility-paths/LOCAL_SETUP.md)**를 따르세요.
+Git LFS로 공유하는 `backend/youth_welfare.db`는 원문 정책 152개, 기존 파싱 조건 1,749개, 사람 검수 경로 정책 152개(변환본 0개)가 적재된 초기본입니다. 개인 DB와 백업은 각자 로컬에서 관리합니다. 테스트 계정과 진단은 별도 로컬 DB에 저장하세요.
 
-1. `backend/`에서 실제 SQLite 경로와 `USE_ELIGIBILITY_PATHS=true`, `USE_STRUCTURED_CONDITIONS=true`, `USE_LLM_JUDGE=false`를 명시합니다.
-2. 기존 DB를 백업하고 앱 테이블을 준비합니다.
-3. `scripts.policy_data`로 `data/welfare-policies.json`을 미리보기한 뒤 백업과 함께 가져옵니다.
-4. 같은 DB 설정으로 `python -B -m scripts.load_eligibility_paths`를 실행합니다.
-5. 정책 152개·저장 조건 1,749개·사람 검수 60개·변환본 92개 및 원문 해시를 확인하고 서버를 시작합니다.
-
-개인화 안내 코드까지 dev에 포함되어 있어야 최신 안내 API를 사용할 수 있습니다. 플래그만 켜거나 기존 스냅샷을 다시 여는 것으로 이전 진단이 갱신되지는 않습니다. 위 가이드의 새 진단 확인 절차까지 진행하세요.
+기본 개발에는 적재가 완료된 로컬 복사본을 사용합니다. 빈 격리 DB를 만들거나 별도 DB를 의도적으로 갱신할 때만 [DB 재구성 및 시드 적재 절차](../docs/eligibility-paths/LOCAL_SETUP.md#3-별도-db-재구성-및-명시적-시드-적재)를 실행합니다. 플래그나 시드를 변경하면 이후 진단에 적용되며, 저장된 진단은 기존 결과를 유지합니다.
 
 ## 계정과 진단 기록 (2026-10-24)
 
@@ -100,6 +90,7 @@ DB 파일을 공유하지 않고 저장소의 JSON으로 구성합니다. 자세
 - `POST /api/v1/users/profile`: 로그인한 계정의 프로필 갱신
 - `GET /api/v1/users/profile`: 403 반환 (재인증 없는 원문 조회 금지)
 - `POST /api/v1/users/profile/view`: `{username, password, snapshot: "current" | "diagnosis"}`로 매번 재인증 후 해당 진단 프로필 반환
+- `POST /api/v1/users/condition-guides/view`: 로그인 세션과 해당 계정의 진단을 확인한 뒤 맞춤 안내·정확한 난이도 점수를 제공함. 응답은 `Cache-Control: no-store`이며 진단 당시 정책 조건과 현재 조건의 동일성을 검증할 수 없으면 개인화 데이터는 생략함.
 - `GET /api/v1/users/state`: 계정의 진단/현황/관심 정책. 프로필 원문은 null이며 조건별 current_value도 마스킹됨
 - `POST /api/v1/welfare/diagnose`: 프로필 저장 + 분석 + 결과 저장
 - `POST /api/v1/welfare/refresh`: 저장된 프로필로 현황만 재분석
@@ -111,8 +102,8 @@ DB 파일을 공유하지 않고 저장소의 JSON으로 구성합니다. 자세
 
 ### 프로필 보호 경계
 
-- 일반 state/diagnose/refresh/matched 응답은 입력값을 숨김. 관심 정책 식별자도 프로필 원문 대신 서버 HMAC 식별자를 반환함.
-- 프로필 조회마다 현재 로그인한 계정의 아이디·비밀번호를 모두 확인함. 조회 권한 토큰이나 해제 쿠키를 별도로 발급하지 않음.
+- 일반 state/diagnose/refresh/matched 응답은 입력값과 정확한 `difficulty`, 내부 검증용 `evaluation_context`를 숨김. 관심 정책은 서버 HMAC 프로필 식별자를 반환함. 신규 내부 스냅샷은 당시 프로필과 지문을 유지하고 정확한 난이도 점수는 저장하지 않음.
+- 원본 프로필 열람 시 현재 로그인한 계정의 아이디·비밀번호를 확인함. 맞춤 안내 API는 로그인 세션과 진단 소유권을 사용함.
 - 프론트는 조회창을 닫거나 창을 전환하거나 2분 경과 시 조회한 입력값을 지움. 수정 화면으로 옮긴 값은 메모리에만 두고 해당 화면을 떠나면 지움.
 - 조회 결과의 충족/미충족 판정 자체로 일부 조건을 추론할 가능성까지 없애는 기능은 아님. 진단 결과 열람에는 로그인 인증을 적용함.
 - 서버 DB의 개인정보 암호화, 다중요소 인증, 외부 보안감사는 이번 기능에 포함하지 않음.
@@ -126,7 +117,7 @@ DB 파일을 공유하지 않고 저장소의 JSON으로 구성합니다. 자세
 
 목록 API와 상세 API의 호출 한도는 별도로 기록합니다. 날짜가 바뀌었다는 이유만으로 한도가 초기화된 것으로 간주하지 않습니다. 실제 잔여 호출 가능량을 확인한 뒤 각 API 작업용 창을 등록해야 합니다. API 키는 기존 `.env` 설정을 사용하며 명령행 인자나 출력에 넣지 않습니다.
 
-아래 명령은 `backend/` 디렉터리에서 실행합니다. `WINDOW_ID`는 운영자가 확인한 호출 한도 구간 식별자이며, 잔여 횟수는 외부 제공자 기준으로 확인한 값이어야 합니다.
+아래 명령은 동기화 대상 DB를 `DATABASE_URL`로 확인한 뒤 `backend/` 디렉터리에서 실행합니다. `WINDOW_ID`는 운영자가 확인한 호출 한도 구간 식별자이며, 잔여 횟수는 외부 제공자 기준으로 확인한 값이어야 합니다.
 
 ```powershell
 python -m scripts.welfare_sync confirm-window --window-id WINDOW_ID --operation list --verified-available-calls 2 --operator-name YOUR_NAME --confirm-provider-quota
@@ -151,37 +142,23 @@ python -m scripts.backup_database restore --source .\backups\youth_welfare-YYYYM
 
 ## 팀원에게 정책 데이터만 전달하기
 
-각자의 SQLite DB는 Git으로 공유하지 않습니다. 아래 도구는 `welfare_services`와 `welfare_eligibility_conditions`의 허용 필드만 JSON으로 전달합니다. 사용자·계정·세션·추가 프로필·동기화 배치·API 호출 한도 기록은 포함하지 않습니다. 조건의 로컬 `id`는 가져오는 DB에서 새로 생성됩니다.
+개인 SQLite DB는 로컬에 보관합니다. 공유 초기본 외에 정책 원문과 파싱 조건만 별도로 전달할 때는 아래 도구를 사용합니다. `welfare_services`와 `welfare_eligibility_conditions`의 허용 필드만 JSON으로 전달합니다. 사용자·계정·세션·추가 프로필·동기화 배치·API 호출 한도 기록은 포함하지 않습니다. 조건의 로컬 `id`는 가져오는 DB에서 새로 생성됩니다.
 
-저장소의 [`data/welfare-policies.json`](data/welfare-policies.json)에는 전달 시점의 **정책 152건과 저장 자격조건 1,749건**이 포함되어 있습니다. 정책 원문·지원 내용·연락처·관련 법령 및 저장된 조건 메타데이터를 함께 전달합니다. 별도 API 호출이나 서비스 키 없이 가져올 수 있습니다. 코드를 받는 것만으로 로컬 DB가 바뀌지는 않으며 아래 가져오기 명령을 실행해야 합니다.
+저장소의 [`data/welfare-policies.json`](data/welfare-policies.json)에는 전달 시점의 **정책 152건과 저장 자격조건 1,749건**이 포함되어 있습니다. 정책 원문·지원 내용·연락처·관련 법령 및 저장된 조건 메타데이터를 함께 전달합니다. 별도 API 호출이나 서비스 키 없이 가져올 수 있습니다. Git 갱신 이후에도 별도로 만든 실행용 DB는 기존 데이터를 유지합니다.
 
 두 사람 모두 같은 백엔드 코드와 기존 테이블이 준비되어 있어야 합니다. 명령은 가상환경을 활성화한 뒤 **`backend/`에서** 실행합니다. 파일명 날짜는 실제 전달 날짜로 바꾸세요.
 
 ### 보내는 사람
 
 ```powershell
-python -B -m scripts.policy_data export --database .\youth_welfare.db --output .\policy-data-YYYYMMDD.json
+python -B -m scripts.policy_data export --database "$policyDb" --output .\policy-data-YYYYMMDD.json
 python -B -m scripts.policy_data inspect --source .\policy-data-YYYYMMDD.json
 ```
 
-검사가 성공한 JSON 파일만 팀원에게 전달합니다. 전체 DB, 백업, `.env`는 전달하지 마세요. 내보내기는 DB를 읽기 전용으로 열며, 기존 출력 파일을 덮어쓰지 않습니다. 파일에는 정책 원문과 저장된 파싱 결과가 포함됩니다. Git에 올릴 경우에도 JSON 내용과 변경 내역을 먼저 검토하세요.
+위 `$policyDb`는 내보낼 SQLite의 절대 경로입니다. 검사가 성공한 JSON 파일만 팀원에게 전달합니다. 전체 DB, 백업, `.env`는 전달하지 마세요. 내보내기는 DB를 읽기 전용으로 열며, 기존 출력 파일을 덮어쓰지 않습니다. 파일에는 정책 원문과 저장된 파싱 결과가 포함됩니다. Git에 올릴 경우에도 JSON 내용과 변경 내역을 먼저 검토하세요.
 
 ### 받는 사람
 
-도구와 JSON이 포함된 코드를 받은 뒤, 서버와 동기화 작업을 종료합니다. 로컬 DB가 없다면 개발 환경 설정 후 앱을 한 번 실행해 기존 테이블을 생성하고 서버를 종료하세요. 기존 DB는 삭제하지 마세요. `backend/`에서 저장소에 포함된 파일 검사 및 **미리보기**를 실행합니다.
-
-```powershell
-python -B -m scripts.policy_data inspect --source .\data\welfare-policies.json
-python -B -m scripts.policy_data import --database .\youth_welfare.db --source .\data\welfare-policies.json
-```
-
-`service_count`, `condition_count`, `new_services`, `updated_services`를 확인한 다음 실제 반영합니다. `backups/` 폴더를 먼저 준비하고, **아직 존재하지 않는 고유한 백업 파일명**을 지정하세요.
-
-```powershell
-New-Item -ItemType Directory -Force .\backups | Out-Null
-python -B -m scripts.policy_data import --database .\youth_welfare.db --source .\data\welfare-policies.json --apply --backup .\backups\before-policy-import-YYYYMMDD-HHmmss.db
-```
-
-`--apply`가 없으면 DB를 변경하지 않습니다. 실제 반영은 SQLite Online Backup API로 기존 DB를 백업한 뒤, 서비스 ID로 갱신하고 **전달된 서비스의 저장 조건만 교체**합니다. 파일에 없는 정책과 기존 사용자·계정·동기화 데이터는 보존합니다. 외래 키·무결성·가져온 내용 검증이 실패하면 전체 가져오기를 롤백합니다. 자동 테이블 생성이나 마이그레이션은 하지 않습니다.
+별도로 전달받은 JSON을 적용하려면 [정책 원문·기존 조건 적재](../docs/eligibility-paths/LOCAL_SETUP.md#33-정책-원문기존-조건-적재) 단계에서 `--source`를 받은 파일로 지정합니다. 미리보기에서 정책·조건 수와 신규·갱신 수를 확인한 뒤 백업을 지정해 반영합니다. 실제 반영은 전달된 서비스의 저장 조건만 교체하며, 외래 키·무결성·가져온 내용 검사에 실패하면 가져오기를 롤백합니다. 경로 데이터까지 갱신할 경우 원문과 지문이 일치하는 시드를 사용합니다.
 
 백업에는 개인 데이터가 포함되므로 로컬에서 안전하게 보관하세요. 체크섬은 파일 손상 검사이며 발신자 인증을 대신하지 않습니다. 신뢰할 수 있는 정책 파일만 사용하세요. 이 방식은 전달 시점의 정책 복사이며 실시간 공유가 아닙니다. 정책이 같아도 사용자 프로필이 다르면 진단 결과는 달라집니다. 향후 스키마가 바뀌면 같은 코드 버전에서 다시 내보내기·가져오기를 확인해야 합니다.

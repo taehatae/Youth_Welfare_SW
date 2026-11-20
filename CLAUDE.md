@@ -8,22 +8,24 @@
 
 ## 실행과 검증 (Windows)
 
-```bash
-# 백엔드 (backend 폴더에서). 자격 경로 판정을 켜려면 환경변수 3개 필요
-backend/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-#   USE_ELIGIBILITY_PATHS=true  USE_STRUCTURED_CONDITIONS=true  USE_LLM_JUDGE=false
+백엔드는 [로컬 실행 준비](docs/eligibility-paths/LOCAL_SETUP.md#2-일반-개발-실행-준비)에서 별도 SQLite 경로와 플래그를 설정한 PowerShell에서 실행한다.
 
-# 프론트 (frontend 폴더에서). /api 는 127.0.0.1:8000 으로 프록시
-node node_modules/vite/bin/vite.js
+```powershell
+# 백엔드 (backend 폴더의 설정을 마친 PowerShell)
+if (-not $policyDb -or -not $env:DATABASE_URL) { throw 'Follow the local database setup first.' }
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
-# 테스트
-cd backend && PYTHONIOENCODING=utf-8 .venv/Scripts/python.exe -m pytest -q
-cd frontend && node --import ./tests/register-ts.mjs --test tests/*.test.mjs
-cd frontend && node node_modules/typescript/bin/tsc --noEmit -p .
+# 프론트 (별도 PowerShell의 frontend 폴더). /api는 127.0.0.1:8000으로 프록시
+pnpm dev
+
+# 백엔드 테스트 (backend 폴더)
+$env:PYTHONIOENCODING = 'utf-8'
+.\.venv\Scripts\python.exe -m pytest -q
+
+# 프론트 검증 (frontend 폴더)
+pnpm test
+node node_modules/typescript/bin/tsc --noEmit -p .
 ```
-
-- 한글 출력이 깨지면 `PYTHONIOENCODING=utf-8`을 붙인다.
-- 로컬 DB 구성은 `docs/eligibility-paths/LOCAL_SETUP.md`.
 
 ## 자격 경로 데이터
 
@@ -57,7 +59,7 @@ welfare-policies.json (정책 원문)
   - 저장값은 원문 표현으로 되돌려 보여준다(2,699,999원 이하 → 270만원 미만, 50.1% 이상 → 50% 초과).
   - 시간이 지나도 다시 충족할 수 없는 조건(나이·혼인 기간·막내 자녀 나이 상한 초과)은 `impossible`, 그런 경로는 화면에서 숨긴다.
   - 성별·장애·한부모·수급 같은 대상자 조건은 "바꾸면 충족"이라고 하지 않고 "이 경로는 ○○가 대상"이라는 정보로 안내한다.
-- `personalized_condition_guidance.py`: 로그인한 본인에게만 금액 차이가 들어간 맞춤 안내. 공개 응답·저장 스냅샷에는 입력값을 넣지 않는다.
+- `personalized_condition_guidance.py`: 로그인 세션·진단 소유권과 정책 조건의 동일성을 확인한 뒤 맞춤 안내와 정확한 난이도 점수를 전용 API로 제공한다. 일반 응답은 입력값과 정확한 점수를 숨긴다. 신규 내부 스냅샷에는 재현에 필요한 진단 당시 프로필과 지문이 남으며 정확한 난이도 점수는 저장하지 않는다.
 - 추천 경로: 미충족 조건마다 개선 난이도 점수를 매겨 합이 가장 낮은 경로. 사용자가 화면 "추천 기준 보기·바꾸기"에서 종류별 배율을 바꿀 수 있고(`frontend/src/services/difficultyPrefs.ts`, 브라우저 저장), 판정은 바뀌지 않는다.
 
 ## 프론트

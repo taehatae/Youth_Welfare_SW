@@ -5,7 +5,11 @@ LLM에게 일을 시킬 때는 이 문서 전체와 해당 정책 원문을 함�
 
 ---
 
-## 1. 지금 상태 (2026-11-05)
+## 1. 현재 상태와 초기 검수 기록
+
+2026-11-20 기준 원문 152개와 동일한 정책 집합이 사람 검수본과 진단 시드에 있다. 사람 검수 152개, 자동 변환본 0개다. 결과 화면의 기본 필터는 사람 검수 정책을 보여 준다.
+
+### 2026-11-05의 초기 검수 기록
 
 | 구분 | 개수 | 만든 방법 | 파일 | 시드 표시 |
 |---|---|---|---|---|
@@ -13,8 +17,7 @@ LLM에게 일을 시킬 때는 이 문서 전체와 해당 정책 원문을 함�
 | **검수 전 (정답지 자동 변환)** | 132 | LLM(Claude)이 원문을 읽고 쓴 **정답지**를 스크립트가 경로로 기계 변환. 사람 검수 없음 | `structure_gold_train.json`(20) · `_val.json`(30) · `_rest.json`(45) · `_new57.json`(57) 중 검수본에 없는 것 | `drafted_by=converted`, `reviewed_by=claude` |
 | 합계 | **152** | 정책 원문 스냅샷 `backend/data/welfare-policies.json`의 모든 정책 | 진단 시드 `backend/data/eligibility_paths.json` | |
 
-- 152개 모두 경로로 판정한다. 결과 화면은 기본으로 **사람 검수 20개만** 보여 주고, 체크를 끄면 전부 보여 준다.
-- 목표: 132개를 차수(10개 안팎)별로 사람 검수해서 전부 검수본으로 바꾼다.
+- 당시에는 결과 화면의 기본 필터에 사람 검수 20개만 표시됐고, 나머지 132개를 차수별로 검수하는 것이 목표였다.
 - 정답지 `train/val` 파일에는 작성자가 적혀 있지 않다. 시드 메타데이터는 `reviewed_by=claude`이며 사람 검수는 거치지 않았다. `rest`, `new57`은 Claude가 작성했다고 파일에 적혀 있다.
 
 ## 2. 데이터 흐름과 "한 정책 = 한 곳" 규칙 (중복 방지)
@@ -22,7 +25,7 @@ LLM에게 일을 시킬 때는 이 문서 전체와 해당 정책 원문을 함�
 ```
 welfare-policies.json (정책 원문 152개, API 응답 그대로)
         │
-        ├─ eligibility_paths_reviewed.json (사람 검수본 20개)  ─┐  검수본이 있으면 검수본만 쓴다
+        ├─ eligibility_paths_reviewed.json (현재 사람 검수본 152개) ─┐  검수본이 있으면 검수본만 쓴다
         └─ structure_gold_*.json (정답지 152개)  ──────────────┘  없으면 정답지를 경로로 변환
                          │  python scripts/build_eligibility_paths.py
                          ▼
@@ -34,9 +37,9 @@ welfare-policies.json (정책 원문 152개, API 응답 그대로)
 
 중복이 생기지 않는 이유 (테스트로 확인한다: `tests/test_build_eligibility_paths.py`, `tests/test_eligibility_path_service.py`)
 - **정답지**: 한 정책은 정답지 파일 4개 중 **한 파일에만** 있다. 같은 serv_id가 두 파일에 있으면 테스트가 실패한다.
-- **검수본**: serv_id가 겹치지 않는다. 사람 검수 20개는 정답지에도 있지만, 시드를 만들 때 **검수본이 있으면 정답지는 쓰지 않는다**(둘을 합치지 않음).
-- **시드**: 원문 스냅샷의 152개와 정확히 같은 집합이고 정책마다 한 번씩 들어간다.
-- **DB**: `serv_id`가 기본키다. 시드를 다시 넣으면 그 정책의 경로를 통째로 지우고 다시 넣는다. 시드에서 빠진 정책은 DB에서 지운다.
+- **검수본**: serv_id가 겹치지 않는다. 같은 정책이 정답지에도 있으면 검수본을 사용한다.
+- **시드**: 현재 원문 스냅샷과 동일한 152개 정책이 한 번씩 들어 있다. 원문과 검수본의 해시가 다르면 빌드에서 해당 정책을 제외한다.
+- **DB**: `policy_eligibility.serv_id`가 기본키다. 시드를 다시 넣으면 경로와 조건을 교체하고, 시드에서 빠진 정책은 경로 데이터에서 제거한다.
 - **초안·채점 기록 파일**(`*_batchN_draft.json`, `*_review.json`, `*_fix1_*.json`)은 **기록일 뿐 시드 입력이 아니다.** 여기 있는 정책은 검수본에도 있지만 빌드는 이 파일들을 읽지 않는다.
 - **원문 해시**: 검수본은 검수 시점 원문의 해시(`source_sha256`)를 갖는다. 원문이 바뀌면 그 정책은 시드에서 빠지고 `[재검수 필요]`로 출력된다. 바뀐 원문에 예전 검수 결과가 붙지 않는다.
 
@@ -47,19 +50,9 @@ welfare-policies.json (정책 원문 152개, API 응답 그대로)
 
 ## 3. 차수 하나를 처리하는 순서
 
-```bash
-cd backend
-# 1) 초안: 아래 4장 프롬프트로 정책 10개 안팎의 초안을 만들어 저장
-#    data/eligibility_paths_batchN_draft.json   ({"version":2,"batch":N,"status":"draft","policies":[...]})
-python scripts/make_review_sheet.py data/eligibility_paths_batchN_draft.json ../docs/eligibility-paths/batch-N   # 자동 점검
-# 2) 사람 채점 (http://localhost:8765). 판단마다 맞음/틀림, 놓친 조건 입력 → data/eligibility_paths_batchN_review.json
-python scripts/review_server.py data/eligibility_paths_batchN_draft.json
-# 3) 채점대로 초안 수정(5장 프롬프트) → 검수본에 합치기 → 시드 → DB → 테스트
-python scripts/merge_reviewed.py data/eligibility_paths_batchN_draft.json
-python scripts/build_eligibility_paths.py && python scripts/load_eligibility_paths.py
-python -m pytest -q
-```
-- 차수를 추가하면 `scripts/build_eligibility_paths.py`의 `BATCH_DATES`에 검수일을 적고, `tests/test_review_sheet.py`의 검수본 개수 기대값을 고친다.
+4장 프롬프트로 초안을 작성하고 [사람 검수 절차](REVIEW_GUIDE.md#2-검수-순서)에 따라 자동 점검과 채점을 진행한다. 5장 프롬프트로 채점 결과를 반영한 뒤 검수본에 합치고 시드를 생성한다. DB 적재는 별도 DB가 필요할 때 [로컬 실행 가이드](LOCAL_SETUP.md#3-별도-db-재구성-및-명시적-시드-적재)를 따른다.
+
+- 차수를 추가하면 `scripts/build_eligibility_paths.py`의 `BATCH_DATES`에 검수일을 적는다. 검수본 정책 수가 바뀌는 경우 테스트 기대 개수도 갱신한다.
 - 이미 검수한 정책을 고칠 때(경로 추가 등)는 그 정책만 담은 초안을 만들어 같은 절차를 밟는다. 예: `eligibility_paths_fix1_draft.json`. 이전에 검수한 문구는 채점 화면에서 "기존 검수"로 미리 채워 두고, 새로 생긴 줄만 채점한다.
 
 ## 4. 초안 작성 프롬프트
@@ -178,7 +171,7 @@ ok=false인 항목은 note대로 고치고, missing(놓친 조건)은 알맞은 
 고친 초안 JSON과, 항목별로 무엇을 어떻게 고쳤는지 목록을 출력한다.
 ````
 
-## 6. 정답지 형식 (검수 전 132개가 쓰는 형식)
+## 6. 초기 자동 변환에 사용한 정답지 형식
 
 `structure_gold_*.json`은 경로 이전의 단순한 형식이다. 빌드 스크립트가 경로로 바꾼다.
 ```jsonc
@@ -202,9 +195,9 @@ ok=false인 항목은 note대로 고치고, missing(놓친 조건)은 알맞은 
 | 경로 | 미충족이 하나라도 있으면 불가. 미충족 없이 충족이 하나라도 있으면 가능(입력하지 않은 조건은 추가 확인). 충족도 미충족도 없으면(비교 조건 없음·모두 미입력) 확인 필요 |
 | 정책 | 가능한 경로가 하나라도 있으면 가능, 모든 경로가 불가면 불가, 그 밖은 확인 필요 |
 | 확인 사항 | 판정을 바꾸지 않는다. 화면의 "추가 확인"에 나온다 |
-| 대표 경로 | 상태 → 미충족 적은 순 → 미입력 적은 순 → 충족 많은 순 |
+| 대표 경로 | 상태(가능 → 확인 필요 → 불가) → 시간 경과로 다시 충족할 수 없는 경로 여부 → 기본 난이도 합 → 미충족 수 → 미확인 수 → 원문 경로 순서 |
 
-설정: `backend/.env`의 `USE_ELIGIBILITY_PATHS=true`, `USE_STRUCTURED_CONDITIONS=true`. 둘 다 기본값은 꺼짐이다.
+환경변수와 별도 로컬 DB 설정은 [로컬 실행 가이드](LOCAL_SETUP.md#2-일반-개발-실행-준비)를 따른다. 사용자 가중치로 정렬하는 화면의 추천 경로는 [진단 당시 대표 경로](README.md#역설계)와 구분한다.
 원문 해시(DB 원문 기준)가 시드와 다르면 그 정책은 경로 판정을 쓰지 않고 기존 분석으로 돌아간다.
 
 ## 8. 검증 방법
