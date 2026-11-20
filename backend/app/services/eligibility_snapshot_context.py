@@ -41,6 +41,12 @@ def _hash(value):
                                     separators=(",", ":")).encode()).hexdigest()
 
 
+def code_hash(path):
+    """체크아웃 환경(CRLF/LF)에 따라 지문이 달라지지 않게 줄바꿈을 LF로 통일해 해시한다."""
+    data = Path(path).read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    return hashlib.sha256(data).hexdigest()
+
+
 def condition(c):
     from app.services.eligibility_path_service import _condition
     return {**_condition(c), "evidence": c.evidence}
@@ -61,7 +67,7 @@ def create_context(service, record):
     uses_reference = any(condition(c)["unit"] == "%" for p in record.paths for c in p.conditions)
     # 코드/참조 데이터가 달라지면 과거 입력을 새 계산으로 해석하지 않는다.
     calculations = {"version": VERSION, "code": {
-        name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
+        name: code_hash(Path(__file__).with_name(name))
         for name in ("structured_condition_service.py", "eligibility_path_service.py",
                      "median_income_reference.py", "urban_worker_income_reference.py")}}
     if uses_reference:
