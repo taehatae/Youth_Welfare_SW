@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 
 import CountUp from "../../components/motion/CountUp"
 import { BrandLogo } from "../../components/brand/BrandLogo"
@@ -71,6 +71,43 @@ export default function HomePage({
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null)
   const [state, setState] = useState<"loading" | "ready" | "error">("loading")
   const [query, setQuery] = useState("")
+  const hero = useRef<HTMLElement>(null)
+
+  // 히어로 스크롤 효과: 히어로가 화면 근처에 있을 때만 스크롤을 듣고 --hero-p(0~1)를 갱신한다.
+  useEffect(() => {
+    const el = hero.current
+    if (
+      !el ||
+      !("IntersectionObserver" in window) ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    )
+      return
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const p = Math.min(1, Math.max(0, window.scrollY / Math.max(1, el.offsetHeight)))
+      el.style.setProperty("--hero-p", p.toFixed(3))
+    }
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        window.removeEventListener("scroll", onScroll)
+        if (entry.isIntersecting) {
+          window.addEventListener("scroll", onScroll, { passive: true })
+          onScroll()
+        }
+      },
+      { rootMargin: "200px 0px" },
+    )
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      window.removeEventListener("scroll", onScroll)
+      if (frame) cancelAnimationFrame(frame)
+    }
+  }, [])
 
   useEffect(() => {
     let alive = true
@@ -108,7 +145,7 @@ export default function HomePage({
 
   return (
     <div className="home">
-      <section className="home-wrap home-hero-wrap" aria-labelledby="home-title">
+      <section ref={hero} className="home-wrap home-hero-wrap" aria-labelledby="home-title">
         <div
           className="home-hero-media"
           style={
@@ -171,7 +208,7 @@ export default function HomePage({
       <div className="home-wrap home-grid">
         <div className="home-main">
           <section aria-labelledby="home-cats">
-            <h2 id="home-cats" className="home-sec" data-reveal>
+            <h2 id="home-cats" className="home-sec" data-reveal="repeat">
               분야별로 보기
               {total ? <small>전체 <CountUp value={total} />개</small> : null}
             </h2>
@@ -191,7 +228,7 @@ export default function HomePage({
                       const count = counts.get(id)
                       if (state === "ready" && !count) return null
                       return (
-                        <li key={id} data-reveal>
+                        <li key={id} data-reveal="repeat" data-reveal-style="pop">
                           <a
                             className="home-tile"
                             href={explorerHref({ category: id })}
@@ -211,7 +248,7 @@ export default function HomePage({
                       )
                     },
                   )}
-                  <li data-reveal>
+                  <li data-reveal="repeat" data-reveal-style="pop">
                     <a className="home-tile" href={explorerHref({})}>
                       <i className="tone-gray" aria-hidden="true">
                         +
@@ -228,13 +265,13 @@ export default function HomePage({
           </section>
 
           <section aria-labelledby="home-mine">
-            <h2 id="home-mine" className="home-sec" data-reveal>
+            <h2 id="home-mine" className="home-sec" data-reveal="repeat">
               내 조건에 맞는 정책
             </h2>
             {mine.length ? (
               <ol className="home-rank">
                 {mine.map((row, i) => (
-                  <li key={row.id} data-reveal>
+                  <li key={row.id} data-reveal="repeat" data-reveal-style="slide">
                     <a href={`#detail/${encodeURIComponent(row.id)}`}>
                       <em>{i + 1}</em>
                       <span>
@@ -246,7 +283,7 @@ export default function HomePage({
                 ))}
               </ol>
             ) : (
-              <div className="home-prompt" data-reveal>
+              <div className="home-prompt" data-reveal="repeat" data-reveal-style="slide">
                 <p>진단하면 내 조건에 맞는 정책을 여기서 바로 보여드려요</p>
                 <button type="button" onClick={() => setPage("diagnosis")}>
                   진단하러 가기
@@ -258,7 +295,7 @@ export default function HomePage({
 
         <aside className="home-side">
           {/* 마감일 데이터가 들어오기 전에는 카드 자체를 숨긴다 */}
-          {deadlines.length > 0 && <section className="home-card" data-reveal aria-labelledby="home-dday">
+          {deadlines.length > 0 && <section className="home-card" data-reveal="repeat" aria-labelledby="home-dday">
             <h3 id="home-dday">마감이 가까운 정책</h3>
             {deadlines.length ? (
               <ul className="home-dday">
@@ -275,7 +312,7 @@ export default function HomePage({
               <p className="home-empty">지금 마감이 가까운 정책이 없어요</p>
             )}
           </section>}
-          <section className="home-card" data-reveal aria-labelledby="home-how">
+          <section className="home-card" data-reveal="repeat" aria-labelledby="home-how">
             <h3 id="home-how">이렇게 확인해요</h3>
             <ol className="home-steps">
               {STEPS.map((text, i) => (
@@ -289,7 +326,7 @@ export default function HomePage({
         </aside>
       </div>
 
-      <footer className="home-wrap home-footer">
+      <footer className="home-wrap home-footer" data-reveal="repeat">
         <BrandLogo width={112} />
         <p>내 조건을 이해하고, 다음 가능성을 발견하는 곳.</p>
         <button type="button" onClick={() => setPage("diagnosis")}>

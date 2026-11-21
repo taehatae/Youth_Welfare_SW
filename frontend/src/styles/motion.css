@@ -23,6 +23,8 @@
 /* 순서대로 등장: --reveal-i(0~8)를 훅이 정한다. 한 번 보이면 훅이 reveal-ready를 떼어 hover 전환이 늦어지지 않는다. */
 .reveal-ready { transition: opacity 420ms ease-out, transform 480ms var(--ease-out) !important; }
 .reveal-ready.reveal-pending { opacity: 0; transform: translateY(16px); }
+.reveal-ready.reveal-pending[data-reveal-style="pop"] { transform: translateY(14px) scale(.96); }
+.reveal-ready.reveal-pending[data-reveal-style="slide"] { transform: translateX(-16px); }
 .reveal-ready:not(.reveal-pending) { transition-delay: calc(var(--reveal-i, 0) * 60ms) !important; }
 .reveal-ready:focus-within { opacity: 1; transform: none; transition-delay: 0ms !important; }
 
@@ -116,11 +118,11 @@ body .catalog-row-end i { transition: transform 220ms var(--ease-out), color 180
   animation: shimmer 1.2s linear infinite;
 }
 
-@media print { .reveal-ready.reveal-pending { opacity: 1; transform: none; } }
+@media print { .reveal-ready.reveal-pending, .reveal-ready.reveal-pending[data-reveal-style] { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   .page-arrive, .step-arrive, .step-slide, main details[open] > :not(summary) { animation: none; }
-  .reveal-ready, .reveal-ready.reveal-pending, .reveal-ready:not(.reveal-pending) { transition: none !important; opacity: 1; transform: none; }
+  .reveal-ready, .reveal-ready.reveal-pending, .reveal-ready.reveal-pending[data-reveal-style], .reveal-ready:not(.reveal-pending) { transition: none !important; opacity: 1; transform: none; }
   .catalog-list .catalog-skeleton span, .home-tiles .home-tile.home-skeleton { animation: none; }
   .interface-primary, .youth-primary, .youth-secondary, .home-cta, .home-search button, .quick-ghost, .dash-refresh,
   .result-page .result-btn-primary, .result-page .result-btn-ghost, .dx-next, .dx-back, .policy-save, .catalog-apply-cta, .catalog-diagnose,

@@ -1,15 +1,6 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react"
+import { useEffect, useRef, type MouseEvent } from "react"
 import QuickFinderPage from "./QuickFinderPage"
 import "./quick-widget.css"
-
-const SEEN_KEY = "youth-welfare:quick-widget-seen"
-
-function readSeen() {
-  try { return window.localStorage.getItem(SEEN_KEY) === "1" } catch { return true }
-}
-function writeSeen() {
-  try { window.localStorage.setItem(SEEN_KEY, "1") } catch { /* 저장소를 못 써도 동작에는 문제없다 */ }
-}
 
 // 화면 오른쪽 아래에 떠 있는 간편 정책 찾기 채팅. 닫아도 대화는 그대로 남는다.
 export default function QuickChatWidget({ open, onOpenChange, hidden, onDiagnosis }: {
@@ -21,22 +12,14 @@ export default function QuickChatWidget({ open, onOpenChange, hidden, onDiagnosi
   const button = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLDivElement>(null)
   const wasOpen = useRef(false)
-  const [hint, setHint] = useState(false)
   const visible = open && !hidden
-
-  useEffect(() => {
-    if (hidden || open || readSeen()) return
-    const show = window.setTimeout(() => setHint(true), 1500)
-    const hide = window.setTimeout(() => { setHint(false); writeSeen() }, 10000)
-    return () => { window.clearTimeout(show); window.clearTimeout(hide) }
-  }, [hidden, open])
 
   useEffect(() => {
     if (hidden && open) onOpenChange(false)
   }, [hidden, open, onOpenChange])
 
   useEffect(() => {
-    if (visible) { setHint(false); writeSeen(); panel.current?.focus() }
+    if (visible) panel.current?.focus()
     else if (wasOpen.current && !hidden) button.current?.focus()
     wasOpen.current = visible
   }, [visible, hidden])
@@ -74,8 +57,8 @@ export default function QuickChatWidget({ open, onOpenChange, hidden, onDiagnosi
       </div>
     </div>
     {!hidden && <>
-      {hint && !open && <span className="quick-widget-hint" role="status">로그인 없이 정책 찾기</span>}
-      <button ref={button} type="button" className="quick-widget-fab" data-pulse={hint && !open}
+      {!open && <span className="quick-widget-label" aria-hidden="true" onClick={() => onOpenChange(true)}>궁금한 정책, 여기서 물어보세요!</span>}
+      <button ref={button} type="button" className="quick-widget-fab"
         aria-label="간편 정책 찾기 열기" aria-expanded={visible} aria-controls="quick-widget-panel"
         onClick={() => onOpenChange(!open)}>
         <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
