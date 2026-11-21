@@ -6,6 +6,7 @@ import type { Page } from "../types/page"
 import HomePage from "../features/home/HomePage"
 import PolicyExplorerPage from "../features/policies/PolicyExplorerPage"
 import PolicyDetailPage from "../features/policies/PolicyDetailPage"
+import QuickFinderPage from "../features/quick/QuickFinderPage"
 import DiagnosisPage from "../features/diagnosis/DiagnosisPage"
 import ResultPage from "../features/diagnosis/ResultPage"
 import DashboardPage from "../features/dashboard/DashboardPage"
@@ -22,7 +23,7 @@ import "../styles/improvements.css"
 import "../styles/auth.css"
 import "../styles/actions.css"
 
-const pages: Page[] = ["home", "explorer", "diagnosis", "result", "dashboard"]
+const pages: Page[] = ["home", "explorer", "quick", "diagnosis", "result", "dashboard"]
 function policyFromRoute(): string {
   if (!window.location.hash.startsWith("#detail/")) return ""
   try { return decodeURIComponent(window.location.hash.slice(8)) } catch { return "invalid-policy" }
@@ -221,6 +222,7 @@ export default function App() {
         {page === "home" && <HomePage setPage={setPage} myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
         {page === "explorer" && <PolicyExplorerPage myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
         {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} checkedAt={session.diagnosis?.checkedAt} myResult={session.diagnosis ? policyResults(session.diagnosis).find(row => row.id === selectedPolicy) : undefined} saved={savedPolicies.some(p => p.profileKey === (session.diagnosis?.profileKey ?? "") && p.policy.id === selectedPolicy)} onToggleSaved={account && session.diagnosis?.profileKey ? (row: PolicyRow) => void toggleSaved(row, session.diagnosis?.profileKey ?? "") : undefined} busy={busy} />}
+        {page === "quick" && <QuickFinderPage onDiagnosis={() => setPage("diagnosis")} />}
         {page === "diagnosis" && <DiagnosisPage draft={session.draft} setDraft={draft => setSession(s => ({ ...s, draft }))} step={session.step} setStep={step => setSession(s => ({ ...s, step }))} setPage={setPage} onComplete={completeDiagnosis} busy={busy} />}
         {page === "result" && <ResultPage snapshot={session.diagnosis} previous={session.previousDiagnosis} setPage={setPage} busy={busy} savedPolicies={savedPolicies} toggleSaved={toggleSaved} onViewProfile={() => setProfileRequest({ snapshot: "diagnosis" })} onEdit={step => setProfileRequest({ snapshot: "diagnosis", step })} />}
         {page === "dashboard" && <DashboardPage onViewProfile={() => setProfileRequest({ snapshot: "current" })} onEdit={step => setProfileRequest({ snapshot: "current", step: step ?? 0 })} savedPolicies={savedPolicies} updateSaved={updateSaved} session={session} setPage={setPage} refresh={refresh} busy={busy} error={refreshError} />}

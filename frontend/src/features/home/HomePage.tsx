@@ -134,6 +134,13 @@ export default function HomePage({
             >
               내 자격 확인하기 <span aria-hidden="true">→</span>
             </button>
+            <button
+              type="button"
+              className="home-cta home-cta-ghost"
+              onClick={() => setPage("quick")}
+            >
+              로그인 없이 간편 정책 찾기 <span aria-hidden="true">→</span>
+            </button>
           </div>
         </div>
         <form className="home-search" role="search" onSubmit={submit}>
