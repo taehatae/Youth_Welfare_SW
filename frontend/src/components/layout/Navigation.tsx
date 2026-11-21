@@ -23,8 +23,6 @@ export default function Navigation({
 
     { id: "explorer", label: "정책 찾기" },
 
-    { id: "quick", label: "간편 정책 찾기" },
-
     { id: "diagnosis", label: "자격 진단" },
 
     { id: "result", label: "진단 결과" },
@@ -83,8 +81,6 @@ export default function Navigation({
           { id: "home" as Page, icon: "🏠", label: "홈" },
 
           { id: "explorer" as Page, icon: "🔍", label: "정책" },
-
-          { id: "quick" as Page, icon: "💬", label: "간편" },
 
           { id: "diagnosis" as Page, icon: "📋", label: "진단" },
 

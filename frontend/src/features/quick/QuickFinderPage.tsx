@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
-  isUnverified, metCountOf, pendingConditionsOf, resultCategoryLabels, resultCategoryOf, resultCategoryOrder, type ResultCategory,
+  cardBrief, isUnverified, metCountOf, pendingConditionsOf, resultCategoryLabels, resultCategoryOf, resultCategoryOrder, type ResultCategory,
 } from "../../components/policy/AnalysisPolicyCard"
 import { policyResults, type PolicyRow } from "../../services/policyResults"
 import { evaluateQuick, loadQuickCategories, loadQuickCategory } from "../../services/welfareApi"
@@ -120,7 +120,16 @@ export const quickFilterCounts = (rows: PolicyRow[]) => Object.fromEntries(
   (["all", ...resultCategoryOrder, "pending"] as QuickFilter[]).map((f) => [f, rows.filter((p) => inQuickFilter(p, f)).length]),
 ) as Record<QuickFilter, number>
 
-export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => void }) {
+function scrollReveal(el: HTMLElement | null, widget: boolean) {
+  if (!el) return
+  const scroller = widget ? el.closest<HTMLElement>(".quick-widget-scroll") : null
+  if (!scroller) { el.scrollIntoView({ behavior: "smooth", block: "start" }); return }
+  const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8
+  scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" })
+}
+
+export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onDiagnosis: () => void; variant?: "page" | "widget" }) {
+  const widget = variant === "widget"
   const [categories, setCategories] = useState<QuickCategory[] | null>(null)
   const [loadError, setLoadError] = useState("")
   const [detail, setDetail] = useState<QuickCategoryDetail | null>(null)
@@ -159,7 +168,7 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
   const resetCategory = () => {
     generation.current++
     setDetail(null); setResult(null); setProgress(0); setEditing(null); setEvalError(""); setStale(false); setEvaluating(false)
-    chatTop.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    scrollReveal(chatTop.current, widget)
   }
   const evaluate = async () => {
     if (!detail || evaluating) return
@@ -170,7 +179,7 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
       if (version !== generation.current) return
       setResult(response); setStale(false); setFilter("all")
       setSkippedAtEval(questions.length - questions.filter((q) => isAnswered(q, draft)).length)
-      window.setTimeout(() => resultTop.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
+      window.setTimeout(() => scrollReveal(resultTop.current, widget), 0)
     } catch (e) {
       if (version === generation.current) setEvalError(e instanceof Error ? e.message : "결과를 불러오지 못했어요.")
     } finally { if (version === generation.current) setEvaluating(false) }
@@ -187,9 +196,9 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
   const shown = rows.filter((p) => inQuickFilter(p, filter))
   const unverified = rows.filter(isUnverified).length
 
-  return <section className="reverse-page quick-page">
-    <PageHeading eyebrow="버튼으로 답하는 간편 탐색" title="간편 정책 찾기"
-      description="관심 분야를 고르고, 그 분야 정책이 실제로 비교하는 조건만 답해 보세요. 로그인 없이 쓸 수 있고 입력값과 결과는 저장하지 않아요." />
+  return <section className={widget ? "quick-widget-body" : "reverse-page quick-page"}>
+    {!widget && <PageHeading eyebrow="버튼으로 답하는 간편 탐색" title="간편 정책 찾기"
+      description="관심 분야를 고르고, 그 분야 정책이 실제로 비교하는 조건만 답해 보세요. 로그인 없이 쓸 수 있고 입력값과 결과는 저장하지 않아요." />}
     <div className="quick-chat" ref={chatTop} aria-label="간편 정책 찾기 대화">
       <Bot>
         <p>안녕하세요. 관심 분야의 정책을 버튼으로 간단히 찾아 드릴게요.</p>
@@ -258,14 +267,21 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
             {id === "all" ? "전체" : id === "pending" ? "└ 그중 미입력 조건 있음" : resultCategoryLabels[id]} <strong>{counts[id]}</strong></button>)}
       </div>
       {unverified > 0 && <p className="analysis-unverified">신청 가능 중 {unverified}건은 비교할 수 있는 조건이 없어 ‘비교 조건 없음’으로 표시했어요.</p>}
-      {shown.length ? <div className="reverse-list quick-list">
+      {shown.length ? widget ? <ul className="quick-mini-list">
+        {shown.map((policy) => { const cat = resultCategoryOf(policy)
+          return <li key={policy.id}><a className="quick-mini" href={"#detail/" + encodeURIComponent(policy.id)}>
+            <span className="quick-mini-pill" data-category={cat}>{resultCategoryLabels[cat]}</span>
+            <strong>{policy.title}</strong>
+            <span className="quick-mini-brief">{cardBrief(policy)}</span>
+          </a></li> })}
+      </ul> : <div className="reverse-list quick-list">
         {shown.map((policy, index) => <AnalysisPolicyCard key={policy.id} policy={policy} index={index} temporary />)}
       </div> : <div className="reverse-empty">
         <h3>{rows.length ? "이 분류에 해당하는 정책이 없어요" : "이 분야에서 분석된 정책이 없어요"}</h3>
         <p>{rows.length ? "다른 분류를 눌러 보세요." : "결과가 없다고 자격이 없다는 뜻은 아니에요. 다른 분야를 선택하거나 전체 자격 진단을 이용해 보세요."}</p>
       </div>}
       <div className="quick-next">
-        <button type="button" className="quick-ghost" onClick={() => chatTop.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>답변 수정하기</button>
+        <button type="button" className="quick-ghost" onClick={() => scrollReveal(chatTop.current, widget)}>답변 수정하기</button>
         <button type="button" className="quick-ghost" onClick={resetCategory}>다른 분야 찾기</button>
         <button type="button" className="interface-primary" onClick={onDiagnosis}>전체 자격 진단 하기 →</button>
       </div>

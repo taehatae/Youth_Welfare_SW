@@ -59,9 +59,12 @@ function daysLeft(policy: CatalogPolicy) {
 
 export default function HomePage({
   setPage,
+  onOpenChat,
   myResults,
 }: {
   setPage: (page: Page) => void
+  /** 간편 정책 찾기 채팅 위젯 열기(없으면 전체 화면 페이지로 이동) */
+  onOpenChat?: () => void
   /** 로그인 후 최근 진단 결과(없으면 undefined) */
   myResults?: PolicyRow[]
 }) {
@@ -140,7 +143,7 @@ export default function HomePage({
               type="button"
               className="home-cta home-cta-ghost"
               data-reveal
-              onClick={() => setPage("quick")}
+              onClick={() => (onOpenChat ? onOpenChat() : setPage("quick"))}
             >
               로그인 없이 간편 정책 찾기 <span aria-hidden="true">→</span>
             </button>

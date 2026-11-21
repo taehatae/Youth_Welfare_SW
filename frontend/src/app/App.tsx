@@ -7,6 +7,7 @@ import HomePage from "../features/home/HomePage"
 import PolicyExplorerPage from "../features/policies/PolicyExplorerPage"
 import PolicyDetailPage from "../features/policies/PolicyDetailPage"
 import QuickFinderPage from "../features/quick/QuickFinderPage"
+import QuickChatWidget from "../features/quick/QuickChatWidget"
 import DiagnosisPage from "../features/diagnosis/DiagnosisPage"
 import ResultPage from "../features/diagnosis/ResultPage"
 import DashboardPage from "../features/dashboard/DashboardPage"
@@ -49,6 +50,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState("")
   const [loginOpen, setLoginOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const [profileRequest, setProfileRequest] = useState<{ snapshot: "current" | "diagnosis"; step?: number } | null>(null)
   const [session, setSession] = useState(emptySession)
   const [savedPolicies, setSavedPolicies] = useState<SavedPolicy[]>([])
@@ -219,7 +221,7 @@ export default function App() {
         <p>입력한 프로필과 진단 결과를 계정에 저장하고, 나의 현황에서 다시 확인할 수 있어요.</p>
         {!authLoading && <button className="interface-primary" onClick={() => account ? void restoreAccount() : setLoginOpen(true)}>{account ? "다시 불러오기" : "로그인 · 회원가입"}</button>}
       </section> : <>
-        {page === "home" && <HomePage setPage={setPage} myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
+        {page === "home" && <HomePage setPage={setPage} onOpenChat={() => setChatOpen(true)} myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
         {page === "explorer" && <PolicyExplorerPage myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
         {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} checkedAt={session.diagnosis?.checkedAt} myResult={session.diagnosis ? policyResults(session.diagnosis).find(row => row.id === selectedPolicy) : undefined} saved={savedPolicies.some(p => p.profileKey === (session.diagnosis?.profileKey ?? "") && p.policy.id === selectedPolicy)} onToggleSaved={account && session.diagnosis?.profileKey ? (row: PolicyRow) => void toggleSaved(row, session.diagnosis?.profileKey ?? "") : undefined} busy={busy} />}
         {page === "quick" && <QuickFinderPage onDiagnosis={() => setPage("diagnosis")} />}
@@ -228,5 +230,6 @@ export default function App() {
         {page === "dashboard" && <DashboardPage onViewProfile={() => setProfileRequest({ snapshot: "current" })} onEdit={step => setProfileRequest({ snapshot: "current", step: step ?? 0 })} savedPolicies={savedPolicies} updateSaved={updateSaved} session={session} setPage={setPage} refresh={refresh} busy={busy} error={refreshError} />}
       </>}
     </main>
+    <QuickChatWidget open={chatOpen} onOpenChange={setChatOpen} hidden={page === "diagnosis" || page === "quick"} onDiagnosis={() => { setChatOpen(false); setPage("diagnosis") }} />
   </div>
 }
