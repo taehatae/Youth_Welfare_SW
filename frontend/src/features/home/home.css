@@ -230,7 +230,8 @@ a.home-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
 
 /* ===== 마스코트 배치 (장식) ===== */
 .home-hero-wrap { z-index: 1; }
-.home-m-hero { position: absolute; right: calc(46% - 70px); bottom: 0; z-index: 2; }
+/* 검색창(히어로 아래 34px 겹침) 위로 띄워 겹치지 않게 */
+.home-m-hero { position: absolute; right: calc(46% - 190px); bottom: 64px; z-index: 2; width: 180px; height: auto; }
 .home-m-hero-sm { display: none; }
 .home-stats { position: relative; overflow: hidden; }
 .home-stats > .home-wrap { position: relative; z-index: 1; }
@@ -251,7 +252,7 @@ a.home-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
 .home-cta-band > .home-wrap { position: relative; }
 .home-m-jump { position: absolute; right: 0; top: 50%; margin-top: -100px; }
 @media (max-width: 1100px) {
-  .home-m-hero { width: 160px; right: calc(40% - 90px); }
+  .home-m-hero { width: 140px; right: calc(40% - 150px); bottom: 64px; }
   .home-m-search { width: 120px; top: -95px; }
 }
 @media (max-width: 900px) {

@@ -65,7 +65,7 @@
   .youth-home { padding-bottom: 80px; }
 }
 @media (max-width: 639px) {
-  .interface-nav-brand img { width: 112px; height: 56px; }
+  .interface-nav-brand .brand-logo > img:first-child { width: 112px; height: 56px; }
   .interface-login-button { padding-inline: 12px; }
   .interface-heading { padding: 24px 20px; border-radius: 24px; }
   .interface-heading-top { flex-direction: column; align-items: stretch; gap: 16px; }
