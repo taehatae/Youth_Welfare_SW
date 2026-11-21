@@ -90,7 +90,7 @@ const fieldName = (field: string) =>
   isOrGroup(field) ? field : (conditionFields[field.toLowerCase()] ?? field)
 const OrNote = ({ field }: { field: string }) =>
   isOrGroup(field) ? (
-    <small className="text-slate-500"> (이 중 하나만 해당하면 돼요)</small>
+    <small className="text-[var(--sub)]"> (이 중 하나만 해당하면 돼요)</small>
   ) : null
 
 export const conditionFields: Record<string, string> = {

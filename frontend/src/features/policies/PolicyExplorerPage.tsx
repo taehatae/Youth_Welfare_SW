@@ -1,8 +1,11 @@
+import type { PolicyRow } from "../../services/policyResults"
 import { useEffect, useRef, useState } from "react"
 
-import PageHeading from "../../components/layout/PageHeading"
-
 import PolicyCard from "../../components/policy/PolicyCard"
+
+import { resultCategoryOf } from "../../components/policy/AnalysisPolicyCard"
+
+import { deadlineOf } from "./categoryStyle"
 
 import { loadPolicyCatalog } from "../../services/welfareApi"
 
@@ -31,7 +34,15 @@ function filters() {
   }
 }
 
-export default function PolicyExplorerPage() {
+export default function PolicyExplorerPage({
+  myResults,
+}: {
+  /** 로그인 후 최근 진단 결과(없으면 undefined) */
+  myResults?: PolicyRow[]
+} = {}) {
+  const [sort, setSort] = useState<"default" | "deadline">("default")
+  const [mineOnly, setMineOnly] = useState(false)
+  const mine = new Map((myResults ?? []).map((row) => [row.id, resultCategoryOf(row)]))
   const [filter, setFilter] = useState(filters)
 
   const [search, setSearch] = useState(filter.query)
@@ -121,37 +132,78 @@ export default function PolicyExplorerPage() {
 
   const pages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1
 
+  const hasDeadline = !!data?.items.some((p) => deadlineOf(p) !== null)
+  const shown = (data?.items ?? [])
+    .filter((p) => !mineOnly || mine.get(p.id) === "likely")
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => {
+      if (sort !== "deadline") return a.i - b.i
+      const x = deadlineOf(a.p) ?? Infinity
+      const y = deadlineOf(b.p) ?? Infinity
+      return x === y ? a.i - b.i : x - y
+    })
+    .map(({ p }) => p)
+
   return (
     <section className="catalog-page">
-      <PageHeading
-        eyebrow="내 생활과 가까운 지원"
-        title="필요한 정책을 찾아보세요"
-        description="주거부터 일자리까지, 분야별 지원 내용과 신청 대상을 살펴보세요."
-      >
-        <form
-          className="catalog-search"
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault()
-            navigate({ query: search.trim(), page: 1 })
-          }}
-        >
-          <label className="sr-only" htmlFor="catalog-search">
-            정책명 또는 지원 내용
+      <div className="catalog-top">
+        <h1 ref={heading} tabIndex={-1} className="catalog-title">
+          <label className="catalog-select">
+            <span className="sr-only">정책 분야</span>
+            <select
+              value={filter.category}
+              onChange={(event) => navigate({ category: event.target.value, page: 1 })}
+            >
+              {CATALOG_CATEGORIES.map(([id, label]) => (
+                <option key={id} value={id}>
+                  {id === "all" ? "분야 전체" : label}
+                </option>
+              ))}
+            </select>
           </label>
-          <input
-            id="catalog-search"
-            type="search"
-            maxLength={100}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="정책명 또는 지원 내용 검색"
-          />
-          <button className="interface-primary" type="submit">
-            검색
+          {data && <span className="catalog-total">{data.total}개</span>}
+        </h1>
+        {/* 마감일 데이터가 있을 때만 정렬을 보여 준다 */}
+        {hasDeadline && <div className="catalog-sort" role="group" aria-label="정렬">
+          <button
+            aria-pressed={sort === "default"}
+            onClick={() => setSort("default")}
+          >
+            기본순
           </button>
-        </form>
-      </PageHeading>
+          <button
+            aria-pressed={sort === "deadline"}
+            disabled={!hasDeadline}
+            title={hasDeadline ? undefined : "신청 마감일 정보가 있는 정책에서만 쓸 수 있어요"}
+            onClick={() => setSort("deadline")}
+          >
+            마감임박순
+          </button>
+        </div>}
+      </div>
+      <form
+        className="catalog-search"
+        role="search"
+        onSubmit={(event) => {
+          event.preventDefault()
+          navigate({ query: search.trim(), page: 1 })
+        }}
+      >
+        <label className="sr-only" htmlFor="catalog-search">
+          정책명 또는 지원 내용
+        </label>
+        <input
+          id="catalog-search"
+          type="search"
+          maxLength={100}
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="정책명 또는 지원 내용 검색"
+        />
+        <button className="interface-primary" type="submit">
+          검색
+        </button>
+      </form>
       <nav className="catalog-categories" aria-label="정책 분야">
         {CATALOG_CATEGORIES.map(([id, label]) => (
           <button
@@ -165,23 +217,26 @@ export default function PolicyExplorerPage() {
             </span>
           </button>
         ))}
+        {myResults && myResults.length > 0 && (
+          <button
+            className="catalog-mine"
+            aria-pressed={mineOnly}
+            onClick={() => setMineOnly((v) => !v)}
+          >
+            내 조건에 맞는 것만
+          </button>
+        )}
       </nav>
       <div className="catalog-results-heading">
-        <div>
-          <h2 ref={heading} tabIndex={-1}>
-            {categoryLabel(filter.category)} 정책{" "}
-            {data && <span>{data.total}개</span>}
-          </h2>
-          <p role="status" aria-live="polite">
-            {error
-              ? "목록 조회에 실패했어요."
-              : !data
-                ? "정책을 불러오고 있어요…"
-                : filter.query
-                  ? `‘${filter.query}’ 검색 결과예요.`
-                  : `공공 API에서 수집한 ${data.collected_count}개 정책을 살펴볼 수 있어요.`}
-          </p>
-        </div>
+        <p role="status" aria-live="polite">
+          {error
+            ? "목록 조회에 실패했어요."
+            : !data
+              ? "정책을 불러오고 있어요…"
+              : filter.query
+                ? `‘${filter.query}’ 검색 결과예요.`
+                : `공공 API에서 수집한 ${data.collected_count}개 정책을 살펴볼 수 있어요.`}
+        </p>
         {(filter.query || filter.category !== "all") && (
           <button
             className="catalog-reset"
@@ -207,8 +262,8 @@ export default function PolicyExplorerPage() {
           </button>
         </div>
       ) : !data ? (
-        <div className="catalog-grid" aria-hidden="true">
-          {Array.from({ length: 6 }, (_, i) => (
+        <div className="catalog-list" aria-hidden="true">
+          {Array.from({ length: 8 }, (_, i) => (
             <div key={i} className="catalog-skeleton">
               <span />
               <span />
@@ -233,10 +288,23 @@ export default function PolicyExplorerPage() {
             전체 정책 보기
           </button>
         </div>
+      ) : shown.length === 0 ? (
+        <div className="catalog-state">
+          <h3>이 페이지에는 내 조건에 맞는 정책이 없어요</h3>
+          <p>다른 페이지나 분야를 보거나 필터를 꺼보세요.</p>
+          <button className="interface-primary" onClick={() => setMineOnly(false)}>
+            전체 보기
+          </button>
+        </div>
       ) : (
-        <div key={key} className="catalog-grid">
-          {data.items.map((policy, index) => (
-            <PolicyCard key={policy.id} policy={policy} index={index} />
+        <div key={key} className="catalog-list">
+          {shown.map((policy, index) => (
+            <PolicyCard
+              key={policy.id}
+              policy={policy}
+              index={index}
+              status={mine.get(policy.id)}
+            />
           ))}
         </div>
       )}

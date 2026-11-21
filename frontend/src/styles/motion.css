@@ -20,3 +20,9 @@
 }
 .interface-primary:not(:disabled):active, .youth-primary:active, .youth-secondary:active { transform: translateY(0); }
 @media print { .reveal-ready.reveal-pending { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .page-arrive, .step-arrive, .motion-details[open] > .details-body { animation: none; }
+  .reveal-ready, .reveal-ready.reveal-pending { transition: none; opacity: 1; transform: none; }
+  .interface-primary, .youth-primary, .youth-secondary, .policy-save, .dashboard-stat, .youth-category { transition: none; }
+  .interface-primary:not(:disabled):hover, .youth-primary:hover, .youth-secondary:hover, .policy-save:hover, .dashboard-stat:hover, .youth-category:not(.reveal-pending):hover { transform: none; }
+}

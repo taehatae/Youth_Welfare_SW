@@ -218,9 +218,9 @@ export default function App() {
         <p>입력한 프로필과 진단 결과를 계정에 저장하고, 나의 현황에서 다시 확인할 수 있어요.</p>
         {!authLoading && <button className="interface-primary" onClick={() => account ? void restoreAccount() : setLoginOpen(true)}>{account ? "다시 불러오기" : "로그인 · 회원가입"}</button>}
       </section> : <>
-        {page === "home" && <HomePage setPage={setPage} />}
-        {page === "explorer" && <PolicyExplorerPage />}
-        {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} checkedAt={session.diagnosis?.checkedAt} myResult={session.diagnosis ? policyResults(session.diagnosis).find(row => row.id === selectedPolicy) : undefined} />}
+        {page === "home" && <HomePage setPage={setPage} myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
+        {page === "explorer" && <PolicyExplorerPage myResults={session.diagnosis ? policyResults(session.diagnosis) : undefined} />}
+        {page === "detail" && <PolicyDetailPage policyId={selectedPolicy} setPage={setPage} checkedAt={session.diagnosis?.checkedAt} myResult={session.diagnosis ? policyResults(session.diagnosis).find(row => row.id === selectedPolicy) : undefined} saved={savedPolicies.some(p => p.profileKey === (session.diagnosis?.profileKey ?? "") && p.policy.id === selectedPolicy)} onToggleSaved={account && session.diagnosis?.profileKey ? (row: PolicyRow) => void toggleSaved(row, session.diagnosis?.profileKey ?? "") : undefined} busy={busy} />}
         {page === "diagnosis" && <DiagnosisPage draft={session.draft} setDraft={draft => setSession(s => ({ ...s, draft }))} step={session.step} setStep={step => setSession(s => ({ ...s, step }))} setPage={setPage} onComplete={completeDiagnosis} busy={busy} />}
         {page === "result" && <ResultPage snapshot={session.diagnosis} previous={session.previousDiagnosis} setPage={setPage} busy={busy} savedPolicies={savedPolicies} toggleSaved={toggleSaved} onViewProfile={() => setProfileRequest({ snapshot: "diagnosis" })} onEdit={step => setProfileRequest({ snapshot: "diagnosis", step })} />}
         {page === "dashboard" && <DashboardPage onViewProfile={() => setProfileRequest({ snapshot: "current" })} onEdit={step => setProfileRequest({ snapshot: "current", step: step ?? 0 })} savedPolicies={savedPolicies} updateSaved={updateSaved} session={session} setPage={setPage} refresh={refresh} busy={busy} error={refreshError} />}

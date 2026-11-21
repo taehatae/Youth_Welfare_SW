@@ -69,6 +69,17 @@
 .result-page .analysis-filters strong{margin:0;min-width:0;padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--sub);font-size:12px;font-weight:600}
 .result-page .analysis-filters button[aria-pressed=true],.result-page .analysis-filters button[data-category][aria-pressed=true]{background:var(--ink);color:#fff;border:0;box-shadow:none}
 .result-page .analysis-filters button[aria-pressed=true] strong{background:#ffffff2e;color:#fff}
+/* 분류별 색: 기본은 배지만 색, 마우스를 올리면 연한 면, 선택하면 진한 면 */
+.result-page .analysis-filters [data-category=all]{--c:var(--accent-soft);--c-ink:#2357B0}
+.result-page .analysis-filters [data-category=saved]{--c:#ECE7FD;--c-ink:#5B47C9}
+.result-page .analysis-filters [data-category=changed]{--c:#E0F2FE;--c-ink:#0369A1}
+.result-page .analysis-filters button[data-category]{transition:background-color .15s,color .15s,transform .15s,box-shadow .15s}
+.result-page .analysis-filters button[data-category] strong{background:var(--c);color:var(--c-ink);transition:background-color .15s,color .15s}
+.result-page .analysis-filters button[data-category]:hover{background:var(--c);color:var(--c-ink);transform:translateY(-1px)}
+.result-page .analysis-filters button[data-category]:hover strong{background:var(--surface)}
+.result-page .analysis-filters button[data-category][aria-pressed=true]{background:var(--c-ink);color:#fff;box-shadow:0 4px 12px -4px var(--c-ink);transform:none}
+.result-page .analysis-filters button[data-category][aria-pressed=true] strong{background:#ffffff33;color:#fff}
+@media (prefers-reduced-motion:reduce){.result-page .analysis-filters button[data-category]{transition:none}.result-page .analysis-filters button[data-category]:hover{transform:none}}
 .result-page .result-search{margin:0;flex:1 1 260px;min-width:220px}
 .result-page .result-search>div{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 8px 0 18px;height:50px}
 .result-page .result-input-wrap{position:relative;flex:1;min-width:0;display:flex;align-items:center;gap:10px;color:var(--sub)}

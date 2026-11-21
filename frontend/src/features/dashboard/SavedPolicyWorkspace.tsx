@@ -22,10 +22,10 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
     try { await updateSaved(item, status, note); setEditing(false); setMessage("계정에 저장했어요.") }
     catch (e) { setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.") }
   }
-  return <article className="workspace-saved-card" data-reveal>
+  return <article className="workspace-saved-card">
     <div className="workspace-saved-top"><span className="workspace-tracking" data-tracking={item.trackingStatus ?? "interested"}>{trackingLabels[item.trackingStatus ?? "interested"]}</span><span className="dashboard-small">{currentProfile ? "현재 진단 프로필" : "이전 진단 프로필"}</span></div>
-    <h3>{row.title}</h3>
-    <p className="workspace-saved-verdict">{latest ? "최근 조회 결과" : "저장 당시 결과"}<strong data-result={resultCategoryOf(row)}>{resultCategoryLabels[resultCategoryOf(row)]}</strong></p>
+    <h4>{row.title}</h4>
+    <p className="workspace-saved-verdict">{latest ? "최근 조회 결과" : "저장 당시 결과"} ·<strong data-result={resultCategoryOf(row)}>{resultCategoryLabels[resultCategoryOf(row)]}</strong></p>
     {currentProfile && !latest && <p className="dashboard-small">이번 조회에 없는 정책이에요. 종료 여부는 공식 공고에서 확인해주세요.</p>}
     <p className="workspace-saved-time">관심 저장 · {formatTime(item.savedAt)}</p>
     {!editing && <>
@@ -43,24 +43,33 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
   </article>
 }
 
+const columns = ["interested", "preparing", "applied"] as const
+
 export default function SavedPolicyWorkspace({ savedPolicies, current, busy, updateSaved, setPage }: {
   savedPolicies: SavedPolicy[]; current: Snapshot; busy: boolean; updateSaved: UpdateSaved; setPage: (page: Page) => void
 }) {
-  const [filter, setFilter] = useState<TrackingStatus | "active">("active")
   const [scope, setScope] = useState("all")
   const latest = new Map(policyResults(current).map(row => [row.id, row]))
   const scoped = savedPolicies.filter(item => scope === "all" || item.profileKey === current.profileKey)
-  const count = (value: TrackingStatus | "active") => scoped.filter(item => value === "active" ? item.trackingStatus !== "archived" : (item.trackingStatus ?? "interested") === value).length
-  const filtered = scoped.filter(item => filter === "active" ? item.trackingStatus !== "archived" : (item.trackingStatus ?? "interested") === filter)
     .slice().sort((a, b) => b.savedAt.localeCompare(a.savedAt))
-  return <section className="workspace-saved" aria-labelledby="workspace-saved-title">
-    <div className="workspace-overview-heading"><div className="workspace-section-title"><p className="dashboard-eyebrow">03 / 관심 정책 관리</p><h2 id="workspace-saved-title">내가 챙길 정책 <span>{savedPolicies.length}</span></h2></div><label className="workspace-scope">프로필 범위<select value={scope} onChange={e => setScope(e.target.value)} disabled={busy}><option value="all">이전 프로필 포함</option><option value="current">현재 진단 프로필만</option></select></label></div>
+  const by = (value: TrackingStatus) => scoped.filter(item => (item.trackingStatus ?? "interested") === value)
+  const card = (item: SavedPolicy) => <SavedCard key={`${item.profileKey}:${item.policy.id}`} item={item} currentProfile={item.profileKey === current.profileKey} latest={item.profileKey === current.profileKey ? latest.get(item.policy.id) : undefined} busy={busy} updateSaved={updateSaved} />
+  const archived = by("archived")
+  return <section className="workspace-saved" id="saved" aria-labelledby="workspace-saved-title">
+    <div className="dash-panel-head"><h2 id="workspace-saved-title">관심 정책 <span>{savedPolicies.length}</span></h2><label className="workspace-scope">프로필 범위<select value={scope} onChange={e => setScope(e.target.value)} disabled={busy}><option value="all">이전 프로필 포함</option><option value="current">현재 진단 프로필만</option></select></label></div>
     <p className="dashboard-small">관리 상태는 직접 기록한 내용이며 실제 접수·선정 결과와 연동되지 않아요. 보관한 정책은 ‘보관’에서 다시 꺼낼 수 있어요.</p>
-    <div className="workspace-tabs" aria-label="관심 정책 관리 상태">
-      {(["active", "interested", "preparing", "applied", "archived"] as const).map(value => <button key={value} disabled={busy} aria-pressed={filter === value} onClick={() => setFilter(value)}>{value === "active" ? "관리 중 전체" : trackingLabels[value]}<b>{count(value)}</b></button>)}
-    </div>
-    {filtered.length ? <div className="workspace-saved-grid">{filtered.map(item => <SavedCard key={`${item.profileKey}:${item.policy.id}`} item={item} currentProfile={item.profileKey === current.profileKey} latest={item.profileKey === current.profileKey ? latest.get(item.policy.id) : undefined} busy={busy} updateSaved={updateSaved} />)}</div> : <div className="workspace-empty" data-reveal>
-      <span className="workspace-empty-mark" aria-hidden="true">☆</span><h3>{savedPolicies.length ? "이 분류에 저장된 정책이 없어요" : "관심 정책을 저장하면 준비가 쉬워져요"}</h3><p>{savedPolicies.length ? "다른 관리 상태나 프로필 범위를 선택해보세요." : "진단 결과에서 관심 정책을 고르고, 이곳에서 준비할 일과 진행 상황을 기록하세요."}</p><button className="interface-primary" onClick={() => setPage("result")}>진단 결과에서 정책 고르기 →</button>
-    </div>}
+    {savedPolicies.length === 0 ? <div className="workspace-empty">
+      <span className="workspace-empty-mark" aria-hidden="true">☆</span><h3>관심 정책을 저장하면 준비가 쉬워져요</h3><p>진단 결과에서 관심 정책을 고르고, 이곳에서 준비할 일과 진행 상황을 기록하세요.</p><button className="interface-primary" onClick={() => setPage("result")}>진단 결과에서 정책 고르기 →</button>
+    </div> : <>
+      <div className="kanban">
+        {columns.map(col => { const items = by(col); return <section key={col} className="kanban-col" data-tracking={col} aria-label={trackingLabels[col]}>
+          <h3>{trackingLabels[col]}<b>{items.length}</b></h3>
+          {items.length ? items.map(card) : <p className="kanban-empty">이 단계의 정책이 없어요</p>}
+        </section> })}
+      </div>
+      <details className="kanban-archive"><summary>{trackingLabels.archived} <b>{archived.length}</b></summary>
+        {archived.length ? <div className="kanban-archive-list">{archived.map(card)}</div> : <p className="kanban-empty">보관한 정책이 없어요</p>}
+      </details>
+    </>}
   </section>
 }

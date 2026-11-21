@@ -1,7 +1,5 @@
 import { profileSummary } from "../../services/profileSummary"
 
-import PageHeading from "../../components/layout/PageHeading"
-
 import { useEffect, useRef, useState } from "react"
 
 import type { Page } from "../../types/page"
@@ -9,6 +7,8 @@ import type { Page } from "../../types/page"
 import type { UserProfileInput } from "../../types/welfareApi"
 
 import { REGIONS } from "../../data/regions"
+
+import "./diagnosis.css"
 
 import {
   EMPTY_ADDITIONAL_ELIGIBILITY,
@@ -110,17 +110,17 @@ function Select({
   if (choices.length >= 2 && choices.length <= 5)
     return (
       <fieldset
-        className="choice-field"
+        className="dx-field"
         disabled={disabled}
         aria-describedby={hint ? name + "-hint" : undefined}
       >
-        <legend className="block text-sm font-semibold text-slate-800">
+        <legend className="dx-label">
           {label}
-          {required && <span className="ml-1 text-blue-700"> (필수)</span>}
+          {required && <span className="dx-req"> (필수)</span>}
         </legend>
-        <div className="choice-group" data-count={choices.length}>
+        <div className="dx-rows">
           {choices.map(([id, text]) => (
-            <label key={id || "empty"} className="choice-option">
+            <label key={id || "empty"} className="dx-row">
               <input
                 type="radio"
                 name={name}
@@ -128,6 +128,7 @@ function Select({
                 checked={value === id}
                 onChange={() => onChange(id)}
               />
+              <i className="dx-mark" aria-hidden="true" />
               <span>{text}</span>
             </label>
           ))}
@@ -135,7 +136,7 @@ function Select({
         {hint && (
           <p
             id={name + "-hint"}
-            className="text-sm leading-relaxed text-slate-500"
+            className="dx-hint"
           >
             {hint}
           </p>
@@ -143,13 +144,10 @@ function Select({
       </fieldset>
     )
   return (
-    <div className="space-y-2">
-      <label
-        htmlFor={name}
-        className="block text-sm font-semibold text-slate-800"
-      >
+    <div className="dx-field">
+      <label htmlFor={name} className="dx-label">
         {label}
-        {required && <span className="ml-1 text-blue-700"> (필수)</span>}
+        {required && <span className="dx-req"> (필수)</span>}
       </label>
       <select
         id={name}
@@ -158,7 +156,7 @@ function Select({
         disabled={disabled}
         required={required}
         aria-describedby={hint ? name + "-hint" : undefined}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base text-slate-900 focus:outline-2 focus:outline-blue-600 disabled:bg-slate-100"
+        className="dx-input"
       >
         {(showUnanswered || !options.some(([v]) => v === "UNKNOWN")) && (
           <option value="">
@@ -174,7 +172,7 @@ function Select({
       {hint && (
         <p
           id={name + "-hint"}
-          className="text-sm leading-relaxed text-slate-500"
+          className="dx-hint"
         >
           {hint}
         </p>
@@ -304,9 +302,9 @@ export default function DiagnosisPage({
     hint: string,
     value: string,
   ) => (
-    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-      {label}
-      <div className="flex items-center gap-2">
+    <label className="dx-field">
+      <span className="dx-label">{label}</span>
+      <div className="dx-unit">
         <input
           type="number"
           inputMode="numeric"
@@ -321,11 +319,11 @@ export default function DiagnosisPage({
             setDraft({ ...draft, additionalEligibility: next })
             setError("")
           }}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+          className="dx-input"
         />
-        <span aria-hidden="true" className="font-normal">만원</span>
+        <span aria-hidden="true">만원</span>
       </div>
-      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+      <span className="dx-hint">{hint}</span>
     </label>
   )
 
@@ -335,9 +333,9 @@ export default function DiagnosisPage({
     hint: string,
     unit: string,
   ) => (
-    <label className="block space-y-2 text-sm font-semibold text-slate-800">
-      {label}
-      <div className="flex items-center gap-2">
+    <label className="dx-field">
+      <span className="dx-label">{label}</span>
+      <div className="dx-unit">
         <input
           type="number"
           inputMode="numeric"
@@ -345,11 +343,11 @@ export default function DiagnosisPage({
           step={1}
           value={additional[key] ?? ""}
           onChange={(event) => updateAdditional(key, event.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+          className="dx-input"
         />
-        <span aria-hidden="true" className="font-normal">{unit}</span>
+        <span aria-hidden="true">{unit}</span>
       </div>
-      <span className="block text-sm font-normal text-slate-500">{hint}</span>
+      <span className="dx-hint">{hint}</span>
     </label>
   )
 
@@ -436,12 +434,15 @@ export default function DiagnosisPage({
 
   if (reviewProfile)
     return (
-      <section className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6">
-        <PageHeading
-          eyebrow="진단 전 마지막 확인"
-          title="입력한 정보를 확인해주세요"
-          description="이 정보로 정책 조건을 비교합니다. 모르는 추가 정보는 미확인으로 남겨도 괜찮아요."
-        />
+      <section className="dx-page">
+        <div className="dx-col">
+        <header className="dx-head">
+          <p className="dx-eyebrow">진단 전 마지막 확인</p>
+          <h1>입력한 정보를 확인해주세요</h1>
+          <p className="dx-desc">
+            이 정보로 정책 조건을 비교합니다. 모르는 추가 정보는 미확인으로 남겨도 괜찮아요.
+          </p>
+        </header>
         <div className="profile-review step-arrive" aria-busy={busy}>
           <h2 ref={heading} tabIndex={-1}>
             이번 진단에 사용할 정보
@@ -505,47 +506,51 @@ export default function DiagnosisPage({
             </button>
           </div>
         </div>
+        </div>
       </section>
     )
 
   return (
-    <section
-      className="mx-auto max-w-2xl px-4 py-8 pb-28 sm:px-6"
-      data-compact-heading={step > 0 || undefined}
-    >
-      <PageHeading
-        eyebrow="내 정보에서 시작하는 맞춤 진단"
-        title="내 자격 진단"
-        description="진단을 완료하면 입력값과 결과가 내 계정에 저장됩니다. 작성 중에는 새로고침하지 마세요. 모르는 추가 조건은 미확인으로 두세요."
-      />
-      <ol
+    <section className="dx-page">
+      <div className="dx-col">
+      <div className="dx-top">
+        <span>
+          {steps[step]} · {step + 1} / 6
+        </span>
+        <span>모르는 항목은 비워 두세요</span>
+      </div>
+      <div
+        className="dx-bar"
+        role="progressbar"
         aria-label="진단 진행 단계"
-        className="interface-steps my-6 grid grid-cols-3 gap-2 sm:grid-cols-6"
+        aria-valuemin={1}
+        aria-valuemax={6}
+        aria-valuenow={step + 1}
+        aria-valuetext={`${steps[step]} ${step + 1} / 6`}
       >
-        {steps.map((label, index) => (
-          <li
-            key={label}
-            aria-current={index === step ? "step" : undefined}
-            className={`rounded-lg px-2 py-2 text-center text-xs font-semibold ${
-              index === step
-                ? "bg-blue-700 text-white"
-                : index < step
-                  ? "bg-blue-50 text-blue-800"
-                  : "bg-slate-100 text-slate-500"
-            }`}
-          >
-            <button
-              type="button"
-              disabled={busy || index > step}
-              onClick={() => setStep(index)}
-              className="w-full rounded py-1 disabled:cursor-default"
-              aria-label={label + (index < step ? " 수정" : "")}
+        <i style={{ width: `${((step + 1) / 6) * 100}%` }} />
+      </div>
+      <details className="dx-steps">
+        <summary>단계 보기</summary>
+        <ol aria-label="진단 진행 단계 목록">
+          {steps.map((label, index) => (
+            <li
+              key={label}
+              aria-current={index === step ? "step" : undefined}
+              data-state={index === step ? "current" : index < step ? "done" : "todo"}
             >
-              {index + 1}. {label}
-            </button>
-          </li>
-        ))}
-      </ol>
+              <button
+                type="button"
+                disabled={busy || index > step}
+                onClick={() => setStep(index)}
+                aria-label={label + (index < step ? " 수정" : "")}
+              >
+                {index + 1}. {label}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </details>
       <form
         key={step}
         noValidate
@@ -554,19 +559,15 @@ export default function DiagnosisPage({
 
           void proceed()
         }}
-        className="interface-form step-arrive bg-white p-5 sm:p-7"
+        className="dx-form step-arrive"
       >
-        <h2
-          ref={heading}
-          tabIndex={-1}
-          className="mb-6 text-xl font-bold text-slate-900 outline-none"
-        >
-          {steps[step]}{" "}
-          <span className="text-sm font-normal text-slate-500">
-            {step + 1} / 6
-          </span>
-        </h2>
-        <fieldset disabled={busy} className="space-y-6">
+        <h1 ref={heading} tabIndex={-1} className="dx-title">
+          {steps[step]}
+        </h1>
+        <p className="dx-desc">
+          진단을 완료하면 입력값과 결과가 내 계정에 저장됩니다. 작성 중에는 새로고침하지 마세요. 모르는 추가 조건은 미확인으로 두세요.
+        </p>
+        <fieldset disabled={busy} className="dx-fields">
           <legend className="sr-only">{steps[step]} 입력</legend>
           {step === 0 && (
             <>
@@ -585,7 +586,7 @@ export default function DiagnosisPage({
               <button
                 type="button"
                 onClick={() => setPage("explorer")}
-                className="text-action"
+                className="dx-link"
               >
                 대상 연령 밖이라면 정책 목록 살펴보기 →
               </button>
@@ -630,15 +631,12 @@ export default function DiagnosisPage({
 
                 "여러 소득이 있다면 가장 큰 비중의 소득원을 선택해주세요.",
               )}
-              <div>
-                <label
-                  htmlFor="income-manwon"
-                  className="mb-2 block text-sm font-semibold text-slate-800"
-                >
+              <div className="dx-field">
+                <label htmlFor="income-manwon" className="dx-label">
                   본인 월평균 세전 소득
-                  <span className="ml-1 text-blue-700"> (필수)</span>
+                  <span className="dx-req"> (필수)</span>
                 </label>
-                <div className="unit-input">
+                <div className="dx-unit">
                   <input
                     id="income-manwon"
                     type="number"
@@ -673,7 +671,7 @@ export default function DiagnosisPage({
                   <span aria-hidden="true">만원</span>
                 </div>
                 <p
-                  className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-900"
+                  className="dx-info"
                   aria-live="polite"
                 >
                   {draft.incomeMajor !== "" && draft.incomeMinor !== ""
@@ -682,7 +680,7 @@ export default function DiagnosisPage({
                       "원"
                     : "월 215만원이라면 215를 입력하세요."}
                 </p>
-                <p id="income-manwon-hint" className="mt-2 text-sm text-slate-500">
+                <p id="income-manwon-hint" className="dx-hint">
                   모든 소득을 합산해 만원 단위로 입력해주세요 (0~9,999만원).
                   가구소득과 소득인정액은 정책별로 추가 확인이 필요합니다.
                 </p>
@@ -771,14 +769,14 @@ export default function DiagnosisPage({
           {step === 5 && (
             <>
               {field("nationality", "국적", NATIONALITY)}
-              <fieldset className="space-y-2">
-                <legend className="mb-2 text-sm font-semibold">
+              <fieldset className="dx-field">
+                <legend className="dx-label">
                   해당하는 대상 (해당하는 것만 선택)
                 </legend>
                 {SPECIAL_TARGETS.map(([value, label]) => (
                   <label
                     key={value}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 px-3 py-3 text-sm"
+                    className="dx-row dx-check"
                   >
                     <input
                       type="checkbox"
@@ -791,12 +789,12 @@ export default function DiagnosisPage({
                             : (draft.specialTargets ?? []).filter((v) => v !== value),
                         })
                       }
-                      className="h-4 w-4 accent-blue-700"
-                    />
-                    {label}
+                      />
+                    <i className="dx-mark" aria-hidden="true" />
+                    <span>{label}</span>
                   </label>
                 ))}
-                <p className="text-sm text-slate-500">
+                <p className="dx-hint">
                   해당 없으면 선택하지 않아도 돼요.
                 </p>
               </fieldset>
@@ -855,11 +853,11 @@ export default function DiagnosisPage({
                   "세",
                 )}
 
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
                       복지 수급·자격 정보
                     </legend>
-                    <p className="text-sm text-slate-500">
+                    <p className="dx-hint">
                       많은 정책이 이 조건으로 대상을 나눠요. 모르면 ‘모름·확인
                       필요’를 선택하세요.
                     </p>
@@ -868,17 +866,17 @@ export default function DiagnosisPage({
                       "기초생활보장급여 수급 여부",
                     )}
                     {additional.basicBenefitStatus === "YES" && (
-                      <fieldset className="space-y-2">
-                        <legend className="text-sm font-semibold">
+                      <fieldset className="dx-field">
+                        <legend className="dx-label">
                           수급 중인 급여 종류 (복수 선택)
                         </legend>
-                        <p className="text-sm text-slate-500">
+                        <p className="dx-hint">
                           현재 해당하는 급여를 모두 선택해주세요.
                         </p>
                         {BENEFIT_TYPE_OPTIONS.map(([value, label]) => (
                           <label
                             key={value}
-                            className="flex items-center gap-3 py-1 text-sm"
+                            className="dx-row dx-check"
                           >
                             <input
                               type="checkbox"
@@ -896,15 +894,15 @@ export default function DiagnosisPage({
                                       ),
                                 )
                               }
-                              className="h-4 w-4 accent-blue-700"
-                            />
-                            {label}
+                              />
+                            <i className="dx-mark" aria-hidden="true" />
+                            <span>{label}</span>
                           </label>
                         ))}
                       </fieldset>
                     )}
                     {additional.basicBenefitStatus === "NO" && (
-                      <p className="text-sm text-slate-600">
+                      <p className="dx-hint">
                         수급 급여 종류: 해당 없음
                       </p>
                     )}
@@ -923,15 +921,15 @@ export default function DiagnosisPage({
                 <summary>
                   가구 소득·보호 경험 등 추가 정보 입력 <small>(선택)</small>
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                <p className="dx-hint">
                   모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로
                   저장됩니다. 입력 내용은 본인 응답이며 공식 자격 증명으로
                   간주되지 않습니다.
                 </p>
-                <div className="details-body mt-5 space-y-7">
+                <div className="details-body dx-body">
 
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
                       가구 소득 정보
                     </legend>
                     {additionalSelect(
@@ -940,8 +938,8 @@ export default function DiagnosisPage({
                       "가구 소득인정액을 알고 있나요?",
                     )}
                     {additional.householdIncomeRecognitionKnown === "YES" && (
-                      <label className="block space-y-2 text-sm font-semibold text-slate-800">
-                        가구 소득인정액 (원, 선택)
+                      <label className="dx-field">
+                        <span className="dx-label">가구 소득인정액 (원, 선택)</span>
                         <input
                           type="number"
                           min="0"
@@ -953,7 +951,7 @@ export default function DiagnosisPage({
                               event.target.value,
                             )
                           }
-                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-base font-normal"
+                          className="dx-input"
                         />
                       </label>
                     )}
@@ -962,17 +960,17 @@ export default function DiagnosisPage({
 
                       "가구 내 기초생활보장급여 수급자 여부",
                     )}
-                    <p className="text-sm text-slate-500">
+                    <p className="dx-hint">
                       본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며,
                       모르는 금액은 계산하지 않습니다.
                     </p>
                   </fieldset>
 
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
                       신용 정보
                     </legend>
-                    <p className="text-sm text-slate-500">
+                    <p className="dx-hint">
                       서민금융 대출은 '신용점수 하위 20%' 같은 기준이 있어요. 평가사마다 점수가 달라 함께 골라주세요.
                     </p>
                     <Select
@@ -990,8 +988,8 @@ export default function DiagnosisPage({
                     )}
                   </fieldset>
 
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
                       보호 경험·종료 정보
                     </legend>
                     {additionalSelect(
@@ -1006,8 +1004,8 @@ export default function DiagnosisPage({
                     )}
                   </fieldset>
 
-                  <fieldset className="space-y-5 border-t border-slate-200 pt-5">
-                    <legend className="px-1 font-semibold">
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
                       구직 정보
                     </legend>
                     {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
@@ -1018,28 +1016,26 @@ export default function DiagnosisPage({
           )}
         </fieldset>
         {error && (
-          <p
-            role="alert"
-            className="mt-5 rounded-lg bg-red-50 p-3 text-sm text-red-800"
-          >
+          <p role="alert" className="dx-alert">
             {error}
           </p>
         )}
-        <div className="mt-8 flex gap-3">
+        <div className="dx-nav">
           {step > 0 && (
             <button
               type="button"
               disabled={busy}
               onClick={() => setStep(step - 1)}
-              className="rounded-xl border border-slate-300 px-5 py-3 font-semibold disabled:opacity-50"
+              className="dx-back"
             >
-              이전
+              <span aria-hidden="true">←</span>
+              <span className="sr-only">이전</span>
             </button>
           )}
           <button
             type="submit"
             disabled={busy}
-            className="interface-primary flex-1"
+            className="dx-next"
           >
             {busy
               ? "진단 중…"
@@ -1049,6 +1045,7 @@ export default function DiagnosisPage({
           </button>
         </div>
       </form>
+      </div>
     </section>
   )
 }
