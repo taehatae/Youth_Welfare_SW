@@ -60,3 +60,9 @@
 @media (prefers-reduced-motion: reduce) {
   .dx-bar i { transition: none; }
 }
+
+/* 마스코트 (장식): 마지막 확인 화면에서만 */
+.dx-head-review{position:relative}
+.dx-m-jump{position:absolute;right:0;top:-8px}
+@media(min-width:761px){.dx-head-review{padding-right:140px}}
+@media(max-width:760px){.dx-m-jump{display:none}}

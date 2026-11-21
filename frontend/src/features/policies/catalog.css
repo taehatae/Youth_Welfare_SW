@@ -130,3 +130,9 @@
 @media(prefers-reduced-motion:reduce){
   .catalog-row,.catalog-categories button,.catalog-pagination button,.catalog-search input,.catalog-sort button,.catalog-apply-cta{transition:none}
 }
+
+/* 마스코트 (장식) */
+.catalog-top{position:relative}
+.catalog-m-search{position:absolute;right:0;bottom:0}
+@media(min-width:761px){.catalog-top{min-height:120px;padding-right:130px}}
+@media(max-width:760px){.catalog-m-search{display:none}}

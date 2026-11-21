@@ -1,3 +1,4 @@
+import mascotChat from "../../assets/brand/mascot-chat.webp"
 import mascotAvatar from "../../assets/brand/mascot-avatar.webp"
 import { useEffect, useRef, type MouseEvent } from "react"
 import QuickFinderPage from "./QuickFinderPage"
@@ -62,10 +63,7 @@ export default function QuickChatWidget({ open, onOpenChange, hidden, onDiagnosi
       <button ref={button} type="button" className="quick-widget-fab"
         aria-label="간편 정책 찾기 열기" aria-expanded={visible} aria-controls="quick-widget-panel"
         onClick={() => onOpenChange(!open)}>
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" aria-hidden="true">
-          <path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" fill="currentColor" />
-          <circle cx="8.5" cy="10.5" r="1.1" fill="var(--ink)" /><circle cx="12" cy="10.5" r="1.1" fill="var(--ink)" /><circle cx="15.5" cy="10.5" r="1.1" fill="var(--ink)" />
-        </svg>
+        <img src={mascotChat} alt="" aria-hidden="true" draggable={false} width={68} height={78} decoding="async" />
       </button>
     </>}
   </div>

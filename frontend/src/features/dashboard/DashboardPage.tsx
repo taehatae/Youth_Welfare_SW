@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import Mascot from "../../components/brand/Mascot"
 import "./dashboard.css"
 import "./workspace.css"
 import CountUp from "../../components/motion/CountUp"
@@ -93,6 +94,7 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
     </nav>
     <div className="dash-main">
       <header className="dash-head" id="summary" data-reveal>
+        <Mascot pose="water" size={120} className="dash-m-water" />
         <h1>{headline}</h1>
         <p className="dash-sub">마지막 확인 <time dateTime={current.checkedAt}>{formatTime(current.checkedAt)}</time>
           <button className="dash-refresh" disabled={busy} onClick={() => void refresh()}>{busy ? "처리 중…" : "↻ 최신 정책으로 다시 확인"}</button></p>

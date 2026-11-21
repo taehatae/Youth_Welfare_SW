@@ -15,6 +15,7 @@ import {
   type CatalogResponse,
 } from "../../types/policyCatalog"
 
+import Mascot from "../../components/brand/Mascot"
 import "./catalog.css"
 
 function filters() {
@@ -180,6 +181,7 @@ export default function PolicyExplorerPage({
             마감임박순
           </button>
         </div>}
+        <Mascot pose="search" size={110} className="catalog-m-search" delay={0.3} />
       </div>
       <form
         className="catalog-search"
@@ -275,6 +277,7 @@ export default function PolicyExplorerPage({
         </div>
       ) : data.items.length === 0 ? (
         <div className="catalog-state">
+          <Mascot pose="think" size={110} className="mascot-center" />
           <h3>
             {data.collected_count === 0
               ? "아직 등록된 정책이 없어요"
@@ -292,6 +295,7 @@ export default function PolicyExplorerPage({
         </div>
       ) : shown.length === 0 ? (
         <div className="catalog-state">
+          <Mascot pose="think" size={110} className="mascot-center" />
           <h3>이 페이지에는 내 조건에 맞는 정책이 없어요</h3>
           <p>다른 페이지나 분야를 보거나 필터를 꺼보세요.</p>
           <button className="interface-primary" onClick={() => setMineOnly(false)}>

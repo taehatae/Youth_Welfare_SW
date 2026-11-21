@@ -74,3 +74,9 @@
   .kpi strong { font-size: 26px; }
 }
 @media (prefers-reduced-motion: reduce) { .cmp-line i { transition: none; } }
+
+/* 마스코트 (장식) */
+.dash-head{position:relative}
+.dash-m-water{position:absolute;right:0;top:-10px}
+@media(min-width:761px){.dash-head{padding-right:140px;min-height:130px}}
+@media(max-width:760px){.dash-m-water{display:none}}

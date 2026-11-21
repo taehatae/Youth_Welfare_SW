@@ -227,3 +227,44 @@ a.home-tile:hover { border-color: var(--accent); transform: translateY(-2px); }
   .hc { transform: rotate(var(--rot, 0deg)); will-change: auto; }
   .hc-in { animation: none; }
 }
+
+/* ===== 마스코트 배치 (장식) ===== */
+.home-hero-wrap { z-index: 1; }
+.home-m-hero { position: absolute; right: calc(46% - 70px); bottom: 0; z-index: 2; }
+.home-m-hero-sm { display: none; }
+.home-stats { position: relative; overflow: hidden; }
+.home-stats > .home-wrap { position: relative; z-index: 1; }
+/* 날기 포즈: 숫자 띠에서 빼서 "분야별로 보기" 제목 오른쪽 빈 공간을 좌우로 천천히 오간다(숫자·제목을 가리지 않음). */
+.home-block:has(> .home-m-fly) { position: relative; }
+.home-m-fly { position: absolute; right: 24px; top: -36px; z-index: 0; pointer-events: none; animation: home-fly 9s ease-in-out infinite alternate; }
+@keyframes home-fly { from { transform: translate(0, 0) rotate(-3deg); } to { transform: translate(-140px, 10px) rotate(3deg); } }
+.home-demo { position: relative; }
+.home-m-search { position: absolute; right: -18px; top: -120px; }
+#home-how { min-height: 100px; }
+.home-block:has(#home-how), .home-block:has(#home-faq) { position: relative; }
+.home-m-thumbs { position: absolute; right: 0; top: 0; }
+#home-faq { min-height: 100px; }
+.home-m-think { position: absolute; right: 16px; top: 0; }
+.home-quick { position: relative; padding-left: 200px; }
+.home-m-chat { position: absolute; left: 32px; bottom: 0; }
+.home-cta-band { overflow: hidden; }
+.home-cta-band > .home-wrap { position: relative; }
+.home-m-jump { position: absolute; right: 0; top: 50%; margin-top: -100px; }
+@media (max-width: 1100px) {
+  .home-m-hero { width: 160px; right: calc(40% - 90px); }
+  .home-m-search { width: 120px; top: -95px; }
+}
+@media (max-width: 900px) {
+  .home-m-hero, .home-m-jump { display: none; }
+  .home-m-hero-sm { display: block; position: absolute; right: 24px; bottom: 100px; z-index: 2; }
+  .home-m-thumbs, .home-m-think { width: 100px; }
+  .home-m-think { top: -12px; }
+  #home-how, #home-faq { min-height: 0; }
+}
+@media (max-width: 760px) {
+  .home-m-hero-sm, .home-m-thumbs, .home-m-think, .home-m-search { display: none; }
+  .home-m-fly { display: none; }
+  .home-quick { padding-left: 24px; padding-top: 110px; }
+  .home-m-chat { width: 90px; left: 24px; top: 12px; bottom: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .home-m-fly { animation: none; } }

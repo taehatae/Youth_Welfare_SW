@@ -12,6 +12,7 @@ import {
   AGE_OPTIONS, answerSummary, isAnswered, questionError, questionsFor, toAnswers, visibleInputs,
   type QuickDraft, type QuickInput, type QuickQuestion,
 } from "./quickQuestions"
+import Mascot from "../../components/brand/Mascot"
 import "../diagnosis/reverse.css"
 import "./quick.css"
 
@@ -278,6 +279,7 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
       </ul> : <div className="reverse-list quick-list">
         {shown.map((policy, index) => <AnalysisPolicyCard key={policy.id} policy={policy} index={index} temporary />)}
       </div> : <div className="reverse-empty">
+        <Mascot pose="think" size={110} className="mascot-center" />
         <h3>{rows.length ? "이 분류에 해당하는 정책이 없어요" : "이 분야에서 분석된 정책이 없어요"}</h3>
         <p>{rows.length ? "다른 분류를 눌러 보세요." : "결과가 없다고 자격이 없다는 뜻은 아니에요. 다른 분야를 선택하거나 전체 자격 진단을 이용해 보세요."}</p>
       </div>}

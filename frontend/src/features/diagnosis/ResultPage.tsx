@@ -23,6 +23,7 @@ import {
   type PolicyRow,
   type SavedPolicy,
 } from "../../services/policyResults"
+import Mascot from "../../components/brand/Mascot"
 import "./reverse.css"
 import "./result.css"
 
@@ -203,6 +204,7 @@ export default function ResultPage({
   )
   const empty = (
     <div className="reverse-empty">
+      <Mascot pose="think" size={110} className="mascot-center" />
       <h3>
         {rows.length === 0
           ? "서버에서 제공된 정책 결과가 없어요"
@@ -244,6 +246,7 @@ export default function ResultPage({
           </p>
         </div>
         <div className="result-hero-actions">
+          <Mascot pose="thumbs" size={150} className="result-m-thumbs" delay={0.4} />
           <button className="result-btn-ghost" disabled={busy} onClick={() => onEdit(0)}>
             내 정보 수정
           </button>

@@ -8,6 +8,7 @@ import type { UserProfileInput } from "../../types/welfareApi"
 
 import { REGIONS } from "../../data/regions"
 
+import Mascot from "../../components/brand/Mascot"
 import "./diagnosis.css"
 
 import {
@@ -444,7 +445,8 @@ export default function DiagnosisPage({
     return (
       <section className="dx-page">
         <div className="dx-col">
-        <header className="dx-head">
+        <header className="dx-head dx-head-review">
+          <Mascot pose="jump" size={130} className="dx-m-jump" />
           <p className="dx-eyebrow">진단 전 마지막 확인</p>
           <h1>입력한 정보를 확인해주세요</h1>
           <p className="dx-desc">

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 
 import CountUp from "../../components/motion/CountUp"
 import { BrandLogo } from "../../components/brand/BrandLogo"
+import Mascot from "../../components/brand/Mascot"
 import {
   cardBrief,
   metCountOf,
@@ -240,6 +241,8 @@ export default function HomePage({
               <div className="hc hc-chat"><span className="hc-in">궁금한 정책, 여기서 물어보세요!</span></div>
             </div>
           )}
+          <Mascot pose="wave" size={200} eager className="home-m-hero" delay={0.4} />
+          <Mascot pose="wave" size={120} eager className="home-m-hero-sm" delay={0.4} />
           <div className="home-hero-copy">
             <h1 id="home-title" data-reveal>
               받을 수 있는 지원,
@@ -309,6 +312,7 @@ export default function HomePage({
       )}
 
       <section className="home-wrap home-block" aria-labelledby="home-cats">
+        <Mascot pose="fly" size={150} float={false} className="home-m-fly" />
         <h2 id="home-cats" className="home-sec" data-reveal="repeat">
           분야별로 보기
           {total ? <small>전체 <CountUp value={total} />개</small> : null}
@@ -360,6 +364,7 @@ export default function HomePage({
             </button>
           </div>
           <figure className="home-demo" data-reveal="repeat" data-reveal-style="pop">
+            <Mascot pose="search" size={150} className="home-m-search" delay={0.8} />
             <figcaption><span className="home-badge">예시 화면</span> 실제 정책이 아닌 설명용 예시예요</figcaption>
             <div className="home-demo-row">
               <b>본인 월소득</b>
@@ -459,6 +464,7 @@ export default function HomePage({
 
       <section className="home-wrap home-block" aria-labelledby="home-how">
         <h2 id="home-how" className="home-sec" data-reveal="repeat">이렇게 확인해요</h2>
+        <Mascot pose="thumbs" size={150} className="home-m-thumbs" delay={0.5} />
         <ol className="home-bigsteps">
           {STEPS.map((text, i) => (
             <li key={text} data-reveal="repeat" data-reveal-style="slide">
@@ -471,6 +477,7 @@ export default function HomePage({
 
       <section className="home-wrap home-block" aria-labelledby="home-quick">
         <div className="home-quick" data-reveal="repeat">
+          <Mascot pose="chat" size={140} className="home-m-chat" delay={0.3} />
           <div>
             <h2 id="home-quick">로그인 없이 버튼으로 빠르게</h2>
             <p>관심 분야를 고르고 몇 가지만 답하면 돼요. 입력값과 결과는 저장하지 않아요.</p>
@@ -483,6 +490,7 @@ export default function HomePage({
 
       <section className="home-wrap home-block" aria-labelledby="home-faq">
         <h2 id="home-faq" className="home-sec" data-reveal="repeat">자주 묻는 질문</h2>
+        <Mascot pose="think" size={130} className="home-m-think" delay={1} />
         <div className="home-faq" data-reveal="repeat">
           {FAQ.map(([q, a]) => (
             <details key={q}>
@@ -495,6 +503,7 @@ export default function HomePage({
 
       <section className="home-cta-band" aria-labelledby="home-final">
         <div className="home-wrap" data-reveal="repeat" data-reveal-style="pop">
+          <Mascot pose="jump" size={170} className="home-m-jump" />
           <h2 id="home-final">받을 수 있는 지원, 지금 확인해 보세요</h2>
           <button type="button" className="home-cta" onClick={() => setPage("diagnosis")}>
             지금 내 자격 확인하기 <span aria-hidden="true">→</span>

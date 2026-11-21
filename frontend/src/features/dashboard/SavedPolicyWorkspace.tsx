@@ -1,3 +1,4 @@
+import Mascot from "../../components/brand/Mascot"
 import { useId, useState } from "react"
 import { formatTime, safeOfficialUrl, type Snapshot } from "../../services/analysisSession"
 import { policyResults, trackingLabels, type PolicyRow, type SavedPolicy, type TrackingStatus } from "../../services/policyResults"
@@ -59,7 +60,7 @@ export default function SavedPolicyWorkspace({ savedPolicies, current, busy, upd
     <div className="dash-panel-head"><h2 id="workspace-saved-title">관심 정책 <span>{savedPolicies.length}</span></h2><label className="workspace-scope">프로필 범위<select value={scope} onChange={e => setScope(e.target.value)} disabled={busy}><option value="all">이전 프로필 포함</option><option value="current">현재 진단 프로필만</option></select></label></div>
     <p className="dashboard-small">관리 상태는 직접 기록한 내용이며 실제 접수·선정 결과와 연동되지 않아요. 보관한 정책은 ‘보관’에서 다시 꺼낼 수 있어요.</p>
     {savedPolicies.length === 0 ? <div className="workspace-empty">
-      <span className="workspace-empty-mark" aria-hidden="true">☆</span><h3>관심 정책을 저장하면 준비가 쉬워져요</h3><p>진단 결과에서 관심 정책을 고르고, 이곳에서 준비할 일과 진행 상황을 기록하세요.</p><button className="interface-primary" onClick={() => setPage("result")}>진단 결과에서 정책 고르기 →</button>
+      <Mascot pose="think" size={140} className="mascot-center" /><h3>관심 정책을 저장하면 준비가 쉬워져요</h3><p>진단 결과에서 관심 정책을 고르고, 이곳에서 준비할 일과 진행 상황을 기록하세요.</p><button className="interface-primary" onClick={() => setPage("result")}>진단 결과에서 정책 고르기 →</button>
     </div> : <>
       <div className="kanban">
         {columns.map(col => { const items = by(col); return <section key={col} className="kanban-col" data-tracking={col} aria-label={trackingLabels[col]}>
