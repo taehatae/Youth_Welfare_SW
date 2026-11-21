@@ -1,3 +1,4 @@
+import mascotAvatar from "../../assets/brand/mascot-avatar.webp"
 import { useEffect, useRef, type MouseEvent } from "react"
 import QuickFinderPage from "./QuickFinderPage"
 import "./quick-widget.css"
@@ -42,7 +43,7 @@ export default function QuickChatWidget({ open, onOpenChange, hidden, onDiagnosi
     <div ref={panel} id="quick-widget-panel" className="quick-widget-panel" role="dialog" aria-modal="false"
       aria-labelledby="quick-widget-title" tabIndex={-1} hidden={!visible} onClick={onPanelClick}>
       <header className="quick-widget-head">
-        <span className="quick-avatar" aria-hidden="true">청</span>
+        <span className="quick-avatar" aria-hidden="true"><img src={mascotAvatar} alt="" /></span>
         <div className="quick-widget-titles">
           <h2 id="quick-widget-title">간편 정책 찾기</h2>
           <p>로그인 없이 버튼으로 답해요</p>

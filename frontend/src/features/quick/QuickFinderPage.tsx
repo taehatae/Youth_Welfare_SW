@@ -1,3 +1,4 @@
+import mascotAvatar from "../../assets/brand/mascot-avatar.webp"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
@@ -18,7 +19,7 @@ import "./quick.css"
 // 입력값과 결과는 이 화면의 메모리에만 있고 서버·브라우저 저장소에 남기지 않는다.
 
 function Bot({ children }: { children: ReactNode }) {
-  return <div className="quick-row" data-from="bot" data-reveal><span className="quick-avatar" aria-hidden="true">청</span><div className="quick-bubble">{children}</div></div>
+  return <div className="quick-row" data-from="bot" data-reveal><span className="quick-avatar" aria-hidden="true"><img src={mascotAvatar} alt="" /></span><div className="quick-bubble">{children}</div></div>
 }
 function Me({ children }: { children: ReactNode }) {
   return <div className="quick-row" data-from="me" data-reveal><div className="quick-bubble">{children}</div></div>
