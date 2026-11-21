@@ -10,7 +10,7 @@ const STATUS_CONFIG = {
 export function StatusPill({ status }: { status: Policy['status'] }) {
   const s = STATUS_CONFIG[status]
   return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border ${s.light}`}>
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-bold border ${s.light}`}>
       <span className="font-semibold">{s.symbol}</span> {s.label}
     </span>
   )
@@ -25,12 +25,12 @@ export function ConditionRow({ c }: { c: Condition }) {
   const col = colors[c.result]
   return (
     <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${col.bg} ${col.border}`}>
-      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 ${col.badge}`}>
+      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[13px] font-semibold flex-shrink-0 ${col.badge}`}>
         {c.result === 'eligible' ? '✓' : c.result === 'ineligible' ? '✕' : '△'}
       </span>
       <div className="flex-1 min-w-0">
         <span className="font-bold text-[var(--ink)] text-sm">{c.label}</span>
-        <span className="text-[var(--sub)] text-xs ml-2">기준: {c.requirement}</span>
+        <span className="text-[var(--sub)] text-[13px] ml-2">기준: {c.requirement}</span>
       </div>
       <span className={`text-sm font-bold ${col.label}`}>{c.userValue}</span>
     </div>

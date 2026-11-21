@@ -6,7 +6,7 @@
 .interface-heading::after { width: 130px; height: 130px; right: -30px; bottom: -48px; background: var(--surface); opacity: .55; }
 .interface-heading > * { position: relative; z-index: 1; }
 .interface-heading-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.interface-eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--surface); color: var(--sub); font-size: 12px; font-weight: 600; margin-bottom: 13px; }
+.interface-eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--surface); color: var(--sub); font-size: 13px; font-weight: 600; margin-bottom: 13px; }
 .interface-eyebrow span { color: var(--accent-ink); }
 .interface-heading h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.045em; line-height: 1.2; color: var(--ink); }
 .interface-description { max-width: 680px; font-size: 15px; line-height: 1.7; color: var(--sub); margin-top: 10px; }
@@ -29,7 +29,7 @@
 .interface-form fieldset label.flex { border-radius: var(--radius-field); border-color: var(--line); transition: background-color .15s, border-color .15s; }
 .interface-form fieldset label.flex:hover { background: var(--bg); border-color: var(--accent); }
 .interface-steps { padding: 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
-.step-pill { border-radius: 999px; padding: 4px 6px; text-align: center; font-size: 12px; font-weight: 600; background: transparent; color: var(--sub); transition: background-color .15s, color .15s; }
+.step-pill { border-radius: 999px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: 600; background: transparent; color: var(--sub); transition: background-color .15s, color .15s; }
 .step-pill[data-state="current"] { background: var(--ink); color: #fff; }
 .step-pill[data-state="done"] { background: var(--accent-soft); color: var(--accent-ink); }
 .step-pill > button { border-radius: 999px; }
@@ -48,7 +48,7 @@
 .interface-empty h2 { font-size: 24px; font-weight: 800; letter-spacing: -.04em; }
 .interface-empty p { max-width: 470px; margin: 12px auto 22px; color: var(--sub); font-size: 14px; line-height: 1.8; }
 .interface-search { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; box-shadow: none; }
-.interface-login-button { border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; color: var(--ink); background: var(--surface); font-weight: 700; font-size: 13px; white-space: nowrap; transition: background-color .15s; }
+.interface-login-button { border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; color: var(--ink); background: var(--surface); font-weight: 700; font-size: 15px; white-space: nowrap; transition: background-color .15s; }
 .interface-login-button:hover { background: var(--hover-bg); }
 .interface-login-dialog { margin: auto; padding: 0; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; border: 0; border-radius: 28px; color: var(--ink); background: var(--surface); box-shadow: 0 8px 30px #1f2a371a; }
 .interface-login-dialog::backdrop { background: #1f2a3766; }
@@ -56,7 +56,7 @@
 .interface-login-content > img { margin-bottom: 24px; }
 .interface-dialog-close { position: absolute; right: 14px; top: 12px; }
 .interface-dialog-close button { width: 36px; height: 36px; border-radius: 50%; color: var(--sub); font-size: 26px; }
-.interface-login-status { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 12px; font-weight: 700; }
+.interface-login-status { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-weight: 700; }
 .interface-login-dialog h2 { margin-top: 14px; font-size: 24px; line-height: 1.35; font-weight: 800; letter-spacing: -.045em; }
 .interface-login-dialog p { margin-top: 12px; font-size: 14px; line-height: 1.8; color: var(--sub); }
 .interface-login-note { margin-block: 20px; padding: 14px 16px; border-radius: var(--radius-card); background: var(--likely); color: var(--likely-ink); font-size: 13px; line-height: 1.7; }

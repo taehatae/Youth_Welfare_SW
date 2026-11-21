@@ -3,35 +3,35 @@
 .workspace-account { margin-top: 14px; }
 .workspace-live:empty, .workspace-save-message:empty { display: none; }
 .workspace-live, .workspace-save-message { font-size: 13px; color: var(--likely-ink); margin-top: 8px; }
-.workspace-scope { display: flex; align-items: center; gap: 10px; color: var(--ink-hover); font-size: 12px; }
+.workspace-scope { display: flex; align-items: center; gap: 10px; color: var(--ink-hover); font-size: 13px; }
 .workspace-scope select, .workspace-editor select, .workspace-editor textarea { border: 1px solid var(--line-strong); border-radius: var(--radius-field); padding: 10px 12px; background: #fff; color: var(--ink); font: inherit; }
 .workspace-scope select { min-height: 44px; }
 
 .kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; align-items: start; }
 .kanban-col { background: var(--bg); border-radius: 14px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
 .kanban-col h3 { font-size: 14px; font-weight: 750; color: var(--ink); display: flex; align-items: center; gap: 8px; }
-.kanban-col h3 b { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
+.kanban-col h3 b { font-size: 13px; padding: 1px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); }
 .kanban-col[data-tracking="preparing"] h3 b { background: var(--review); color: var(--review-ink); }
 .kanban-col[data-tracking="applied"] h3 b { background: var(--likely); color: var(--likely-ink); }
-.kanban-empty { font-size: 12px; color: var(--sub); padding: 10px 2px; }
+.kanban-empty { font-size: 13px; color: var(--sub); padding: 10px 2px; }
 .kanban-archive { margin-top: 14px; }
 .kanban-archive summary { cursor: pointer; font-size: 13px; font-weight: 650; color: var(--sub); min-height: 44px; display: flex; align-items: center; gap: 8px; }
 .kanban-archive-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 
 .workspace-saved-card { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
 .workspace-saved-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.workspace-tracking { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 650; color: var(--accent-ink); background: var(--accent-soft); }
+.workspace-tracking { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 650; color: var(--accent-ink); background: var(--accent-soft); }
 .workspace-tracking[data-tracking="preparing"] { color: var(--review-ink); background: var(--review); }
 .workspace-tracking[data-tracking="applied"] { color: var(--likely-ink); background: var(--likely); }
 .workspace-tracking[data-tracking="archived"] { color: var(--ink-hover); background: var(--bg); }
 .workspace-saved-card h4 { margin-top: 10px; font-size: 15px; font-weight: 750; color: var(--ink); line-height: 1.5; overflow-wrap: anywhere; }
-.workspace-saved-verdict { font-size: 12px; color: var(--sub); margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+.workspace-saved-verdict { font-size: 13px; color: var(--sub); margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
 .workspace-saved-verdict strong { font-weight: 700; }
 .workspace-saved-verdict strong[data-result="likely"] { color: var(--likely-ink); }
 .workspace-saved-verdict strong[data-result="review"] { color: var(--review-ink); }
 .workspace-saved-verdict strong[data-result="gap"] { color: var(--gap-ink); }
-.workspace-saved-time { color: var(--sub); font-size: 11px; margin-top: 4px; }
-.workspace-note { padding: 10px; margin-top: 10px; background: var(--bg); border-radius: 12px; font-size: 12px; color: var(--sub); line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.workspace-saved-time { color: var(--sub); font-size: 12px; margin-top: 4px; }
+.workspace-note { padding: 10px; margin-top: 10px; background: var(--bg); border-radius: 12px; font-size: 13px; color: var(--sub); line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
 .workspace-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .workspace-actions button, .workspace-actions a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; font-weight: 650; color: var(--accent-ink); background: #fff; text-decoration: none; }
 .workspace-actions button:hover:not(:disabled), .workspace-actions a:hover { background: var(--hover-bg); }

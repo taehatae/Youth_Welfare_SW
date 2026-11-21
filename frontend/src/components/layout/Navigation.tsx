@@ -34,7 +34,7 @@ export default function Navigation({
     <>
       <nav className="sticky top-0 z-50 bg-white border-b border-[var(--line)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between min-h-[72px] gap-3">
+          <div className="flex items-center justify-between min-h-[80px] py-[14px] gap-3">
             <a
               href="#home"
               onClick={() => setPage("home")}
@@ -50,13 +50,16 @@ export default function Navigation({
                   key={l.id}
                   aria-current={page === l.id ? "page" : undefined}
                   onClick={() => setPage(l.id)}
-                  className={`rounded-full px-4 py-2 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
+                  className={`relative rounded-full px-4 py-[10px] text-[15px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
                     page === l.id
-                      ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]"
-                      : "text-[var(--sub)] hover:bg-[var(--bg)] hover:text-[var(--ink)]"
+                      ? "bg-[var(--accent-soft)] text-[var(--accent-ink)] font-bold"
+                      : "font-semibold text-[color:color-mix(in_srgb,var(--ink)_80%,transparent)] hover:bg-[var(--bg)] hover:text-[var(--ink)]"
                   }`}
                 >
                   {l.label}
+                  {page === l.id && (
+                    <span aria-hidden="true" className="absolute left-1/2 -translate-x-1/2 bottom-[3px] h-[2px] w-4 rounded-full bg-[var(--accent)]" />
+                  )}
                 </button>
               ))}
             </div>
@@ -66,7 +69,7 @@ export default function Navigation({
               <button type="button" className="interface-login-button" disabled={busy} onClick={account ? onLogout : onLogin} aria-haspopup={account ? undefined : "dialog"}>{account ? "로그아웃" : "로그인"}</button>
               <button
                 onClick={() => setPage("diagnosis")}
-                className="bg-[var(--ink)] text-white text-sm font-bold px-3 sm:px-5 py-2.5 rounded-full hover:bg-[var(--ink-hover)] transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                className="bg-[var(--ink)] text-white text-[15px] font-bold px-3 sm:px-5 py-2.5 rounded-full hover:bg-[var(--ink-hover)] transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 진단 시작 <span className="hidden sm:inline" aria-hidden="true">→</span>
               </button>
@@ -92,7 +95,7 @@ export default function Navigation({
             key={l.id}
             aria-current={page === l.id ? "page" : undefined}
             onClick={() => setPage(l.id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-2 mx-0.5 rounded-2xl text-[10px] font-extrabold transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+            className={`flex-1 flex flex-col items-center gap-0.5 py-2 mx-0.5 rounded-2xl text-[12px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
               page === l.id ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[var(--sub)]"
             }`}
           >

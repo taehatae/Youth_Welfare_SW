@@ -39,7 +39,7 @@
 .dx-info { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-ink); font-size: 14px; }
 .dx-alert { margin: 24px 0 0; padding: 14px 16px; border-radius: 14px; background: var(--review); color: var(--review-ink); font-size: 14px; line-height: 1.6; }
 .dx-group { display: grid; gap: 24px; border: 0; border-top: 1px solid var(--line); padding: 24px 0 0; margin: 0; min-width: 0; }
-.dx-group-title { font-size: 17px; font-weight: 800; letter-spacing: -.02em; padding: 0; color: var(--ink); }
+.dx-group-title { font-size: 20px; font-weight: 800; letter-spacing: -.02em; padding: 0; color: var(--ink); }
 .dx-body { display: grid; gap: 28px; }
 .dx-link { width: fit-content; background: none; border: 0; padding: 0; font-size: 13px; color: var(--sub); text-decoration: underline; cursor: pointer; border-radius: 6px; }
 .dx-link:hover { color: var(--ink); }

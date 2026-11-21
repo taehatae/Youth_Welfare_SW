@@ -22,7 +22,7 @@
 .catalog-categories button{display:flex;gap:8px;align-items:center;min-height:40px;padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--sub);font-size:14px;font-weight:600;transition:background-color 180ms,border-color 180ms,color 180ms}
 .catalog-categories button:hover{background:var(--hover-bg);color:var(--ink)}
 .catalog-categories button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
-.catalog-categories button span{font-size:12px;font-variant-numeric:tabular-nums;opacity:.85;min-width:16px}
+.catalog-categories button span{font-size:13px;font-variant-numeric:tabular-nums;opacity:.85;min-width:16px}
 .catalog-categories .catalog-mine{background:var(--likely);border-color:transparent;color:var(--likely-ink);margin-left:auto}
 .catalog-categories .catalog-mine[aria-pressed=true]{background:var(--likely-ink);color:#fff}
 
@@ -32,25 +32,24 @@
 .catalog-help{font-size:13px;line-height:1.75;color:var(--sub);margin:6px 0 20px}
 
 /* 목록 */
-.catalog-list{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden}
-.catalog-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:16px;padding:18px 22px;min-height:84px;color:inherit;text-decoration:none;transition:background-color .15s}
-.catalog-row+.catalog-row,.catalog-skeleton+.catalog-skeleton{border-top:1px solid var(--line)}
-.catalog-row:hover{background:var(--bg)}
-.catalog-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.catalog-list{display:grid;gap:12px;background:transparent}
+.catalog-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:16px;padding:20px 22px;min-height:84px;color:inherit;text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.04);transition:background-color .15s,border-color .15s,box-shadow .2s}
+.catalog-row:hover{border-color:color-mix(in srgb,var(--accent) 40%,transparent);box-shadow:0 6px 18px rgba(15,23,42,.08)}
+.catalog-row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .catalog-row-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:18px;font-weight:800}
 .catalog-row-body{display:flex;flex-direction:column;gap:4px;min-width:0}
 .catalog-row h3{font-size:16px;font-weight:700;line-height:1.4;color:var(--ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
 .catalog-row-summary{font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.catalog-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--sub)}
+.catalog-row-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px;color:var(--sub)}
 .catalog-row-meta>span+span:not(.catalog-row-pill)::before{content:"·";margin-right:8px}
 .catalog-row-pill{padding:2px 8px;border-radius:999px;background:var(--bg);color:var(--ink);font-weight:600}
 .catalog-row-end{display:flex;align-items:center;gap:12px}
-.catalog-row-end em{font-style:normal;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.catalog-row-end em{font-style:normal;font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
 .catalog-row-end em[data-result=likely]{background:var(--likely,#D3F2E6);color:var(--likely-ink,#17795A)}
 .catalog-row-end em[data-result=review]{background:var(--review,#FFF0CC);color:var(--review-ink,#8F6100)}
 .catalog-row-end em[data-result=gap]{background:var(--gap,#FFE0E3);color:var(--gap-ink,#B23A4A)}
 .catalog-row-end i{font-style:normal;font-size:22px;color:var(--sub)}
-.catalog-skeleton{display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:16px 12px;gap:10px 16px;padding:18px 22px;min-height:84px;align-content:center}
+.catalog-skeleton{display:grid;grid-template-columns:44px minmax(0,1fr);grid-template-rows:16px 12px;gap:10px 16px;padding:20px 22px;min-height:84px;align-content:center;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .catalog-skeleton span{display:block;background:#E8EFF5;border-radius:999px}
 .catalog-skeleton span:first-child{grid-row:1/3;width:44px;height:44px;border-radius:12px}
 .catalog-skeleton span:nth-child(2){width:60%}

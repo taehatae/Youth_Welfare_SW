@@ -29,7 +29,7 @@
 .quick-card-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .quick-ghost { padding: 11px 18px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 13px; font-weight: 650; }
 .quick-ghost:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-.quick-link { margin-left: 8px; padding: 2px 4px; color: inherit; font-size: 12px; font-weight: 500; text-decoration: underline; opacity: .9; }
+.quick-link { margin-left: 8px; padding: 2px 4px; color: inherit; font-size: 13px; font-weight: 500; text-decoration: underline; opacity: .9; }
 .quick-link:disabled { opacity: .5; }
 .quick-error { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 14px; border-radius: var(--radius-field); background: var(--gap); color: var(--gap-ink); font-size: 13px; }
 .quick-results { margin-top: 36px; scroll-margin-top: 90px; }
@@ -38,7 +38,7 @@
 .quick-next { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 @media (max-width: 600px) {
   .quick-options, .quick-card { margin-left: 0; }
-  .quick-avatar { width: 28px; height: 28px; border-radius: 10px; font-size: 12px; }
+  .quick-avatar { width: 28px; height: 28px; border-radius: 10px; font-size: 13px; }
   .quick-card { padding: 16px; }
   .quick-options { grid-template-columns: 1fr 1fr; }
   .quick-next > * { flex: 1 1 100%; }
@@ -46,5 +46,5 @@
 /* 미입력 조건이 남은 '신청 가능' 카드(간편 찾기 전용). 불가처럼 보이지 않게 확인 필요 계열 색을 쓴다. */
 .reverse-tag[data-result="pending"] { margin-left: 6px; background: var(--review); color: var(--review-ink); border: 1px dashed currentColor; font-weight: 700; }
 .reverse-card[data-pending="true"] .card-brief:not(.card-checks) { color: var(--review-ink); font-weight: 600; }
-.card-brief.card-checks { margin-top: 2px; font-size: 12px; }
+.card-brief.card-checks { margin-top: 2px; font-size: 13px; }
 .analysis-filters button[data-category="pending"] { border-style: dashed; }

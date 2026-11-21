@@ -29,7 +29,7 @@ export default function MatchedPolicyCard({
       data-status={status}
       className="interface-policy-card bg-white p-5"
     >
-      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+      <div className="flex flex-wrap items-center gap-2 text-[13px] font-semibold">
         <span className="text-[var(--accent-ink)]">{policy.category}</span>
         <span
           className={
@@ -49,7 +49,7 @@ export default function MatchedPolicyCard({
       <h3 className="mt-3 text-lg font-semibold text-[var(--ink)]">
         {policy.title}
       </h3>
-      <p className="mt-3 text-xs leading-relaxed text-[var(--sub)]">
+      <p className="mt-3 text-[13px] leading-relaxed text-[var(--sub)]">
         자동 비교 가능한 조건을 충족한 사전 안내입니다. 최종 수급 여부는 담당
         기관에 확인해 주세요.
       </p>

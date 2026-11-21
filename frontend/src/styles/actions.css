@@ -30,12 +30,12 @@
 .policy-path-list > li { padding: 8px 0; border-top: 1px solid var(--line); }
 .policy-path-list > li:first-child { border-top: 0; }
 .policy-path-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; font-weight: 650; }
-.policy-path-main { color: var(--sub); font-size: 12px; }
+.policy-path-main { color: var(--sub); font-size: 13px; }
 .policy-path-conditions li { font-size: 13px; line-height: 1.6; padding-left: 2px; }
 .policy-path-conditions li[data-status="passed"] > span { color: var(--result-likely-ink); font-weight: 700; }
 .policy-path-conditions li[data-status="failed"] > span { color: var(--result-gap-ink); font-weight: 700; }
 .policy-path-conditions li[data-status="needs_review"] > span { color: var(--result-review-ink); font-weight: 700; }
-.policy-path-checks { color: var(--sub); font-size: 12.5px; margin-top: 4px; }
+.policy-path-checks { color: var(--sub); font-size: 13px; margin-top: 4px; }
 .policy-path-checks li { line-height: 1.6; }
 .policy-path-preferences { margin: 8px 0 0; color: var(--sub); font-size: 13px; }
 .reverse-card[data-result="likely"] > header { border-left: 4px solid var(--result-likely); }
@@ -91,7 +91,7 @@
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-ink);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   text-decoration: none;
   transition: background .15s, border-color .15s;
@@ -121,7 +121,7 @@
 .card-brief { margin-top: 6px; font-size: 13px; color: var(--sub); line-height: 1.6; }
 .reverse-card[data-result="gap"] .card-brief { color: var(--result-gap); font-weight: 600; }
 .condition-counts.compact { margin-top: 10px; gap: 6px; }
-.condition-counts.compact span { padding: 4px 9px; font-size: 11px; }
+.condition-counts.compact span { padding: 4px 9px; font-size: 12px; }
 .condition-counts.compact b { margin-left: 4px; font-size: 13px; }
 .card-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0; }
 .card-toggle {
@@ -130,7 +130,7 @@
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-ink);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 650;
   transition: background .15s, border-color .15s;
 }
@@ -221,7 +221,7 @@
 .my-policy-result h2 { display: flex; gap: 6px; margin: 6px 0 8px; }
 .my-policy-result h2 .reverse-tag { margin-left: 0; font-size: 13px; padding: 5px 10px; }
 .my-policy-result header p { font-size: 14px; color: var(--sub); line-height: 1.7; }
-.my-policy-kicker { font-size: 12px !important; color: var(--sub) !important; font-weight: 600; }
+.my-policy-kicker { font-size: 13px !important; color: var(--sub) !important; font-weight: 600; }
 .my-policy-columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
 .my-policy-columns > div { padding: 14px 16px; border-radius: 14px; background: var(--bg); border: 1px solid var(--line); }
 .my-policy-columns > div[data-kind="failed"] { background: var(--result-gap-soft); border-color: var(--result-gap-line); }
@@ -253,7 +253,7 @@
 }
 
 /* 결과 카드: 충족·미충족·추가 확인 버튼을 누르면 해당 조건 목록을 펼친다 */
-.condition-counts.compact button { padding: 4px 9px; font-size: 11px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
+.condition-counts.compact button { padding: 4px 9px; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer; transition: box-shadow .15s, border-color .15s; }
 .condition-counts.compact button:hover:not(:disabled) { border-color: currentColor; }
 .condition-counts.compact button[aria-pressed="true"] { border-color: currentColor; box-shadow: inset 0 0 0 1px currentColor; }
 .condition-counts.compact button:disabled { cursor: default; opacity: .55; }
@@ -265,16 +265,16 @@
 .condition-panel-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
 .condition-panel-title b, .condition-group-title b { margin-left: 4px; }
 .condition-group + .condition-group { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--review); }
-.condition-group-title { font-size: 12px; font-weight: 700; color: var(--review-ink); margin-bottom: 8px; }
+.condition-group-title { font-size: 13px; font-weight: 700; color: var(--review-ink); margin-bottom: 8px; }
 .condition-panel ul { display: grid; gap: 8px; }
 .condition-item { display: grid; gap: 6px; padding: 12px 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; font-size: 13px; line-height: 1.6; }
 .condition-item > strong { font-weight: 700; color: var(--ink); }
 .condition-item dl { display: grid; gap: 2px; }
 .condition-item dl > div { display: grid; grid-template-columns: 52px 1fr; gap: 8px; }
-.condition-item dt { color: var(--sub); font-size: 12px; }
+.condition-item dt { color: var(--sub); font-size: 13px; }
 .condition-item dd { color: var(--sub); overflow-wrap: anywhere; }
 .condition-item[data-check] { grid-template-columns: 22px 1fr; align-items: start; gap: 10px; }
 .condition-item[data-check] p { color: var(--sub); overflow-wrap: anywhere; }
-.condition-no { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--review); color: var(--review-ink); font-size: 11px; font-weight: 700; }
+.condition-no { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-top: 1px; border-radius: 50%; background: var(--review); color: var(--review-ink); font-size: 12px; font-weight: 700; }
 .condition-item .condition-edit { justify-self: start; }
 @media (max-width: 760px) { .condition-panel { margin: 0 16px 14px; } }

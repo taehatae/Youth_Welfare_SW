@@ -2,7 +2,7 @@
 .auth-form label { display: grid; gap: 7px; font-size: 14px; font-weight: 650; color: var(--ink); }
 .auth-form input { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-field); background: #fff; color: var(--ink); }
 .auth-form input:focus { outline: var(--focus-ring); outline-offset: 2px; border-color: var(--accent); }
-.auth-form small { color: var(--sub); font-size: 12px; }
+.auth-form small { color: var(--sub); font-size: 13px; }
 .auth-form button { margin-top: 8px; }
 .auth-error { color: var(--gap-ink) !important; font-size: 13px !important; }
 .auth-switch { margin-top: 20px; color: var(--accent-ink); font-size: 13px; text-decoration: underline; }

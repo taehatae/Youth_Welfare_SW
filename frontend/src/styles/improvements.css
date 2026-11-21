@@ -1,14 +1,14 @@
 /* 공통 상세·비교 면: 하늘·민트 파스텔 */
 .policy-overview { padding: 20px 24px; }
 .condition-counts, .change-counts { display:flex; flex-wrap:wrap; gap:8px; }
-.condition-counts span, .change-counts span { padding:7px 11px; border:0; border-radius:999px; font-size:12px; background:var(--bg); }
+.condition-counts span, .change-counts span { padding:7px 11px; border:0; border-radius:999px; font-size:13px; background:var(--bg); }
 .condition-counts b, .change-counts b { margin-left:6px; font-size:16px; }
 .condition-counts [data-kind=passed] { background:var(--likely); color:var(--likely-ink); }
 .condition-counts [data-kind=failed] { background:var(--gap); color:var(--gap-ink); }
 .condition-counts [data-kind=review] { background:var(--review); color:var(--review-ink); }
-.policy-evaluation-note, .policy-description { margin-top:12px; font-size:12px; line-height:1.8; color:var(--sub); overflow-wrap:anywhere; }
+.policy-evaluation-note, .policy-description { margin-top:12px; font-size:13px; line-height:1.8; color:var(--sub); overflow-wrap:anywhere; }
 .policy-key-reason { display:grid; gap:6px; border-left:3px solid var(--line-strong); padding-left:12px; margin-top:16px; font-size:13px; line-height:1.8; overflow-wrap:anywhere; }
-.policy-key-reason strong { color:var(--ink); font-size:12px; }
+.policy-key-reason strong { color:var(--ink); font-size:13px; }
 .policy-condition-details { margin:0 22px 22px; border:1px solid var(--line); border-radius:var(--radius-card); background:var(--surface); }
 .policy-condition-details > summary { cursor:pointer; padding:14px; font-size:13px; font-weight:650; color:var(--accent-ink); }
 .policy-condition-details > summary > span { float:right; }
@@ -19,23 +19,23 @@
 .changes-panel { padding:24px; margin-block:24px; background:#fff; border:1px solid var(--line); border-radius:var(--radius-panel); box-shadow:none; }
 .changes-heading { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:16px; }
 .changes-heading h2 { font-size:19px; font-weight:700; letter-spacing:-.03em; line-height:1.5; }
-.comparison-toggle { flex-shrink:0; border:1px solid var(--line); padding:9px 12px; border-radius:999px; color:var(--accent-ink); font-size:12px; }
+.comparison-toggle { flex-shrink:0; border:1px solid var(--line); padding:9px 12px; border-radius:999px; color:var(--accent-ink); font-size:13px; }
 .changes-panel h3 { font-size:14px; font-weight:700; margin:18px 0 8px; }
-.comparison-time { margin-block:12px; font-size:12px; color:var(--sub); line-height:1.8; }
-.comparison-note { font-size:12px; color:var(--sub); line-height:1.9; margin-top:16px; }
+.comparison-time { margin-block:12px; font-size:13px; color:var(--sub); line-height:1.8; }
+.comparison-note { font-size:13px; color:var(--sub); line-height:1.9; margin-top:16px; }
 .profile-differences { display:grid; gap:8px; font-size:13px; }
 .profile-differences li { display:grid; grid-template-columns:150px 1fr; gap:16px; padding:10px 12px; background:var(--bg); border-radius:14px; overflow-wrap:anywhere; }
 .policy-differences { display:grid; gap:12px; margin-top:18px; }
 .policy-differences li { display:flex; flex-wrap:wrap; gap:10px; align-items:center; border-top:1px solid var(--line); padding-top:12px; font-size:13px; }
 .policy-differences li > strong { flex:1; min-width:140px; overflow-wrap:anywhere; }
 .policy-differences li > span:last-child { color:var(--sub); }
-.change-label { background:var(--accent-soft); color:var(--accent-ink); border-radius:999px; padding:4px 10px; font-size:11px; }
+.change-label { background:var(--accent-soft); color:var(--accent-ink); border-radius:999px; padding:4px 10px; font-size:12px; }
 .profile-review { margin-top:24px; padding:26px; background:#fff; border:1px solid var(--line); border-radius:var(--radius-panel); }
 .profile-review > h2 { font-size:21px; font-weight:700; outline-offset:5px; }
 .review-group { margin-top:22px; padding-top:18px; border-top:1px solid var(--line); }
 .review-group > header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
 .review-group h3 { color:var(--accent-ink); font-size:15px; font-weight:700; }
-.review-group button { color:var(--accent-ink); font-size:12px; text-decoration:underline; text-underline-offset:3px; }
+.review-group button { color:var(--accent-ink); font-size:13px; text-decoration:underline; text-underline-offset:3px; }
 .review-group dl { display:grid; gap:10px; }
 .review-group dl > div { display:grid; grid-template-columns:minmax(120px, .8fr) 1fr; gap:16px; font-size:13px; line-height:1.7; }
 .review-group dt { color:var(--sub); }
