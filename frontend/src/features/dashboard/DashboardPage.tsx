@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import "./dashboard.css"
 import "./workspace.css"
+import CountUp from "../../components/motion/CountUp"
 import PageHeading from "../../components/layout/PageHeading"
 import SavedPolicyWorkspace from "./SavedPolicyWorkspace"
 import { changedPolicyIds } from "../../components/policy/AnalysisChanges"
@@ -91,7 +92,7 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
       <ul>{menu.map(([id, label, n]) => <li key={id}><a href={`#${id}`} onClick={go(id)} aria-current={active === id ? "true" : undefined}>{label}{n !== null && <b>{n}</b>}</a></li>)}</ul>
     </nav>
     <div className="dash-main">
-      <header className="dash-head" id="summary">
+      <header className="dash-head" id="summary" data-reveal>
         <h1>{headline}</h1>
         <p className="dash-sub">마지막 확인 <time dateTime={current.checkedAt}>{formatTime(current.checkedAt)}</time>
           <button className="dash-refresh" disabled={busy} onClick={() => void refresh()}>{busy ? "처리 중…" : "↻ 최신 정책으로 다시 확인"}</button></p>
@@ -100,12 +101,12 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
       </header>
 
       <div className="kpi-row">
-        {resultCategoryOrder.map(k => <div className="kpi" key={k} data-cat={k}><span className="kpi-label">{resultCategoryLabels[k]}</span><strong>{nowCounts[k]}</strong><Delta now={nowCounts[k]} before={prevCounts?.[k]} /></div>)}
-        <div className="kpi" data-cat="saved"><span className="kpi-label">관심 정책</span><strong>{savedPolicies.length}</strong><span className="kpi-delta">신청 완료 {applied}</span></div>
+        {resultCategoryOrder.map(k => <div className="kpi" key={k} data-cat={k} data-reveal><span className="kpi-label">{resultCategoryLabels[k]}</span><strong><CountUp value={nowCounts[k]} /></strong><Delta now={nowCounts[k]} before={prevCounts?.[k]} /></div>)}
+        <div className="kpi" data-cat="saved" data-reveal><span className="kpi-label">관심 정책</span><strong><CountUp value={savedPolicies.length} /></strong><span className="kpi-delta">신청 완료 {applied}</span></div>
       </div>
 
       <div className="dash-two">
-        <section className="dash-panel" aria-labelledby="cmp-title">
+        <section className="dash-panel" data-reveal aria-labelledby="cmp-title">
           <div className="dash-panel-head"><h2 id="cmp-title">지난 확인 vs 이번 확인</h2></div>
           <ul className="cmp-bars">{resultCategoryOrder.map(k => <li key={k} data-cat={k}>
             <span className="cmp-name">{resultCategoryLabels[k]}</span>
@@ -115,7 +116,7 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
             </div></li>)}</ul>
           {!prevCounts && <p className="dashboard-small">다음 확인부터 변화를 비교해요. 첫 기록의 정책은 신규 공고로 표시하지 않아요.</p>}
         </section>
-        <section className="dash-panel" id="changes" aria-labelledby="chg-title">
+        <section className="dash-panel" id="changes" data-reveal aria-labelledby="chg-title">
           <div className="dash-panel-head"><h2 id="chg-title">바뀐 정책 {previous && <span>{changes.length}</span>}</h2></div>
           {!previous ? <p className="dashboard-small">비교의 기준이 되는 첫 기록을 저장했어요. 다음 현황 조회부터 추가·제외된 정책과 판정·조건 안내의 변화를 보여드려요.</p>
             : changes.length === 0 ? <p className="dashboard-small">정책 분류와 조건 안내에 변화가 없어요.</p>
@@ -129,7 +130,7 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
 
       <SavedPolicyWorkspace savedPolicies={savedPolicies} current={current} busy={busy} updateSaved={updateSaved} setPage={setPage} />
 
-      <section className="dash-panel workspace-account" id="profile" aria-labelledby="workspace-account-title">
+      <section className="dash-panel workspace-account" id="profile" data-reveal aria-labelledby="workspace-account-title">
         <div className="dash-panel-head"><h2 id="workspace-account-title">내 정보</h2></div>
         <p className="dashboard-small">아이디와 비밀번호를 다시 확인한 뒤 저장된 입력 정보를 조회할 수 있어요.</p>
         <div className="workspace-actions"><button disabled={busy} onClick={onViewProfile}>본인 확인 후 조회 →</button><button disabled={busy} onClick={() => onEdit()}>정보 수정 후 재진단 →</button><button onClick={() => setPage("result")}>진단 결과 보기 →</button></div>

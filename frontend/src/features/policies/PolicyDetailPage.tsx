@@ -163,13 +163,14 @@ function PolicyBody({
     <>
       <div
         className="catalog-banner"
+        data-reveal
         style={{ background: style.bg, color: style.ink }}
         aria-hidden="true"
       >
         <span>{style.word}</span>
       </div>
       <div className="catalog-detail-layout">
-        <div className="catalog-detail-head">
+        <div className="catalog-detail-head" data-reveal>
           <p className="catalog-detail-meta">
             {policy.department || "제공 기관 미확인"}
             {policy.organization &&
@@ -202,7 +203,7 @@ function PolicyBody({
             ))}
           </nav>
         </div>
-        <aside className="catalog-apply-panel" aria-label="신청과 내 자격">
+        <aside className="catalog-apply-panel" data-reveal aria-label="신청과 내 자격">
           {url ? (
             <a
               className="catalog-apply-cta"

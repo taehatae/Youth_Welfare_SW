@@ -120,7 +120,7 @@ function Select({
         </legend>
         <div className="dx-rows">
           {choices.map(([id, text]) => (
-            <label key={id || "empty"} className="dx-row">
+            <label key={id || "empty"} className="dx-row" data-reveal>
               <input
                 type="radio"
                 name={name}
@@ -144,7 +144,7 @@ function Select({
       </fieldset>
     )
   return (
-    <div className="dx-field">
+    <div className="dx-field" data-reveal>
       <label htmlFor={name} className="dx-label">
         {label}
         {required && <span className="dx-req"> (필수)</span>}
@@ -223,6 +223,14 @@ export default function DiagnosisPage({
   useEffect(() => {
     heading.current?.focus()
   }, [step, reviewProfile])
+
+  // 단계 이동 방향(앞으로/뒤로)에 따라 입력 영역이 들어오는 쪽을 정한다.
+  const lastStep = useRef(step)
+  const stepDirection = useRef<"fwd" | "back">("fwd")
+  if (lastStep.current !== step) {
+    stepDirection.current = step < lastStep.current ? "back" : "fwd"
+    lastStep.current = step
+  }
 
   const update = (key: keyof ProfileDraft, value: string) => {
     const next = { ...draft, [key]: value }
@@ -559,7 +567,8 @@ export default function DiagnosisPage({
 
           void proceed()
         }}
-        className="dx-form step-arrive"
+        className="dx-form step-slide"
+        data-dir={stepDirection.current}
       >
         <h1 ref={heading} tabIndex={-1} className="dx-title">
           {steps[step]}
@@ -777,6 +786,7 @@ export default function DiagnosisPage({
                   <label
                     key={value}
                     className="dx-row dx-check"
+                    data-reveal
                   >
                     <input
                       type="checkbox"

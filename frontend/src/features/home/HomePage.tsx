@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react"
 
+import CountUp from "../../components/motion/CountUp"
 import { BrandLogo } from "../../components/brand/BrandLogo"
 import {
   cardBrief,
@@ -118,18 +119,19 @@ export default function HomePage({
             </span>
           )}
           <div className="home-hero-copy">
-            <h1 id="home-title">
+            <h1 id="home-title" data-reveal>
               받을 수 있는 지원,
               <br />
               3분이면 알 수 있어요
             </h1>
-            <p>
+            <p data-reveal>
               {total ? `${total}개 ` : ""}청년 정책을 내 조건으로 한 번에
               비교해요.
             </p>
             <button
               type="button"
               className="home-cta"
+              data-reveal
               onClick={() => setPage("diagnosis")}
             >
               내 자격 확인하기 <span aria-hidden="true">→</span>
@@ -137,6 +139,7 @@ export default function HomePage({
             <button
               type="button"
               className="home-cta home-cta-ghost"
+              data-reveal
               onClick={() => setPage("quick")}
             >
               로그인 없이 간편 정책 찾기 <span aria-hidden="true">→</span>
@@ -165,9 +168,9 @@ export default function HomePage({
       <div className="home-wrap home-grid">
         <div className="home-main">
           <section aria-labelledby="home-cats">
-            <h2 id="home-cats" className="home-sec">
+            <h2 id="home-cats" className="home-sec" data-reveal>
               분야별로 보기
-              {total ? <small>전체 {total}개</small> : null}
+              {total ? <small>전체 <CountUp value={total} />개</small> : null}
             </h2>
             <ul className="home-tiles">
               {state === "loading" ? (
@@ -185,7 +188,7 @@ export default function HomePage({
                       const count = counts.get(id)
                       if (state === "ready" && !count) return null
                       return (
-                        <li key={id}>
+                        <li key={id} data-reveal>
                           <a
                             className="home-tile"
                             href={explorerHref({ category: id })}
@@ -198,21 +201,21 @@ export default function HomePage({
                             </i>
                             <span>
                               <b>{label}</b>
-                              {state === "ready" && <small>{count}개</small>}
+                              {state === "ready" && <small><CountUp value={count ?? 0} />개</small>}
                             </span>
                           </a>
                         </li>
                       )
                     },
                   )}
-                  <li>
+                  <li data-reveal>
                     <a className="home-tile" href={explorerHref({})}>
                       <i className="tone-gray" aria-hidden="true">
                         +
                       </i>
                       <span>
                         <b>전체 보기</b>
-                        {total ? <small>{total}개</small> : null}
+                        {total ? <small><CountUp value={total} />개</small> : null}
                       </span>
                     </a>
                   </li>
@@ -222,13 +225,13 @@ export default function HomePage({
           </section>
 
           <section aria-labelledby="home-mine">
-            <h2 id="home-mine" className="home-sec">
+            <h2 id="home-mine" className="home-sec" data-reveal>
               내 조건에 맞는 정책
             </h2>
             {mine.length ? (
               <ol className="home-rank">
                 {mine.map((row, i) => (
-                  <li key={row.id}>
+                  <li key={row.id} data-reveal>
                     <a href={`#detail/${encodeURIComponent(row.id)}`}>
                       <em>{i + 1}</em>
                       <span>
@@ -240,7 +243,7 @@ export default function HomePage({
                 ))}
               </ol>
             ) : (
-              <div className="home-prompt">
+              <div className="home-prompt" data-reveal>
                 <p>진단하면 내 조건에 맞는 정책을 여기서 바로 보여드려요</p>
                 <button type="button" onClick={() => setPage("diagnosis")}>
                   진단하러 가기
@@ -252,7 +255,7 @@ export default function HomePage({
 
         <aside className="home-side">
           {/* 마감일 데이터가 들어오기 전에는 카드 자체를 숨긴다 */}
-          {deadlines.length > 0 && <section className="home-card" aria-labelledby="home-dday">
+          {deadlines.length > 0 && <section className="home-card" data-reveal aria-labelledby="home-dday">
             <h3 id="home-dday">마감이 가까운 정책</h3>
             {deadlines.length ? (
               <ul className="home-dday">
@@ -269,7 +272,7 @@ export default function HomePage({
               <p className="home-empty">지금 마감이 가까운 정책이 없어요</p>
             )}
           </section>}
-          <section className="home-card" aria-labelledby="home-how">
+          <section className="home-card" data-reveal aria-labelledby="home-how">
             <h3 id="home-how">이렇게 확인해요</h3>
             <ol className="home-steps">
               {STEPS.map((text, i) => (

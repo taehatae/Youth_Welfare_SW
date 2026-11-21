@@ -146,7 +146,7 @@ export default function PolicyExplorerPage({
 
   return (
     <section className="catalog-page">
-      <div className="catalog-top">
+      <div className="catalog-top" data-reveal>
         <h1 ref={heading} tabIndex={-1} className="catalog-title">
           <label className="catalog-select">
             <span className="sr-only">정책 분야</span>
@@ -183,6 +183,7 @@ export default function PolicyExplorerPage({
       </div>
       <form
         className="catalog-search"
+        data-reveal
         role="search"
         onSubmit={(event) => {
           event.preventDefault()
@@ -208,6 +209,7 @@ export default function PolicyExplorerPage({
         {CATALOG_CATEGORIES.map(([id, label]) => (
           <button
             key={id}
+            data-reveal
             aria-pressed={filter.category === id}
             onClick={() => navigate({ category: id, page: 1 })}
           >
@@ -227,7 +229,7 @@ export default function PolicyExplorerPage({
           </button>
         )}
       </nav>
-      <div className="catalog-results-heading">
+      <div className="catalog-results-heading" data-reveal>
         <p role="status" aria-live="polite">
           {error
             ? "목록 조회에 실패했어요."

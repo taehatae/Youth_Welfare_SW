@@ -8,16 +8,42 @@ export function usePageMotion(routeKey: string) {
     if (!container || !("IntersectionObserver" in window)) return
     const seen = new WeakSet<Element>()
     const pending = new Set<HTMLElement>()
-    const show = (element: HTMLElement) => {
-      element.classList.remove("reveal-pending")
+    const timers = new Set<number>()
+    // 등장이 끝나면 reveal-ready를 떼어 hover 전환이 지연되지 않게 한다.
+    const settle = (element: HTMLElement, ms: number) => {
+      const timer = window.setTimeout(() => {
+        timers.delete(timer)
+        element.classList.remove("reveal-ready")
+        element.style.removeProperty("--reveal-i")
+      }, ms)
+      timers.add(timer)
+    }
+    const show = (element: HTMLElement, order?: number) => {
+      if (order !== undefined) {
+        element.style.setProperty("--reveal-i", String(Math.min(order, 8)))
+        settle(element, 480 + Math.min(order, 8) * 60 + 80)
+      } else element.classList.remove("reveal-ready")
       pending.delete(element)
       observer.unobserve(element)
+      if (order === undefined) {
+        element.classList.remove("reveal-pending")
+        return
+      }
+      // 숨긴 상태가 한 번 그려진 뒤에 풀어야 전환이 실제로 보인다(같은 프레임이면 바로 나타남).
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => element.classList.remove("reveal-pending")),
+      )
     }
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) show(entry.target as HTMLElement)
-        })
+        // 같은 때 보이게 된 요소는 문서 순서대로 60ms 간격으로 등장한다.
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => entry.target as HTMLElement)
+          .sort((a, b) =>
+            a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+          )
+          .forEach((element, order) => show(element, order))
       },
       { threshold: 0, rootMargin: "0px 0px -20px 0px" },
     )
@@ -42,7 +68,7 @@ export function usePageMotion(routeKey: string) {
       let element: Element | null = event.target
       while (element && container.contains(element)) {
         if (element instanceof HTMLElement && pending.has(element))
-          show(element)
+          show(element, 0)
         element = element.parentElement
       }
     }
@@ -52,7 +78,8 @@ export function usePageMotion(routeKey: string) {
     container.addEventListener("focusin", revealFocused)
     return () => {
       mutations.disconnect()
-      pending.forEach(show)
+      timers.forEach((timer) => window.clearTimeout(timer))
+      pending.forEach((element) => show(element))
       observer.disconnect()
       container.removeEventListener("focusin", revealFocused)
     }

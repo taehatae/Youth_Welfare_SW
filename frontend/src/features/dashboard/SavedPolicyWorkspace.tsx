@@ -22,7 +22,7 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
     try { await updateSaved(item, status, note); setEditing(false); setMessage("계정에 저장했어요.") }
     catch (e) { setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.") }
   }
-  return <article className="workspace-saved-card">
+  return <article className="workspace-saved-card" data-reveal>
     <div className="workspace-saved-top"><span className="workspace-tracking" data-tracking={item.trackingStatus ?? "interested"}>{trackingLabels[item.trackingStatus ?? "interested"]}</span><span className="dashboard-small">{currentProfile ? "현재 진단 프로필" : "이전 진단 프로필"}</span></div>
     <h4>{row.title}</h4>
     <p className="workspace-saved-verdict">{latest ? "최근 조회 결과" : "저장 당시 결과"} ·<strong data-result={resultCategoryOf(row)}>{resultCategoryLabels[resultCategoryOf(row)]}</strong></p>

@@ -18,10 +18,10 @@ import "./quick.css"
 // 입력값과 결과는 이 화면의 메모리에만 있고 서버·브라우저 저장소에 남기지 않는다.
 
 function Bot({ children }: { children: ReactNode }) {
-  return <div className="quick-row" data-from="bot"><span className="quick-avatar" aria-hidden="true">청</span><div className="quick-bubble">{children}</div></div>
+  return <div className="quick-row" data-from="bot" data-reveal><span className="quick-avatar" aria-hidden="true">청</span><div className="quick-bubble">{children}</div></div>
 }
 function Me({ children }: { children: ReactNode }) {
-  return <div className="quick-row" data-from="me"><div className="quick-bubble">{children}</div></div>
+  return <div className="quick-row" data-from="me" data-reveal><div className="quick-bubble">{children}</div></div>
 }
 
 function Field({ input, draft, set }: { input: QuickInput; draft: QuickDraft; set: (patch: QuickDraft) => void }) {
@@ -96,7 +96,7 @@ function QuestionCard({ question, draft, setDraft, onDone, editing }: {
     if (question.id === "region") cleared.region_district = undefined
     setDraft(cleared); setError(""); onDone()
   }
-  return <div className="quick-card">
+  return <div className="quick-card" data-reveal>
     {visibleInputs(question, draft).map((input) => <Field key={input.key} input={input} draft={draft} set={set} />)}
     {error && <p role="alert" className="quick-error">{error}</p>}
     <div className="quick-card-actions">
@@ -196,7 +196,7 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
         <p className="quick-muted">자유 문장 입력이나 AI 답변은 없어요. 모르는 질문은 건너뛰면 그 조건은 ‘확인 필요’로 남아요. 전체 자격 진단을 대신하지는 않아요.</p>
       </Bot>
       <Bot><p>어떤 분야의 정책을 찾고 있나요?</p></Bot>
-      {!detail && <div className="quick-options" aria-busy={!categories || detailLoading}>
+      {!detail && <div className="quick-options" data-reveal aria-busy={!categories || detailLoading}>
         {loadError && <div role="alert" className="quick-error">{loadError}
           <button type="button" className="quick-ghost" onClick={categories ? () => setLoadError("") : loadCategories}>다시 시도</button></div>}
         {!categories && !loadError && <p role="status" className="quick-muted">분야 목록을 불러오는 중이에요.</p>}

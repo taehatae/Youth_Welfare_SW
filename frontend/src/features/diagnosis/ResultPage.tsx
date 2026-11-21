@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useMediaQuery } from "../../hooks/useMediaQuery"
+import CountUp from "../../components/motion/CountUp"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
   cardBrief,
@@ -225,7 +226,7 @@ export default function ResultPage({
   )
   return (
     <section className="reverse-page result-page" aria-busy={busy}>
-      <div className="result-hero">
+      <div className="result-hero" data-reveal>
         <div className="result-hero-title">
           <p className="result-eyebrow">내 조건으로 살펴본 정책</p>
           <h1>진단 결과</h1>
@@ -252,13 +253,13 @@ export default function ResultPage({
         </div>
       </div>
       <div className="result-stats" aria-label="전체 분석 요약">
-        <div className="result-stat result-stat-total">
+        <div className="result-stat result-stat-total" data-reveal>
           <span className="result-stat-label">
             총 분석
             {onlyReviewed && <span className="result-chip">검수 완료 {reviewedCount}</span>}
           </span>
           <p className="result-stat-num">
-            {total}
+            <CountUp value={total} />
             <small>건</small>
           </p>
           <div className="result-ratio" aria-hidden="true">
@@ -275,6 +276,7 @@ export default function ResultPage({
             key={category}
             type="button"
             className="result-stat result-stat-cat"
+            data-reveal
             data-category={category}
             aria-pressed={filter === category}
             onClick={() => setFilter(filter === category ? "all" : category)}
@@ -284,7 +286,7 @@ export default function ResultPage({
               <span className="result-chip">{pct(counts[category])}%</span>
             </span>
             <span className="result-stat-num">
-              {counts[category]}
+              <CountUp value={counts[category]} />
               <small>건</small>
             </span>
             <span className="result-bar" aria-hidden="true">
@@ -306,7 +308,7 @@ export default function ResultPage({
         current={snapshot}
         mode="diagnosis"
       />
-      <div className="result-toolbar">
+      <div className="result-toolbar" data-reveal>
         <div className="result-toolbar-row">
           <div className="analysis-filters" aria-label="분석 결과 필터">
             {filters.map((item) => (
@@ -403,7 +405,7 @@ export default function ResultPage({
               {filtered.map((policy) => {
                 const c = tabCounts(policy)
                 return (
-                  <li key={policy.id}>
+                  <li key={policy.id} data-reveal>
                     <button
                       type="button"
                       data-category={resultCategoryOf(policy)}
