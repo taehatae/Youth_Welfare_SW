@@ -73,6 +73,21 @@ const pathBrief = (policy: PolicyRow): string | null => {
     .map((c) => c.condition_type)
   return `${policy.matchedPathId === path.path_id ? "대표 경로" : "경로"} '${path.label}': ${failedTypes.join(", ")} 미충족`
 }
+// 간편 찾기용: '신청 가능'인데 대표 경로(엔진이 정한 matched_path_id)에 입력하지 않은 비교 조건이 남은 경우.
+// 판정을 바꾸지 않고 표시만 보완한다. 다른 대안 경로의 미입력 항목은 세지 않는다(이 판정과 무관).
+// 공통 조건은 백엔드가 대표 경로 조건에 한 번만 합쳐 주며, 같은 항목·기준이 겹치면 한 번만 센다.
+// 기관 확인 사항(checks)은 입력으로 비교할 수 없어 미입력 수에 넣지 않고 따로 센다.
+export type PendingConditions = { pathLabel: string; multiplePaths: boolean; fields: string[]; count: number; checks: number }
+export function pendingConditionsOf(policy: PolicyRow): PendingConditions | null {
+  const paths = policy.paths ?? []
+  if (policy.status !== "eligible" || !paths.length) return null
+  const path = paths.find((p) => p.path_id === policy.matchedPathId) ?? paths[0]
+  const rows = new Map<string, string>()
+  for (const c of path.conditions)
+    if (c.status === "needs_review") rows.set(`${c.condition_type}|${c.required_value}`, c.condition_type)
+  return { pathLabel: path.label, multiplePaths: paths.length > 1, fields: [...new Set(rows.values())],
+    count: rows.size, checks: new Set(path.checks).size }
+}
 export const resultReason = (policy: PolicyRow): string => {
   if (policy.paths?.length && policy.recommendationReason)
     return policy.recommendationReason
@@ -225,10 +240,12 @@ function PathCardView({ card, tab, single, best, scored, personal, onEdit, busy 
   )
 }
 // 경로가 있는 정책의 미충족·추가 확인 탭: 가장 가까운 경로만 크게, 나머지는 '다른 경로 확인하기'에 접어 둔다.
-function PathCards({ policy, tab, personal, scores, onEdit, busy = false }: {
+function PathCards({ policy, tab, personal, scores, onEdit, busy = false, temporary = false }: {
   policy: PolicyRow; tab: PathTab; personal: ReadonlyMap<string, string>
   scores: PrivateDifficulties
   onEdit?: (step: number) => void; busy?: boolean
+  // 저장하지 않는 임시 결과(간편 정책 찾기). 정확한 난이도가 없어 사용자 가중치 재정렬을 제공하지 않는다.
+  temporary?: boolean
 }) {
   const { best, others, hidden, allImpossible, scored } = pathCards(policy.paths, tab, getDifficultyPrefs(), scores, policy.matchedPathId)
   const single = (policy.paths?.length ?? 0) < 2
@@ -240,8 +257,9 @@ function PathCards({ policy, tab, personal, scores, onEdit, busy = false }: {
     <div className="path-guides">
       {allImpossible && <p className="condition-scope-note">시간이 지나도 다시 충족할 수 없는 조건 때문에 이 정책에는 해당하지 않아요.</p>}
       {best.map((c) => view(c, true))}
-      {tab === "failed" && !single && best[0]?.failed.length > 0 && (
-        <DifficultySettings disabled={!scored} />
+      {tab === "failed" && !single && best[0]?.failed.length > 0 && (temporary
+        ? <p className="path-guide-note">간편 찾기 결과는 기본 순서로 경로를 보여줘요. 추천 기준 바꾸기는 로그인 후 자격 진단 결과에서 쓸 수 있어요.</p>
+        : <DifficultySettings disabled={!scored} />
       )}
       {!!others.length && (
         <details className="other-path-cards">
@@ -254,9 +272,9 @@ function PathCards({ policy, tab, personal, scores, onEdit, busy = false }: {
   )
 }
 // 선택된 탭의 조건만 표시한다. 판정과 조건 선택은 백엔드 결과를 그대로 사용한다.
-export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedAt, guideTarget }: {
+export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedAt, guideTarget, temporary = false }: {
   policy: PolicyRow; tab: ConditionTab; onEdit?: (step: number) => void; busy?: boolean; savedAt?: string
-  guideTarget?: ConditionGuideTarget
+  guideTarget?: ConditionGuideTarget; temporary?: boolean
 }) {
   useDifficultyPrefs() // 사용자 가중치가 바뀌면 다시 그린다
   const items: Record<ConditionTab, ConditionItem[]> = {
@@ -278,7 +296,7 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
         <b>{pathMode ? tabCounts(policy, scores)[tab] : shown.length + otherRows.length + (tab === "review" ? other.checks.length : 0)}</b>
       </p>
       {pathMode && (
-        <PathCards policy={policy} tab={tab} personal={personalGuides} scores={scores} onEdit={onEdit} busy={busy} />
+        <PathCards policy={policy} tab={tab} personal={personalGuides} scores={scores} onEdit={onEdit} busy={busy} temporary={temporary} />
       )}
       {pathMode ? null : shown.length ? (
         groupsOf(tab, shown).map(([title, rows]) => (
@@ -395,15 +413,18 @@ export default function AnalysisPolicyCard({
   guideTarget,
   busy = false,
   index = 0,
+  temporary = false,
 }: {
   policy: PolicyRow
-  saved: boolean
-  toggle: () => void
+  saved?: boolean
+  // 없으면 관심 저장 버튼을 숨긴다(저장하지 않는 임시 결과).
+  toggle?: () => void
   savedAt?: string
   onEdit?: (step: number) => void
   guideTarget?: ConditionGuideTarget
   busy?: boolean
   index?: number
+  temporary?: boolean
 }) {
   useDifficultyPrefs() // 사용자 가중치가 바뀌면 요약·숫자도 다시 계산한다
   const url = safeOfficialUrl(policy.url)
@@ -412,12 +433,15 @@ export default function AnalysisPolicyCard({
   const [tab, setTab] = useState<ConditionTab | null>(null)
   const panelId = useId()
   const passed = metCountOf(policy)
+  // 기존 진단 화면(temporary가 아님)은 표시를 바꾸지 않는다.
+  const pending = temporary ? pendingConditionsOf(policy) : null
   return (
     <article
       className="reverse-card"
       data-reveal
       data-reveal-delay={index % 3}
       data-result={resultCategoryOf(policy)}
+      data-pending={pending?.count ? true : undefined}
       data-open={tab !== null}
     >
       <header>
@@ -430,17 +454,27 @@ export default function AnalysisPolicyCard({
               비교 조건 없음
             </span>
           )}
+          {!!pending?.count && (
+            <span className="reverse-tag" data-result="pending">
+              미입력 조건 {pending.count}개
+            </span>
+          )}
           <h3>
             <a href={"#detail/" + encodeURIComponent(policy.id)}>{policy.title}</a>
           </h3>
           <p className="card-brief">
-            {pathBrief(policy) ??
+            {pending?.count
+              ? `${pending.multiplePaths ? `'${pending.pathLabel}' 경로 기준 · ` : ""}입력한 조건은 충족했지만, 입력하지 않은 조건 확인이 필요해요: ${pending.fields.join(", ")}`
+              : pathBrief(policy) ??
               (failed.length
               ? `${fieldName(failed[0].field)}${isOrGroup(failed[0].field) ? " (이 중 하나만 해당하면 돼요)" : ""} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
               : passed > 0
                 ? `입력값으로 비교한 조건 ${passed}개 충족`
                 : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요")}
           </p>
+          {!!pending?.checks && (
+            <p className="card-brief card-checks">이와 별도로 기관 확인 사항 {pending.checks}개는 공식 안내에서 확인하세요.</p>
+          )}
           {counts && (
             <div className="condition-counts compact" role="group" aria-label="조건 비교 요약">
               {conditionTabs.map(([kind, label]) => {
@@ -462,19 +496,19 @@ export default function AnalysisPolicyCard({
             </div>
           )}
         </div>
-        <div className="card-header-actions">
+        {toggle && <div className="card-header-actions">
           <button
             className="policy-save"
-            aria-pressed={saved}
+            aria-pressed={!!saved}
             aria-label={`${policy.title} 관심 정책 ${saved ? "해제" : "저장"}`}
             onClick={toggle}
           >
             {saved ? "★ 저장됨" : "☆ 관심 저장"}
           </button>
-        </div>
+        </div>}
       </header>
       <div id={panelId} hidden={tab === null} className="condition-panel" data-kind={tab ?? undefined}>
-        {tab && <PolicyConditionPanel policy={policy} tab={tab} onEdit={onEdit} busy={busy} savedAt={savedAt} guideTarget={guideTarget} />}
+        {tab && <PolicyConditionPanel policy={policy} tab={tab} onEdit={onEdit} busy={busy} savedAt={savedAt} guideTarget={guideTarget} temporary={temporary} />}
       </div>
       <footer className="policy-card-actions">
         {url ? (
