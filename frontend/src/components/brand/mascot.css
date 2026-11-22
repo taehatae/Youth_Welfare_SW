@@ -1,0 +1,10 @@
+.mascot { display: block; max-width: none; height: auto; pointer-events: none; user-select: none; filter: drop-shadow(0 10px 18px rgba(31, 42, 55, .15)); }
+.mascot-float { animation: mascot-float 5.2s ease-in-out var(--mascot-delay, 0s) infinite; }
+@keyframes mascot-float {
+  0%, 100% { transform: translateY(0) rotate(calc(var(--mascot-tilt, 0deg) - 1deg)); }
+  50% { transform: translateY(-10px) rotate(calc(var(--mascot-tilt, 0deg) + 1deg)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float { animation: none; transform: rotate(var(--mascot-tilt, 0deg)); }
+}
+.mascot-center { margin: 0 auto 10px; }

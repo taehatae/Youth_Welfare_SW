@@ -1,36 +1,59 @@
 import { categoryLabel, type CatalogPolicy } from "../../types/policyCatalog"
+import { styleOf, supportTypeOf } from "../../features/policies/categoryStyle"
+import {
+  resultCategoryLabels,
+  type ResultCategory,
+} from "./AnalysisPolicyCard"
+
+// 첫 줄만 짧게 보여준다.
+const shortLine = (text: string) =>
+  (text.split("\n")[0] ?? "").replace(/\s+/g, " ").trim()
 
 export default function PolicyCard({
   policy,
   index,
+  status,
 }: {
   policy: CatalogPolicy
   index: number
+  /** 내 진단 결과가 있을 때만 */
+  status?: ResultCategory
 }) {
+  const style = styleOf(policy.categories)
+  const first = policy.categories[0]
+  const support = supportTypeOf(policy.support_type)
   return (
-    <article data-reveal data-reveal-delay={index % 3} className="catalog-card">
-      <div className="catalog-tags">
-        {policy.categories.map((category) => (
-          <span key={category}>{categoryLabel(category)}</span>
-        ))}
-      </div>
-      <h3>
-        <a href={"#detail/" + encodeURIComponent(policy.id)}>{policy.title}</a>
-      </h3>
-      <p className="catalog-description">
-        {policy.summary || "상세 화면에서 지원 대상과 내용을 확인해주세요."}
-      </p>
-      <div className="catalog-card-meta">
-        <span>{policy.department || "제공 기관 확인 필요"}</span>
-        <span>{policy.support_type || "지원 방식 확인 필요"}</span>
-      </div>
-      <a
-        className="catalog-detail-link"
-        href={"#detail/" + encodeURIComponent(policy.id)}
-        aria-label={policy.title + " 상세 보기"}
+    <a
+      data-reveal
+      data-reveal-delay={index % 4}
+      className="catalog-row"
+      href={"#detail/" + encodeURIComponent(policy.id)}
+      aria-label={policy.title + " 상세 보기"}
+    >
+      <span
+        className="catalog-row-icon"
+        style={{ background: style.bg, color: style.ink }}
+        aria-hidden="true"
       >
-        지원 내용 보기 <span aria-hidden="true">↗</span>
-      </a>
-    </article>
+        {support.glyph || style.word.slice(0, 1)}
+      </span>
+      <span className="catalog-row-body">
+        <h3>{policy.title}</h3>
+        <span className="catalog-row-summary">
+          {shortLine(policy.summary) || policy.support_type || "지원 내용 확인 필요"}
+        </span>
+        <span className="catalog-row-meta">
+          {first && <span>{categoryLabel(first)}</span>}
+          <span>{policy.department || "제공 기관 확인 필요"}</span>
+          <span className="catalog-row-pill">{support.label}</span>
+        </span>
+      </span>
+      <span className="catalog-row-end">
+        {status && (
+          <em data-result={status}>{resultCategoryLabels[status]}</em>
+        )}
+        <i aria-hidden="true">›</i>
+      </span>
+    </a>
   )
 }

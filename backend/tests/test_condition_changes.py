@@ -181,3 +181,9 @@ def test_isolated_api_and_saved_snapshot_keep_changes_without_private_values(set
         text = json.dumps(payload, ensure_ascii=False)
         for secret in ("3,456,789", "3456789", "756,790", "756790", "서울특별시 관악구"):
             assert secret not in text
+
+
+def test_zero_won_reads_as_won_not_manwon():
+    c = condition("본인 월소득", "lte", 0, unit="원")
+    assert base.describe(c) == "본인 월소득 0원 이하"
+    assert "0만원" not in base.condition_guide(c, 3_000_000, False)["condition_guide"]

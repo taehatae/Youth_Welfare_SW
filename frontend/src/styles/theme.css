@@ -1,0 +1,37 @@
+/* 하늘·민트 파스텔 테마: 전역 토큰. 진단 결과(result.css)와 같은 값을 쓴다. */
+:root {
+  --bg: #F4F8FB;
+  --surface: #fff;
+  --ink: #1F2A37;
+  --ink-hover: #334155;
+  --sub: #475569;
+  --line: #E3EBF2;
+  --line-strong: #cbd5e1;
+  --accent: #3D7BE0;
+  --accent-ink: #2357B0;
+  --accent-soft: #E3EEFD;
+  --likely: #D3F2E6;
+  --likely-ink: #17795A;
+  --review: #FFF0CC;
+  --review-ink: #8F6100;
+  --gap: #FFE0E3;
+  --gap-ink: #B23A4A;
+  --saved: #ECE7FD;
+  --saved-ink: #5B47C9;
+  --hero: #E2F0FF;
+  --hero-2: #DFF6EE;
+  --hover-bg: #f1f6fb;
+  --accent-soft-hover: #D3E4FB;
+  --soft-shadow: 0 2px 10px #0000000d;
+  --radius-panel: 24px;
+  --radius-card: 20px;
+  --radius-field: 14px;
+  --focus-ring: 2px solid var(--accent);
+
+  /* 기존 이름 호환 */
+  --youth-ink: var(--ink);
+  --youth-blue: var(--accent-ink);
+  --youth-teal: var(--likely-ink);
+  --youth-line: var(--line);
+  --youth-surface: var(--bg);
+}

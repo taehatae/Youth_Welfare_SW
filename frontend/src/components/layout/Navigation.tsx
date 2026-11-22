@@ -23,8 +23,6 @@ export default function Navigation({
 
     { id: "explorer", label: "정책 찾기" },
 
-    { id: "quick", label: "간편 정책 찾기" },
-
     { id: "diagnosis", label: "자격 진단" },
 
     { id: "result", label: "진단 결과" },
@@ -34,33 +32,33 @@ export default function Navigation({
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white border-b-2 border-slate-900">
+      <nav className="sticky top-0 z-50 bg-white border-b border-[var(--line)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between min-h-[72px] gap-3">
+          <div className="flex items-center justify-between min-h-[80px] py-[14px] gap-3">
             <a
               href="#home"
               onClick={() => setPage("home")}
-              className="interface-nav-brand flex shrink-0 items-center rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="interface-nav-brand flex shrink-0 items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               aria-label="자격있청 홈으로"
             >
               <BrandLogo />
             </a>
 
-            <div className="hidden lg:flex items-center">
+            <div className="hidden lg:flex items-center gap-1">
               {links.map((l) => (
                 <button
                   key={l.id}
                   aria-current={page === l.id ? "page" : undefined}
                   onClick={() => setPage(l.id)}
-                  className={`relative px-4 py-4 text-sm font-bold transition-colors ${
+                  className={`relative rounded-full px-4 py-[10px] text-[15px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] ${
                     page === l.id
-                      ? "text-blue-600"
-                      : "text-slate-500 hover:text-slate-900"
+                      ? "bg-[var(--accent-soft)] text-[var(--accent-ink)] font-bold"
+                      : "font-semibold text-[color:color-mix(in_srgb,var(--ink)_80%,transparent)] hover:bg-[var(--bg)] hover:text-[var(--ink)]"
                   }`}
                 >
                   {l.label}
                   {page === l.id && (
-                    <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-blue-600 rounded-full" />
+                    <span aria-hidden="true" className="absolute left-1/2 -translate-x-1/2 bottom-[3px] h-[2px] w-4 rounded-full bg-[var(--accent)]" />
                   )}
                 </button>
               ))}
@@ -71,7 +69,7 @@ export default function Navigation({
               <button type="button" className="interface-login-button" disabled={busy} onClick={account ? onLogout : onLogin} aria-haspopup={account ? undefined : "dialog"}>{account ? "로그아웃" : "로그인"}</button>
               <button
                 onClick={() => setPage("diagnosis")}
-                className="bg-slate-900 text-white text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                className="bg-[var(--ink)] text-white text-[15px] font-bold px-3 sm:px-5 py-2.5 rounded-full hover:bg-[var(--ink-hover)] transition-colors whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
               >
                 진단 시작 <span className="hidden sm:inline" aria-hidden="true">→</span>
               </button>
@@ -81,13 +79,11 @@ export default function Navigation({
       </nav>
 
       {/* Mobile bottom nav */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-300 flex z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] flex z-50 px-2 pb-1 pt-1">
         {[
           { id: "home" as Page, icon: "🏠", label: "홈" },
 
           { id: "explorer" as Page, icon: "🔍", label: "정책" },
-
-          { id: "quick" as Page, icon: "💬", label: "간편" },
 
           { id: "diagnosis" as Page, icon: "📋", label: "진단" },
 
@@ -99,8 +95,8 @@ export default function Navigation({
             key={l.id}
             aria-current={page === l.id ? "page" : undefined}
             onClick={() => setPage(l.id)}
-            className={`flex-1 flex flex-col items-center gap-0.5 py-3 text-[10px] font-black transition-colors ${
-              page === l.id ? "text-blue-600" : "text-slate-400"
+            className={`flex-1 flex flex-col items-center gap-0.5 py-2 mx-0.5 rounded-2xl text-[12px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-[var(--accent)] ${
+              page === l.id ? "bg-[var(--accent-soft)] text-[var(--accent-ink)]" : "text-[var(--sub)]"
             }`}
           >
             <span className="text-xl leading-none">{l.icon}</span>

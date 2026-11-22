@@ -1,7 +1,8 @@
+import mascotAvatar from "../../assets/brand/mascot-avatar.webp"
 import { useEffect, useRef, useState, type ReactNode } from "react"
 import PageHeading from "../../components/layout/PageHeading"
 import AnalysisPolicyCard, {
-  isUnverified, metCountOf, pendingConditionsOf, resultCategoryLabels, resultCategoryOf, resultCategoryOrder, type ResultCategory,
+  cardBrief, isUnverified, metCountOf, pendingConditionsOf, resultCategoryLabels, resultCategoryOf, resultCategoryOrder, type ResultCategory,
 } from "../../components/policy/AnalysisPolicyCard"
 import { policyResults, type PolicyRow } from "../../services/policyResults"
 import { evaluateQuick, loadQuickCategories, loadQuickCategory } from "../../services/welfareApi"
@@ -11,6 +12,7 @@ import {
   AGE_OPTIONS, answerSummary, isAnswered, questionError, questionsFor, toAnswers, visibleInputs,
   type QuickDraft, type QuickInput, type QuickQuestion,
 } from "./quickQuestions"
+import Mascot from "../../components/brand/Mascot"
 import "../diagnosis/reverse.css"
 import "./quick.css"
 
@@ -18,10 +20,10 @@ import "./quick.css"
 // 입력값과 결과는 이 화면의 메모리에만 있고 서버·브라우저 저장소에 남기지 않는다.
 
 function Bot({ children }: { children: ReactNode }) {
-  return <div className="quick-row" data-from="bot"><span className="quick-avatar" aria-hidden="true">청</span><div className="quick-bubble">{children}</div></div>
+  return <div className="quick-row" data-from="bot" data-reveal><span className="quick-avatar" aria-hidden="true"><img src={mascotAvatar} alt="" /></span><div className="quick-bubble">{children}</div></div>
 }
 function Me({ children }: { children: ReactNode }) {
-  return <div className="quick-row" data-from="me"><div className="quick-bubble">{children}</div></div>
+  return <div className="quick-row" data-from="me" data-reveal><div className="quick-bubble">{children}</div></div>
 }
 
 function Field({ input, draft, set }: { input: QuickInput; draft: QuickDraft; set: (patch: QuickDraft) => void }) {
@@ -96,7 +98,7 @@ function QuestionCard({ question, draft, setDraft, onDone, editing }: {
     if (question.id === "region") cleared.region_district = undefined
     setDraft(cleared); setError(""); onDone()
   }
-  return <div className="quick-card">
+  return <div className="quick-card" data-reveal>
     {visibleInputs(question, draft).map((input) => <Field key={input.key} input={input} draft={draft} set={set} />)}
     {error && <p role="alert" className="quick-error">{error}</p>}
     <div className="quick-card-actions">
@@ -120,7 +122,16 @@ export const quickFilterCounts = (rows: PolicyRow[]) => Object.fromEntries(
   (["all", ...resultCategoryOrder, "pending"] as QuickFilter[]).map((f) => [f, rows.filter((p) => inQuickFilter(p, f)).length]),
 ) as Record<QuickFilter, number>
 
-export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => void }) {
+function scrollReveal(el: HTMLElement | null, widget: boolean) {
+  if (!el) return
+  const scroller = widget ? el.closest<HTMLElement>(".quick-widget-scroll") : null
+  if (!scroller) { el.scrollIntoView({ behavior: "smooth", block: "start" }); return }
+  const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 8
+  scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" })
+}
+
+export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onDiagnosis: () => void; variant?: "page" | "widget" }) {
+  const widget = variant === "widget"
   const [categories, setCategories] = useState<QuickCategory[] | null>(null)
   const [loadError, setLoadError] = useState("")
   const [detail, setDetail] = useState<QuickCategoryDetail | null>(null)
@@ -159,7 +170,7 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
   const resetCategory = () => {
     generation.current++
     setDetail(null); setResult(null); setProgress(0); setEditing(null); setEvalError(""); setStale(false); setEvaluating(false)
-    chatTop.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    scrollReveal(chatTop.current, widget)
   }
   const evaluate = async () => {
     if (!detail || evaluating) return
@@ -170,7 +181,7 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
       if (version !== generation.current) return
       setResult(response); setStale(false); setFilter("all")
       setSkippedAtEval(questions.length - questions.filter((q) => isAnswered(q, draft)).length)
-      window.setTimeout(() => resultTop.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0)
+      window.setTimeout(() => scrollReveal(resultTop.current, widget), 0)
     } catch (e) {
       if (version === generation.current) setEvalError(e instanceof Error ? e.message : "결과를 불러오지 못했어요.")
     } finally { if (version === generation.current) setEvaluating(false) }
@@ -187,16 +198,16 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
   const shown = rows.filter((p) => inQuickFilter(p, filter))
   const unverified = rows.filter(isUnverified).length
 
-  return <section className="reverse-page quick-page">
-    <PageHeading eyebrow="버튼으로 답하는 간편 탐색" title="간편 정책 찾기"
-      description="관심 분야를 고르고, 그 분야 정책이 실제로 비교하는 조건만 답해 보세요. 로그인 없이 쓸 수 있고 입력값과 결과는 저장하지 않아요." />
+  return <section className={widget ? "quick-widget-body" : "reverse-page quick-page"}>
+    {!widget && <PageHeading eyebrow="버튼으로 답하는 간편 탐색" title="간편 정책 찾기"
+      description="관심 분야를 고르고, 그 분야 정책이 실제로 비교하는 조건만 답해 보세요. 로그인 없이 쓸 수 있고 입력값과 결과는 저장하지 않아요." />}
     <div className="quick-chat" ref={chatTop} aria-label="간편 정책 찾기 대화">
       <Bot>
         <p>안녕하세요. 관심 분야의 정책을 버튼으로 간단히 찾아 드릴게요.</p>
         <p className="quick-muted">자유 문장 입력이나 AI 답변은 없어요. 모르는 질문은 건너뛰면 그 조건은 ‘확인 필요’로 남아요. 전체 자격 진단을 대신하지는 않아요.</p>
       </Bot>
       <Bot><p>어떤 분야의 정책을 찾고 있나요?</p></Bot>
-      {!detail && <div className="quick-options" aria-busy={!categories || detailLoading}>
+      {!detail && <div className="quick-options" data-reveal aria-busy={!categories || detailLoading}>
         {loadError && <div role="alert" className="quick-error">{loadError}
           <button type="button" className="quick-ghost" onClick={categories ? () => setLoadError("") : loadCategories}>다시 시도</button></div>}
         {!categories && !loadError && <p role="status" className="quick-muted">분야 목록을 불러오는 중이에요.</p>}
@@ -258,14 +269,22 @@ export default function QuickFinderPage({ onDiagnosis }: { onDiagnosis: () => vo
             {id === "all" ? "전체" : id === "pending" ? "└ 그중 미입력 조건 있음" : resultCategoryLabels[id]} <strong>{counts[id]}</strong></button>)}
       </div>
       {unverified > 0 && <p className="analysis-unverified">신청 가능 중 {unverified}건은 비교할 수 있는 조건이 없어 ‘비교 조건 없음’으로 표시했어요.</p>}
-      {shown.length ? <div className="reverse-list quick-list">
+      {shown.length ? widget ? <ul className="quick-mini-list">
+        {shown.map((policy) => { const cat = resultCategoryOf(policy)
+          return <li key={policy.id}><a className="quick-mini" href={"#detail/" + encodeURIComponent(policy.id)}>
+            <span className="quick-mini-pill" data-category={cat}>{resultCategoryLabels[cat]}</span>
+            <strong>{policy.title}</strong>
+            <span className="quick-mini-brief">{cardBrief(policy)}</span>
+          </a></li> })}
+      </ul> : <div className="reverse-list quick-list">
         {shown.map((policy, index) => <AnalysisPolicyCard key={policy.id} policy={policy} index={index} temporary />)}
       </div> : <div className="reverse-empty">
+        <Mascot pose="think" size={110} className="mascot-center" />
         <h3>{rows.length ? "이 분류에 해당하는 정책이 없어요" : "이 분야에서 분석된 정책이 없어요"}</h3>
         <p>{rows.length ? "다른 분류를 눌러 보세요." : "결과가 없다고 자격이 없다는 뜻은 아니에요. 다른 분야를 선택하거나 전체 자격 진단을 이용해 보세요."}</p>
       </div>}
       <div className="quick-next">
-        <button type="button" className="quick-ghost" onClick={() => chatTop.current?.scrollIntoView({ behavior: "smooth", block: "start" })}>답변 수정하기</button>
+        <button type="button" className="quick-ghost" onClick={() => scrollReveal(chatTop.current, widget)}>답변 수정하기</button>
         <button type="button" className="quick-ghost" onClick={resetCategory}>다른 분야 찾기</button>
         <button type="button" className="interface-primary" onClick={onDiagnosis}>전체 자격 진단 하기 →</button>
       </div>

@@ -43,7 +43,7 @@ export const isUnverified = (policy: PolicyRow) =>
 const STATUS_OF_TAB = { passed: "passed", failed: "failed", review: "needs_review" } as const
 // 탭 숫자: 대표 경로 결과 + 다른 경로에서 합친 조건(+ 다른 경로의 확인 사항).
 // 미충족·추가 확인 숫자는 가장 가까운 경로 기준이다(카드에 크게 보이는 경로와 같게).
-const tabCounts = (policy: PolicyRow, scores?: PrivateDifficulties) => {
+export const tabCounts = (policy: PolicyRow, scores?: PrivateDifficulties) => {
   const base = policy.counts ?? { passed: 0, failed: 0, review: 0 }
   const other = otherPathDetails(policy.paths, policy.matchedPathId)
   const best = pathCards(policy.paths, "failed", getDifficultyPrefs(), scores, policy.matchedPathId).best[0]
@@ -105,7 +105,7 @@ const fieldName = (field: string) =>
   isOrGroup(field) ? field : (conditionFields[field.toLowerCase()] ?? field)
 const OrNote = ({ field }: { field: string }) =>
   isOrGroup(field) ? (
-    <small className="text-slate-500"> (이 중 하나만 해당하면 돼요)</small>
+    <small className="text-[var(--sub)]"> (이 중 하나만 해당하면 돼요)</small>
   ) : null
 
 export const conditionFields: Record<string, string> = {
@@ -124,7 +124,7 @@ export const conditionFields: Record<string, string> = {
   external_review: "기관 심사",
   informational: "안내 사항",
 }
-type ConditionTab = "passed" | "failed" | "review"
+export type ConditionTab = "passed" | "failed" | "review"
 const conditionTabs: [ConditionTab, string][] = [
   ["passed", "충족"],
   ["failed", "미충족"],
@@ -404,6 +404,18 @@ export function PolicyConditionPanel({ policy, tab, onEdit, busy = false, savedA
     </>}</PersonalizedGuideAccess>
   )
 }
+export function cardBrief(policy: PolicyRow): string {
+  const failed = policy.conditions.filter((c) => c.status === "미충족")
+  const passed = metCountOf(policy)
+  return (
+    pathBrief(policy) ??
+    (failed.length
+      ? `${fieldName(failed[0].field)}${isOrGroup(failed[0].field) ? " (이 중 하나만 해당하면 돼요)" : ""} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
+      : passed > 0
+        ? `입력값으로 비교한 조건 ${passed}개 충족`
+        : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요")
+  )
+}
 export default function AnalysisPolicyCard({
   policy,
   saved,
@@ -413,6 +425,7 @@ export default function AnalysisPolicyCard({
   guideTarget,
   busy = false,
   index = 0,
+  defaultTab = null,
   temporary = false,
 }: {
   policy: PolicyRow
@@ -424,13 +437,14 @@ export default function AnalysisPolicyCard({
   guideTarget?: ConditionGuideTarget
   busy?: boolean
   index?: number
+  defaultTab?: ConditionTab | null
   temporary?: boolean
 }) {
   useDifficultyPrefs() // 사용자 가중치가 바뀌면 요약·숫자도 다시 계산한다
   const url = safeOfficialUrl(policy.url)
   const counts = policy.counts
   const failed = policy.conditions.filter((c) => c.status === "미충족")
-  const [tab, setTab] = useState<ConditionTab | null>(null)
+  const [tab, setTab] = useState<ConditionTab | null>(defaultTab)
   const panelId = useId()
   const passed = metCountOf(policy)
   // 기존 진단 화면(temporary가 아님)은 표시를 바꾸지 않는다.
@@ -465,12 +479,7 @@ export default function AnalysisPolicyCard({
           <p className="card-brief">
             {pending?.count
               ? `${pending.multiplePaths ? `'${pending.pathLabel}' 경로 기준 · ` : ""}입력한 조건은 충족했지만, 입력하지 않은 조건 확인이 필요해요: ${pending.fields.join(", ")}`
-              : pathBrief(policy) ??
-              (failed.length
-              ? `${fieldName(failed[0].field)}${isOrGroup(failed[0].field) ? " (이 중 하나만 해당하면 돼요)" : ""} 조건 미충족${failed.length > 1 ? ` 외 ${failed.length - 1}개` : ""}`
-              : passed > 0
-                ? `입력값으로 비교한 조건 ${passed}개 충족`
-                : "입력값으로 비교할 조건 없음 · 공식 안내 확인 필요")}
+              : cardBrief(policy)}
           </p>
           {!!pending?.checks && (
             <p className="card-brief card-checks">이와 별도로 기관 확인 사항 {pending.checks}개는 공식 안내에서 확인하세요.</p>

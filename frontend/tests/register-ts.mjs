@@ -16,6 +16,8 @@ registerHooks({
   },
   load(url, context, nextLoad) {
     if (url.endsWith(".css")) return { format: "module", source: "export {}", shortCircuit: true }
+    // 이미지 import는 Vite처럼 파일 경로 문자열로 바꾼다.
+    if (/\.(png|jpe?g|webp|svg|gif)$/.test(url)) return { format: "module", source: `export default ${JSON.stringify(url)}`, shortCircuit: true }
     if (/\.tsx?$/.test(url)) {
       return {
         format: "module", shortCircuit: true,

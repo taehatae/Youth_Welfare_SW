@@ -182,3 +182,13 @@ def test_fingerprints_normalize_numbers_but_preserve_meaning_and_contain_no_inpu
     assert create_context(service, record) == original
     record.paths[0].conditions[0].kind = "exclusion"
     assert create_context(service, record) != original
+
+
+def test_calculation_fingerprint_ignores_line_endings(tmp_path):
+    from app.services.eligibility_snapshot_context import code_hash
+    lf, crlf = tmp_path / "lf.py", tmp_path / "crlf.py"
+    lf.write_bytes(b"a = 1\nb = 2\n")
+    crlf.write_bytes(b"a = 1\r\nb = 2\r\n")
+    assert code_hash(lf) == code_hash(crlf)
+    lf.write_bytes(b"a = 1\nb = 3\n")
+    assert code_hash(lf) != code_hash(crlf)

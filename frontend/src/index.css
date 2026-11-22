@@ -1,22 +1,23 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 @import 'tailwindcss';
+@import './styles/theme.css';
 
 @theme inline {
-  --color-background: #FFFFFF;
-  --color-foreground: #0A0F1E;
+  --color-background: #F4F8FB;
+  --color-foreground: #1F2A37;
   --color-card: #FFFFFF;
-  --color-card-foreground: #0A0F1E;
-  --color-primary: #1D4ED8;
+  --color-card-foreground: #1F2A37;
+  --color-primary: #3D7BE0;
   --color-primary-foreground: #FFFFFF;
-  --color-secondary: #DCFCE7;
-  --color-secondary-foreground: #14532D;
-  --color-muted: #F1F5F9;
-  --color-muted-foreground: #64748B;
-  --color-accent: #16A34A;
+  --color-secondary: #D3F2E6;
+  --color-secondary-foreground: #17795A;
+  --color-muted: #F4F8FB;
+  --color-muted-foreground: #475569;
+  --color-accent: #3D7BE0;
   --color-accent-foreground: #FFFFFF;
-  --color-border: #E2E8F0;
-  --color-ring: #2563EB;
-  --radius: 10px;
+  --color-border: #E3EBF2;
+  --color-ring: #3D7BE0;
+  --radius: 14px;
   --font-display: 'Pretendard', sans-serif;
 }
 
@@ -25,13 +26,16 @@
 }
 
 html {
+  font-size: 100%;
   scroll-behavior: smooth;
 }
 
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #FFFFFF;
-  color: #0A0F1E;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -47,8 +51,8 @@ body {
 
 /* Selection */
 ::selection {
-  background: #DBEAFE;
-  color: #1D4ED8;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 /* Utility: marquee animation */
@@ -66,3 +70,8 @@ body {
 }
 .animate-float { animation: float-up 3s ease-in-out infinite; }
 .animate-float-delay { animation: float-up 3s ease-in-out 1.5s infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-marquee, .animate-float, .animate-float-delay { animation: none; }
+}
