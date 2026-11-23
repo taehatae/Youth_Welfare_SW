@@ -65,3 +65,7 @@
 .quick-widget-header .quick-avatar, [class*="quick-widget-head"] .quick-avatar { width: 40px; height: 40px; border-radius: 50%; }
 
 .quick-widget-fab img { position: absolute; left: 0; right: 0; bottom: 1px; margin: auto; width: 68px; height: auto; pointer-events: none; }
+
+/* 미입력 조건 표시(큰 화면 카드와 같은 의미) */
+.quick-mini-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-mini-pill[data-category="pending"] { background: var(--review, #FFF0CC); color: var(--review-ink, #8F6100); border: 1px solid #8f610040; }

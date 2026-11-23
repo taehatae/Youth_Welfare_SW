@@ -271,10 +271,17 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
       {unverified > 0 && <p className="analysis-unverified">신청 가능 중 {unverified}건은 비교할 수 있는 조건이 없어 ‘비교 조건 없음’으로 표시했어요.</p>}
       {shown.length ? widget ? <ul className="quick-mini-list">
         {shown.map((policy) => { const cat = resultCategoryOf(policy)
+          // 큰 화면 카드(temporary)와 같게, 입력하지 않은 조건이 남은 '신청 가능'은 따로 표시한다.
+          const pending = pendingConditionsOf(policy)
           return <li key={policy.id}><a className="quick-mini" href={"#detail/" + encodeURIComponent(policy.id)}>
-            <span className="quick-mini-pill" data-category={cat}>{resultCategoryLabels[cat]}</span>
+            <span className="quick-mini-tags">
+              <span className="quick-mini-pill" data-category={cat}>{resultCategoryLabels[cat]}</span>
+              {!!pending?.count && <span className="quick-mini-pill" data-category="pending">미입력 조건 {pending.count}개</span>}
+            </span>
             <strong>{policy.title}</strong>
-            <span className="quick-mini-brief">{cardBrief(policy)}</span>
+            <span className="quick-mini-brief">{pending?.count
+              ? `입력한 조건은 충족했지만, 입력하지 않은 조건 확인이 필요해요: ${pending.fields.join(", ")}`
+              : cardBrief(policy)}</span>
           </a></li> })}
       </ul> : <div className="reverse-list quick-list">
         {shown.map((policy, index) => <AnalysisPolicyCard key={policy.id} policy={policy} index={index} temporary />)}

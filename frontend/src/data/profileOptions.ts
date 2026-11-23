@@ -231,7 +231,7 @@ export function stepError(d: ProfileDraft, step: number): string {
     (!numberOptions(0, 99).some(([v]) => v === d.incomeMajor) ||
       !numberOptions(0, 99).some(([v]) => v === d.incomeMinor))
   )
-    return "월 소득의 백만원 단위와 나머지 만원 단위를 모두 선택해주세요."
+    return "월 소득을 만원 단위 숫자로 입력해주세요(예: 215)."
 
   if (step === 2 && d.incomeType === "NONE" && incomeWon(d) !== 0)
     return "소득 없음은 월 소득이 0원일 때 선택할 수 있어요."
