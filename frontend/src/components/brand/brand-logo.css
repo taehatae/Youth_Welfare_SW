@@ -1,10 +1,5 @@
 .brand-logo { display: inline-flex; align-items: center; gap: 4px; }
-.brand-logo-mascot { display: block; flex-shrink: 0; object-fit: contain; transform-origin: 50% 90%; transition: transform .25s ease; }
-/* 로고에 마우스를 올리면 마스코트가 살짝 인사하듯 기울어진다 */
-@media (hover: hover) and (pointer: fine) {
-  a:hover > .brand-logo .brand-logo-mascot, button:hover > .brand-logo .brand-logo-mascot, .brand-logo:hover .brand-logo-mascot { transform: rotate(-10deg) translateY(-2px); }
-}
-@media (prefers-reduced-motion: reduce) { .brand-logo-mascot { transition: none; } }
+.brand-logo-mascot { display: block; flex-shrink: 0; object-fit: contain; }
 /* 좁은 화면: 메뉴 버튼이 밀려나지 않게 로고와 마스코트를 줄인다 */
 @media (max-width: 420px) {
   .brand-logo { gap: 2px; }

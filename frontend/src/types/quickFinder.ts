@@ -19,6 +19,14 @@ export interface QuickCategoryDetail extends QuickCategory {
 // 입력하지 않은 항목은 보내지 않는다(서버도 기본값을 채우지 않는다).
 export type QuickAnswers = { age: number } & Record<string, string | number | string[]>
 
+// 문장 해석 결과. 알아듣지 못하면 category가 null이다.
+export interface QuickInterpretResponse {
+  category: string | null
+  category_label: string | null
+  keywords: string[]
+  source: "llm" | "dictionary" | "none"
+}
+
 export interface QuickEvaluateResponse {
   category: string
   category_label: string

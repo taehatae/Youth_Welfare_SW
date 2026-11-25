@@ -1,5 +1,5 @@
 import type { CatalogResponse, CatalogDetail } from "../types/policyCatalog"
-import type { QuickAnswers, QuickCategory, QuickCategoryDetail, QuickEvaluateResponse } from "../types/quickFinder"
+import type { QuickAnswers, QuickCategory, QuickCategoryDetail, QuickEvaluateResponse, QuickInterpretResponse } from "../types/quickFinder"
 import type { UserProfileInput, MatchedPolicy, ConditionGuideTarget, PrivateConditionGuides } from "../types/welfareApi"
 import { isSnapshot, type Snapshot } from "./analysisSession"
 import { restoreSavedPolicies, type SavedPolicy, type TrackingStatus } from "./policyResults"
@@ -123,6 +123,9 @@ export const viewConditionGuides = (target: ConditionGuideTarget) =>
 // 간편 정책 찾기: 로그인 없이 쓰는 공개 API. 서버는 입력값과 결과를 저장하지 않는다.
 export const loadQuickCategories = () => request<{ categories: QuickCategory[] }>("/quick-finder/categories")
 export const loadQuickCategory = (id: string) => request<QuickCategoryDetail>("/quick-finder/categories/" + encodeURIComponent(id))
+// 사용자가 쓴 문장을 분야로 바꾼다(예: "자취 관련 정책 없어?" → 주거). 문장은 저장하지 않는다.
+export const interpretQuick = (text: string) =>
+  request<QuickInterpretResponse>("/quick-finder/interpret", { method: "POST", cache: "no-store", body: JSON.stringify({ text }) })
 export const evaluateQuick = (category: string, answers: QuickAnswers) =>
   request<QuickEvaluateResponse>("/quick-finder/evaluate", { method: "POST", cache: "no-store", body: JSON.stringify({ category, answers }) })
 

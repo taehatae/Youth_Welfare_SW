@@ -59,11 +59,12 @@ test("임시 결과 카드는 관심 저장과 추천 기준 바꾸기를 보여
   assert.match(renderToStaticMarkup(h(AnalysisPolicyCard, { policy, saved: false, toggle() {} })), /관심 저장/)
 })
 
-test("간편 정책 찾기 첫 화면은 버튼형 안내만 있고 자유 입력창이 없다", () => {
+test("간편 정책 찾기 첫 화면은 분야 버튼과 문장 입력칸(200자)을 함께 보여 준다", () => {
   const html = renderToStaticMarkup(h(QuickFinderPage, { onDiagnosis() {} }))
   assert.match(html, /어떤 분야의 정책을 찾고 있나요/)
-  assert.match(html, /자유 문장 입력이나 AI 답변은 없어요/)
-  assert.doesNotMatch(html, /<textarea|type="text"/)
+  assert.match(html, /문장은 분야를 고르는 데만 쓰고 저장하지 않아요/)
+  assert.match(html, /type="text"[^>]*maxLength="200"|maxLength="200"[^>]*type="text"/i)
+  assert.doesNotMatch(html, /<textarea/)
 })
 
 // ---- 미입력 조건이 남은 '신청 가능' 표시(간편 찾기 전용) ----

@@ -1,5 +1,6 @@
 import { categoryLabel, type CatalogPolicy } from "../../types/policyCatalog"
-import { styleOf, supportTypeOf } from "../../features/policies/categoryStyle"
+import { CATEGORY_TONE, supportTypeOf } from "../../features/policies/categoryStyle"
+import CategoryIcon from "./CategoryIcon"
 import {
   resultCategoryLabels,
   type ResultCategory,
@@ -19,8 +20,8 @@ export default function PolicyCard({
   /** 내 진단 결과가 있을 때만 */
   status?: ResultCategory
 }) {
-  const style = styleOf(policy.categories)
-  const first = policy.categories[0]
+  const first = policy.categories.find((c) => c in CATEGORY_TONE) ?? policy.categories[0]
+  const tone = (first && CATEGORY_TONE[first]) || "gray"
   const support = supportTypeOf(policy.support_type)
   return (
     <a
@@ -30,12 +31,8 @@ export default function PolicyCard({
       href={"#detail/" + encodeURIComponent(policy.id)}
       aria-label={policy.title + " 상세 보기"}
     >
-      <span
-        className="catalog-row-icon"
-        style={{ background: style.bg, color: style.ink }}
-        aria-hidden="true"
-      >
-        {support.glyph || style.word.slice(0, 1)}
+      <span className="catalog-row-icon" data-tone={tone} aria-hidden="true">
+        <CategoryIcon id={first ?? "other"} size={26} />
       </span>
       <span className="catalog-row-body">
         <h3>{policy.title}</h3>
@@ -43,16 +40,16 @@ export default function PolicyCard({
           {shortLine(policy.summary) || policy.support_type || "지원 내용 확인 필요"}
         </span>
         <span className="catalog-row-meta">
-          {first && <span>{categoryLabel(first)}</span>}
-          <span>{policy.department || "제공 기관 확인 필요"}</span>
+          {first && <span className="catalog-row-pill" data-tone={tone}>{categoryLabel(first)}</span>}
           <span className="catalog-row-pill">{support.label}</span>
+          <span className="catalog-row-dept">{policy.department || "제공 기관 확인 필요"}</span>
         </span>
       </span>
       <span className="catalog-row-end">
         {status && (
           <em data-result={status}>{resultCategoryLabels[status]}</em>
         )}
-        <i aria-hidden="true">›</i>
+        <i aria-hidden="true">→</i>
       </span>
     </a>
   )

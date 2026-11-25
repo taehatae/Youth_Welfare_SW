@@ -18,7 +18,7 @@
 
 .quick-widget-body { padding: 16px 14px 24px; }
 .quick-widget-body .quick-chat { max-width: none; margin-top: 0; gap: 12px; }
-.quick-widget-body .quick-options, .quick-widget-body .quick-card { margin-left: 0; }
+.quick-widget-body .quick-options, .quick-widget-body .quick-card, .quick-widget-body .quick-ask { margin-left: 0; }
 .quick-widget-body .quick-options { grid-template-columns: 1fr 1fr; }
 .quick-widget-body .quick-card { padding: 16px; }
 .quick-widget-body .quick-avatar { width: 32px; height: 32px; border-radius: 10px; }
@@ -61,7 +61,7 @@
 
 /* 대화창 안 프로필도 크게(헤더는 조금 작게) */
 .quick-widget-body .quick-avatar { width: 42px; height: 42px; border-radius: 50%; }
-.quick-widget-body .quick-options, .quick-widget-body .quick-card { margin-left: 0; }
+.quick-widget-body .quick-options, .quick-widget-body .quick-card, .quick-widget-body .quick-ask { margin-left: 0; }
 .quick-widget-header .quick-avatar, [class*="quick-widget-head"] .quick-avatar { width: 40px; height: 40px; border-radius: 50%; }
 
 .quick-widget-fab img { position: absolute; left: 0; right: 0; bottom: 1px; margin: auto; width: 68px; height: auto; pointer-events: none; }

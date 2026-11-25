@@ -85,9 +85,9 @@ flowchart LR
 - **같은 판정 엔진 사용**: 새 판정 규칙을 만들지 않고 자격 진단과 같은 엔진(`EligibilityMatchingService`)으로 평가한 뒤 분야로만 걸러 냅니다.
 - **건너뛴 질문은 추정하지 않음**: 답하지 않은 항목에 기본값을 채우지 않고 그 조건은 비교하지 않습니다. 답한 조건을 충족해 "신청 가능"이 나온 정책이라도 입력하지 않은 조건이 남아 있으면 **"미입력 조건 n개"** 표시와 함께 확인할 항목을 알려 주고, 목록에서 뒤쪽에 둡니다.
 - **저장하지 않음**: 계정·프로필·진단 기록을 만들지 않습니다. 입력값과 결과는 화면 메모리에만 있고, 응답에서도 입력값과 정확한 난이도 점수를 가립니다.
-- **현재는 LLM 없이 동작**: 자유 문장 입력이나 AI 답변은 없으며, 미리 정한 질문과 버튼으로만 진행합니다.
+- **문장으로 분야 찾기**: "자취 관련 정책 없어?"처럼 문장을 적으면 로컬 LLM(Ollama)이 분야(주거)와 관련어(월세·무주택 등)를 고르고, 사용자가 확인하면 그 분야 질문을 시작합니다. LLM이 꺼져 있으면 단어 사전으로 대신합니다. LLM은 분야만 고르고 판정은 하지 않으며, 문장은 저장하지 않습니다.
 
-관련 코드: [quick_finder_service.py](backend/app/services/quick_finder_service.py) · [QuickFinderPage.tsx](frontend/src/features/quick/QuickFinderPage.tsx) · [QuickChatWidget.tsx](frontend/src/features/quick/QuickChatWidget.tsx)
+관련 코드: [quick_finder_service.py](backend/app/services/quick_finder_service.py) · [quick_intent_service.py](backend/app/services/quick_intent_service.py) · [QuickFinderPage.tsx](frontend/src/features/quick/QuickFinderPage.tsx) · [QuickChatWidget.tsx](frontend/src/features/quick/QuickChatWidget.tsx)
 
 ### 3. 자격 진단
 

@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     llm_concurrency: int = 4
     llm_judgments_path: str = "./data/llm_judgments.json"
+    # 간편 찾기 문장 해석: 로컬 Ollama가 없거나 느리면 단어 사전으로 대신한다.
+    use_llm_intent: bool = True
+    intent_model: str = "gemma3:4b-it-q8_0"
+    intent_timeout_seconds: float = 12.0
 
     # 검수를 마친 구조화 조건(data/structured_conditions.json)으로 입력값과 정책 자격을 비교한다.
     use_structured_conditions: bool = False

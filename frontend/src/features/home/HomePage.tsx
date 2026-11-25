@@ -3,6 +3,8 @@ import { useEffect, useRef, useState, type FormEvent } from "react"
 import CountUp from "../../components/motion/CountUp"
 import { BrandLogo } from "../../components/brand/BrandLogo"
 import Mascot from "../../components/brand/Mascot"
+import CategoryIcon from "../../components/policy/CategoryIcon"
+import { CATEGORY_TONE as TONES } from "../policies/categoryStyle"
 import {
   cardBrief,
   metCountOf,
@@ -24,17 +26,6 @@ import "./home.css"
 /** 라이선스 사진이 생기면 경로를 넣는다. null이면 타이포그래피 히어로로 보인다. */
 const HERO_IMAGE: string | null = null
 
-const TONES: Record<string, string> = {
-  housing: "blue",
-  employment: "mint",
-  finance: "butter",
-  education: "lav",
-  health: "pink",
-  living: "mint",
-  culture: "butter",
-  safety: "lav",
-  other: "gray",
-}
 
 const STEPS = [
   "나이·지역·소득 등 기본 정보를 입력해요",
@@ -238,7 +229,6 @@ export default function HomePage({
                   <span className="hc-row"><u className="hc-l3" /><s>불가</s></span>
                 </span>
               </div>
-              <div className="hc hc-chat"><span className="hc-in">궁금한 정책, 여기서 물어보세요!</span></div>
             </div>
           )}
           <Mascot pose="wave" size={200} eager className="home-m-hero" delay={0.4} />
@@ -301,9 +291,9 @@ export default function HomePage({
                 ))
               ) : (
                 <>
-                  {total ? <div className="home-stat"><dd><CountUp value={total} /><small>개</small></dd><dt>살펴볼 수 있는 정책</dt></div> : null}
-                  {categoryCount ? <div className="home-stat"><dd><CountUp value={categoryCount} /><small>개</small></dd><dt>정책 분야</dt></div> : null}
-                  {supportKinds ? <div className="home-stat"><dd><CountUp value={supportKinds} /><small>가지</small></dd><dt>지원 형태</dt></div> : null}
+                  {total ? <div className="home-stat" data-tone="blue"><dt>살펴볼 수 있는 정책<i aria-hidden="true"><CategoryIcon id="all" size={26} /></i></dt><dd><CountUp value={total} /><small>개</small><span className="home-stat-cap">공공 API에서 모은 복지 정책</span></dd></div> : null}
+                  {categoryCount ? <div className="home-stat" data-tone="mint"><dt>정책 분야<i aria-hidden="true"><CategoryIcon id="other" size={26} /></i></dt><dd><CountUp value={categoryCount} /><small>개</small><span className="home-stat-cap">주거·취업·금융 등</span></dd></div> : null}
+                  {supportKinds ? <div className="home-stat" data-tone="butter"><dt>지원 형태<i aria-hidden="true"><CategoryIcon id="finance" size={26} /></i></dt><dd><CountUp value={supportKinds} /><small>가지</small><span className="home-stat-cap">현금·서비스·융자 등</span></dd></div> : null}
                 </>
               )}
             </dl>
@@ -329,22 +319,24 @@ export default function HomePage({
                 if (state === "ready" && !count) return null
                 return (
                   <li key={id} data-reveal="repeat" data-reveal-style="pop">
-                    <a className="home-tile" href={explorerHref({ category: id })}>
-                      <i className={`tone-${TONES[id] ?? "gray"}`} aria-hidden="true">{label[0]}</i>
-                      <span>
-                        <b>{label}</b>
-                        {state === "ready" && <small><CountUp value={count ?? 0} />개</small>}
+                    <a className={`home-tile tile-${TONES[id] ?? "gray"}`} href={explorerHref({ category: id })}>
+                      <i aria-hidden="true"><CategoryIcon id={id} /></i>
+                      <b>{label}</b>
+                      <span className="home-tile-foot">
+                        {state === "ready" && <small><CountUp value={count ?? 0} />개 정책</small>}
+                        <em aria-hidden="true">→</em>
                       </span>
                     </a>
                   </li>
                 )
               })}
               <li data-reveal="repeat" data-reveal-style="pop">
-                <a className="home-tile" href={explorerHref({})}>
-                  <i className="tone-gray" aria-hidden="true">+</i>
-                  <span>
-                    <b>전체 보기</b>
-                    {total ? <small><CountUp value={total} />개</small> : null}
+                <a className="home-tile home-tile-all" href={explorerHref({})}>
+                  <i aria-hidden="true"><CategoryIcon id="all" /></i>
+                  <b>전체 보기</b>
+                  <span className="home-tile-foot">
+                    {total ? <small><CountUp value={total} />개 정책</small> : null}
+                    <em aria-hidden="true">→</em>
                   </span>
                 </a>
               </li>
@@ -477,14 +469,28 @@ export default function HomePage({
 
       <section className="home-wrap home-block" aria-labelledby="home-quick">
         <div className="home-quick" data-reveal="repeat">
-          <Mascot pose="chat" size={140} className="home-m-chat" delay={0.3} />
-          <div>
-            <h2 id="home-quick">로그인 없이 버튼으로 빠르게</h2>
-            <p>관심 분야를 고르고 몇 가지만 답하면 돼요. 입력값과 결과는 저장하지 않아요.</p>
+          <div className="home-quick-copy">
+            <span className="home-quick-tag">챗봇 간편 찾기 · 로그인 없이</span>
+            <h2 id="home-quick">챗봇에게 물어보고<br />빠르게 신청하세요</h2>
+            <p>관심 분야를 고르고 버튼으로 몇 가지만 답하면, 받을 수 있는 정책을 바로 보여줘요. 정책을 누르면 신청 방법까지 이어져요.</p>
+            <ol className="home-quick-steps">
+              <li><b>1</b>분야 고르기</li>
+              <li><b>2</b>버튼으로 답하기</li>
+              <li><b>3</b>정책 보고 신청하기</li>
+            </ol>
+            <button type="button" className="home-quick-cta" onClick={openChat}>
+              챗봇으로 빠르게 찾기 <span aria-hidden="true">→</span>
+            </button>
+            <p className="home-quick-note">입력한 답과 결과는 저장하지 않아요.</p>
           </div>
-          <button type="button" className="home-btn" onClick={openChat}>
-            간편 정책 찾기 <span aria-hidden="true">→</span>
-          </button>
+          <div className="home-quick-chat" aria-hidden="true">
+            <span className="home-quick-demo">예시 대화</span>
+            <div className="hq-row hq-bot"><Mascot pose="chat" size={48} float={false} className="hq-avatar" /><span className="hq-bubble">어떤 분야의 정책이 궁금하세요?</span></div>
+            <div className="hq-chips"><span>주거</span><span>취업·일자리</span><span>금융·자산</span></div>
+            <div className="hq-row hq-user"><span className="hq-bubble">주거</span></div>
+            <div className="hq-row hq-bot"><Mascot pose="chat" size={48} float={false} className="hq-avatar" /><span className="hq-bubble">답해주신 조건으로 신청할 수 있는 주거 정책을 찾았어요!</span></div>
+            <div className="hq-result"><em>신청 가능</em><b>청년 월세 지원</b><span>자세히 보고 신청하기 →</span></div>
+          </div>
         </div>
       </section>
 

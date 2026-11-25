@@ -59,3 +59,14 @@
 .quick-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
 .quick-options, .quick-card { margin-left: 58px; }
 @media (max-width: 600px) { .quick-avatar { width: 40px; height: 40px; } .quick-options, .quick-card { margin-left: 0; } }
+
+/* 문장으로 묻기: 입력칸 + 보내기, 해석 뒤 분야 확인 버튼 */
+.quick-ask { display: flex; gap: 8px; margin: 4px 0 0 46px; padding: 6px 6px 6px 16px; border: 2px solid var(--accent); border-radius: 999px; background: #fff; box-shadow: 0 6px 18px #3d7be026; }
+.quick-ask:focus-within { border-color: var(--accent-ink); box-shadow: 0 0 0 4px #3d7be02e; }
+.quick-ask input { flex: 1; min-width: 0; border: 0; background: none; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink); outline: 0; }
+.quick-ask input::placeholder { color: #64748b; font-weight: 500; }
+.quick-ask button { flex: none; min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 800; }
+.quick-ask button:disabled { opacity: .45; cursor: not-allowed; }
+.quick-intent-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.quick-intent-yes { padding: 11px 18px; border: 0; border-radius: 999px; background: var(--accent); color: #fff; font-size: 14px; font-weight: 800; }
+.quick-intent-yes:hover:not(:disabled) { background: var(--accent-ink); }
