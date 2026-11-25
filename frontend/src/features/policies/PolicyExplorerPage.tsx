@@ -5,7 +5,8 @@ import PolicyCard from "../../components/policy/PolicyCard"
 
 import { resultCategoryOf } from "../../components/policy/AnalysisPolicyCard"
 
-import { deadlineOf } from "./categoryStyle"
+import { CATEGORY_TONE, deadlineOf } from "./categoryStyle"
+import CategoryIcon from "../../components/policy/CategoryIcon"
 
 import { loadPolicyCatalog } from "../../services/welfareApi"
 
@@ -33,6 +34,17 @@ function filters() {
     query: (params.get("q") ?? "").slice(0, 100),
     page: Number.isSafeInteger(page) && page > 0 ? page : 1,
   }
+}
+
+// 페이지 번호: 처음·끝과 현재 앞뒤 1쪽을 보이고, 나머지는 …(null)로 줄인다.
+function pageNumbers(current: number, total: number): (number | null)[] {
+  const keep = new Set([1, total, current - 1, current, current + 1])
+  const out: (number | null)[] = []
+  for (let n = 1; n <= total; n++) {
+    if (keep.has(n)) out.push(n)
+    else if (out[out.length - 1] !== null) out.push(null)
+  }
+  return out
 }
 
 export default function PolicyExplorerPage({
@@ -147,90 +159,81 @@ export default function PolicyExplorerPage({
 
   return (
     <section className="catalog-page">
-      <div className="catalog-top" data-reveal>
-        <h1 ref={heading} tabIndex={-1} className="catalog-title">
-          <label className="catalog-select">
-            <span className="sr-only">정책 분야</span>
-            <select
-              value={filter.category}
-              onChange={(event) => navigate({ category: event.target.value, page: 1 })}
+      <div className="catalog-hero" data-reveal>
+        <div className="catalog-top">
+          <h1 ref={heading} tabIndex={-1} className="catalog-title">
+            {filter.category === "all" ? "정책 찾기" : categoryLabel(filter.category) + " 정책"}
+            {data && <span className="catalog-total">{data.total}개</span>}
+          </h1>
+          {/* 마감일 데이터가 있을 때만 정렬을 보여 준다 */}
+          {hasDeadline && <div className="catalog-sort" role="group" aria-label="정렬">
+            <button
+              aria-pressed={sort === "default"}
+              onClick={() => setSort("default")}
             >
-              {CATALOG_CATEGORIES.map(([id, label]) => (
-                <option key={id} value={id}>
-                  {id === "all" ? "분야 전체" : label}
-                </option>
-              ))}
-            </select>
+              기본순
+            </button>
+            <button
+              aria-pressed={sort === "deadline"}
+              disabled={!hasDeadline}
+              title={hasDeadline ? undefined : "신청 마감일 정보가 있는 정책에서만 쓸 수 있어요"}
+              onClick={() => setSort("deadline")}
+            >
+              마감임박순
+            </button>
+          </div>}
+        </div>
+        <p className="catalog-lead">분야를 고르거나 검색해서 청년 정책을 찾아보세요.</p>
+        <form
+          className="catalog-search"
+          role="search"
+          onSubmit={(event) => {
+            event.preventDefault()
+            navigate({ query: search.trim(), page: 1 })
+          }}
+        >
+          <label className="sr-only" htmlFor="catalog-search">
+            정책명 또는 지원 내용
           </label>
-          {data && <span className="catalog-total">{data.total}개</span>}
-        </h1>
-        {/* 마감일 데이터가 있을 때만 정렬을 보여 준다 */}
-        {hasDeadline && <div className="catalog-sort" role="group" aria-label="정렬">
-          <button
-            aria-pressed={sort === "default"}
-            onClick={() => setSort("default")}
-          >
-            기본순
-          </button>
-          <button
-            aria-pressed={sort === "deadline"}
-            disabled={!hasDeadline}
-            title={hasDeadline ? undefined : "신청 마감일 정보가 있는 정책에서만 쓸 수 있어요"}
-            onClick={() => setSort("deadline")}
-          >
-            마감임박순
-          </button>
-        </div>}
-        <Mascot pose="search" size={110} className="catalog-m-search" delay={0.3} />
+          <span className="catalog-search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="catalog-search"
+            type="search"
+            maxLength={100}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="정책명 또는 지원 내용으로 검색 (예: 월세, 취업 수당)"
+          />
+          <button type="submit">검색</button>
+        </form>
+        <Mascot pose="search" size={130} className="catalog-m-search" delay={0.3} />
       </div>
-      <form
-        className="catalog-search"
-        data-reveal
-        role="search"
-        onSubmit={(event) => {
-          event.preventDefault()
-          navigate({ query: search.trim(), page: 1 })
-        }}
-      >
-        <label className="sr-only" htmlFor="catalog-search">
-          정책명 또는 지원 내용
-        </label>
-        <input
-          id="catalog-search"
-          type="search"
-          maxLength={100}
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="정책명 또는 지원 내용 검색"
-        />
-        <button className="interface-primary" type="submit">
-          검색
-        </button>
-      </form>
       <nav className="catalog-categories" aria-label="정책 분야">
         {CATALOG_CATEGORIES.map(([id, label]) => (
           <button
             key={id}
             data-reveal
+            data-tone={id === "all" ? "all" : CATEGORY_TONE[id] ?? "gray"}
             aria-pressed={filter.category === id}
             onClick={() => navigate({ category: id, page: 1 })}
           >
-            {label}
+            <i aria-hidden="true"><CategoryIcon id={id} size={22} /></i>
+            <b>{label}</b>
             <span>
               {data?.categories.find((c) => c.id === id)?.count ?? "–"}
             </span>
           </button>
         ))}
-        {myResults && myResults.length > 0 && (
-          <button
-            className="catalog-mine"
-            aria-pressed={mineOnly}
-            onClick={() => setMineOnly((v) => !v)}
-          >
-            내 조건에 맞는 것만
-          </button>
-        )}
       </nav>
+      {myResults && myResults.length > 0 && (
+        <button
+          className="catalog-mine"
+          aria-pressed={mineOnly}
+          onClick={() => setMineOnly((v) => !v)}
+        >
+          {mineOnly ? "✓ " : ""}내 조건에 맞는 것만
+        </button>
+      )}
       <div className="catalog-results-heading" data-reveal>
         <p role="status" aria-live="polite">
           {error
@@ -317,19 +320,38 @@ export default function PolicyExplorerPage({
       {data && data.total > 0 && filter.page <= pages && (
         <nav className="catalog-pagination" aria-label="정책 목록 페이지">
           <button
+            className="catalog-page-step"
             disabled={filter.page <= 1}
             onClick={() => navigate({ page: filter.page - 1 }, true)}
           >
-            ← 이전
+            <span aria-hidden="true">←</span> 이전
           </button>
-          <span aria-live="polite">
-            {filter.page} / {pages}
+          <ol className="catalog-page-numbers">
+            {pageNumbers(filter.page, pages).map((n, i) =>
+              n === null ? (
+                <li key={"gap" + i} className="catalog-page-gap" aria-hidden="true">…</li>
+              ) : (
+                <li key={n}>
+                  <button
+                    aria-current={n === filter.page ? "page" : undefined}
+                    aria-label={`${n}페이지`}
+                    onClick={() => navigate({ page: n }, true)}
+                  >
+                    {n}
+                  </button>
+                </li>
+              ),
+            )}
+          </ol>
+          <span className="sr-only" aria-live="polite">
+            {pages}페이지 중 {filter.page}페이지
           </span>
           <button
+            className="catalog-page-step"
             disabled={filter.page >= pages}
             onClick={() => navigate({ page: filter.page + 1 }, true)}
           >
-            다음 →
+            다음 <span aria-hidden="true">→</span>
           </button>
         </nav>
       )}

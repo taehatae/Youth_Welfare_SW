@@ -5,9 +5,9 @@ import AnalysisPolicyCard, {
   cardBrief, isUnverified, metCountOf, pendingConditionsOf, resultCategoryLabels, resultCategoryOf, resultCategoryOrder, type ResultCategory,
 } from "../../components/policy/AnalysisPolicyCard"
 import { policyResults, type PolicyRow } from "../../services/policyResults"
-import { evaluateQuick, loadQuickCategories, loadQuickCategory } from "../../services/welfareApi"
+import { evaluateQuick, interpretQuick, loadQuickCategories, loadQuickCategory } from "../../services/welfareApi"
 import { REGIONS } from "../../data/regions"
-import type { QuickCategory, QuickCategoryDetail, QuickEvaluateResponse } from "../../types/quickFinder"
+import type { QuickCategory, QuickCategoryDetail, QuickEvaluateResponse, QuickInterpretResponse } from "../../types/quickFinder"
 import {
   AGE_OPTIONS, answerSummary, isAnswered, questionError, questionsFor, toAnswers, visibleInputs,
   type QuickDraft, type QuickInput, type QuickQuestion,
@@ -16,7 +16,7 @@ import Mascot from "../../components/brand/Mascot"
 import "../diagnosis/reverse.css"
 import "./quick.css"
 
-// 버튼으로만 묻고 답하는 간편 정책 찾기. 자유 문장 입력이나 AI 응답은 없다.
+// 버튼으로 묻고 답하는 간편 정책 찾기. 첫 단계에서만 문장을 받아 분야를 고른다(판정은 버튼 답으로 한다).
 // 입력값과 결과는 이 화면의 메모리에만 있고 서버·브라우저 저장소에 남기지 않는다.
 
 function Bot({ children }: { children: ReactNode }) {
@@ -145,6 +145,13 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
   const [evalError, setEvalError] = useState("")
   const [filter, setFilter] = useState<Filter>("all")
   const [skippedAtEval, setSkippedAtEval] = useState(0)
+  // 문장으로 묻기: 보낸 문장은 화면에만 남고 서버에 저장되지 않는다.
+  const [ask, setAsk] = useState("")
+  const [asked, setAsked] = useState("")
+  const [asking, setAsking] = useState(false)
+  const [intent, setIntent] = useState<QuickInterpretResponse | null>(null)
+  const [askError, setAskError] = useState("")
+  const askGeneration = useRef(0)
   const generation = useRef(0)
   const chatTop = useRef<HTMLDivElement>(null)
   const resultTop = useRef<HTMLDivElement>(null)
@@ -157,6 +164,7 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
   useEffect(loadCategories, [])
 
   const chooseCategory = async (id: string) => {
+    clearAsk()
     const version = ++generation.current
     setDetailLoading(true); setLoadError(""); setResult(null); setEvalError(""); setStale(false)
     setProgress(0); setEditing(null); setFilter("all")
@@ -167,6 +175,21 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
       if (version === generation.current) setLoadError(e instanceof Error ? e.message : "분야 정보를 불러오지 못했어요.")
     } finally { if (version === generation.current) setDetailLoading(false) }
   }
+  const submitAsk = async () => {
+    const text = ask.trim()
+    if (!text || asking) return
+    const version = ++askGeneration.current
+    setAsked(text); setAsk(""); setIntent(null); setAskError(""); setAsking(true)
+    try {
+      const found = await interpretQuick(text)
+      if (version === askGeneration.current) setIntent(found)
+    } catch (e) {
+      if (version === askGeneration.current) setAskError(e instanceof Error ? e.message : "문장을 이해하지 못했어요. 위 버튼에서 분야를 골라주세요.")
+    } finally { if (version === askGeneration.current) setAsking(false) }
+  }
+  function clearAsk() { askGeneration.current++; setAsked(""); setIntent(null); setAskError(""); setAsking(false) }
+  // 해석된 분야가 간편 찾기 분야 목록에 있고 정책이 있을 때만 바로 시작할 수 있다.
+  const suggested = intent?.category ? categories?.find((c) => c.id === intent.category && c.policy_count > 0) : undefined
   const resetCategory = () => {
     generation.current++
     setDetail(null); setResult(null); setProgress(0); setEditing(null); setEvalError(""); setStale(false); setEvaluating(false)
@@ -203,8 +226,8 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
       description="관심 분야를 고르고, 그 분야 정책이 실제로 비교하는 조건만 답해 보세요. 로그인 없이 쓸 수 있고 입력값과 결과는 저장하지 않아요." />}
     <div className="quick-chat" ref={chatTop} aria-label="간편 정책 찾기 대화">
       <Bot>
-        <p>안녕하세요. 관심 분야의 정책을 버튼으로 간단히 찾아 드릴게요.</p>
-        <p className="quick-muted">자유 문장 입력이나 AI 답변은 없어요. 모르는 질문은 건너뛰면 그 조건은 ‘확인 필요’로 남아요. 전체 자격 진단을 대신하지는 않아요.</p>
+        <p>안녕하세요. 관심 분야의 정책을 간단히 찾아 드릴게요.</p>
+        <p className="quick-muted">분야 버튼을 누르거나, 찾는 정책을 문장으로 적어 보세요. 문장은 분야를 고르는 데만 쓰고 저장하지 않아요. 모르는 질문은 건너뛰면 그 조건은 ‘확인 필요’로 남아요. 전체 자격 진단을 대신하지는 않아요.</p>
       </Bot>
       <Bot><p>어떤 분야의 정책을 찾고 있나요?</p></Bot>
       {!detail && <div className="quick-options" data-reveal aria-busy={!categories || detailLoading}>
@@ -215,6 +238,27 @@ export default function QuickFinderPage({ onDiagnosis, variant = "page" }: { onD
           onClick={() => void chooseCategory(c.id)}>{c.label} <small>{c.policy_count}개</small></button>)}
         {detailLoading && <p role="status" className="quick-muted">분야의 비교 조건을 확인하고 있어요.</p>}
       </div>}
+      {!detail && <>
+        {asked && <Me>{asked}</Me>}
+        {asking && <Bot><p role="status">무엇을 찾는지 생각하고 있어요…</p></Bot>}
+        {askError && <Bot><p role="alert">{askError}</p></Bot>}
+        {intent && !asking && (suggested
+          ? <Bot>
+              <p><strong>{suggested.label}</strong> 분야 정책을 찾으시는 것 같아요. {suggested.label} 정책 {suggested.policy_count}개 중에서 찾아볼까요?</p>
+              {intent.keywords.length > 0 && <p className="quick-muted">관련된 말: {intent.keywords.join(" · ")}</p>}
+              <div className="quick-intent-actions">
+                <button type="button" className="quick-intent-yes" disabled={detailLoading} onClick={() => void chooseCategory(suggested.id)}>네, {suggested.label} 정책 찾기</button>
+                <button type="button" className="quick-ghost" onClick={clearAsk}>다른 분야 고를게요</button>
+              </div>
+            </Bot>
+          : <Bot><p>말씀하신 내용에 맞는 분야를 찾지 못했어요. 위 버튼에서 분야를 골라 주시거나, 다른 말로 다시 적어 주세요.</p></Bot>)}
+        <form className="quick-ask" onSubmit={(e) => { e.preventDefault(); void submitAsk() }}>
+          <label className="sr-only" htmlFor={widget ? "quick-ask-widget" : "quick-ask-page"}>찾는 정책을 문장으로 적기</label>
+          <input id={widget ? "quick-ask-widget" : "quick-ask-page"} type="text" maxLength={200} value={ask} disabled={asking}
+            onChange={(e) => setAsk(e.target.value)} placeholder="예: 자취 관련 정책 없어?" autoComplete="off" />
+          <button type="submit" disabled={asking || !ask.trim()}>보내기</button>
+        </form>
+      </>}
       {detail && <>
         <Me>{detail.label} <button type="button" className="quick-link" onClick={resetCategory}>다른 분야 선택</button></Me>
         <Bot>

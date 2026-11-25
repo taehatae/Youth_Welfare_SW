@@ -13,6 +13,19 @@ export const CATEGORY_STYLE: Record<string, { bg: string; ink: string; word: str
   other: { bg: "#E8EEF4", ink: "#475569", word: "정책" },
 }
 
+// 분야 색 이름(홈 분야 카드·정책 찾기 분야 칩·목록 아이콘이 같은 색을 쓴다)
+export const CATEGORY_TONE: Record<string, string> = {
+  housing: "blue",
+  employment: "mint",
+  finance: "butter",
+  education: "lav",
+  health: "pink",
+  living: "mint",
+  culture: "butter",
+  safety: "lav",
+  other: "gray",
+}
+
 export const styleOf = (categories: string[]) =>
   CATEGORY_STYLE[categories.find((c) => c in CATEGORY_STYLE) ?? "other"]
 

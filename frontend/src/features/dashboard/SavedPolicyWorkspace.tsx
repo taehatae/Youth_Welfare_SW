@@ -23,6 +23,13 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
     try { await updateSaved(item, status, note); setEditing(false); setMessage("계정에 저장했어요.") }
     catch (e) { setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.") }
   }
+  // 카드에서 바로 상태를 옮긴다(메모는 그대로 둔다).
+  const current = item.trackingStatus ?? "interested"
+  const move = async (next: TrackingStatus) => {
+    setError(""); setMessage("")
+    try { await updateSaved(item, next, item.note ?? "") }
+    catch (e) { setError(e instanceof Error ? e.message : "저장하지 못했어요. 다시 시도해주세요.") }
+  }
   return <article className="workspace-saved-card" data-reveal>
     <div className="workspace-saved-top"><span className="workspace-tracking" data-tracking={item.trackingStatus ?? "interested"}>{trackingLabels[item.trackingStatus ?? "interested"]}</span><span className="dashboard-small">{currentProfile ? "현재 진단 프로필" : "이전 진단 프로필"}</span></div>
     <h4>{row.title}</h4>
@@ -31,6 +38,9 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
     <p className="workspace-saved-time">관심 저장 · {formatTime(item.savedAt)}</p>
     {!editing && <>
       <p className={`workspace-note${item.note ? "" : " is-empty"}`}>{item.note || "준비할 일이나 확인할 내용을 메모해보세요."}</p>
+      <div className="workspace-move" role="group" aria-label="관리 상태 바로 바꾸기">
+        {columns.filter(s => s !== current).map(s => <button key={s} type="button" data-tracking={s} disabled={busy} onClick={() => void move(s)}>{moveLabels[s]}<span aria-hidden="true">→</span></button>)}
+      </div>
       <div className="workspace-actions"><button disabled={busy} onClick={() => { setStatus(item.trackingStatus ?? "interested"); setNote(item.note ?? ""); setError(""); setMessage(""); setEditing(true) }}>상태·메모 수정</button>{url && <a href={url} target="_blank" rel="noopener noreferrer">공식 공고 ↗<span className="sr-only"> (새 탭)</span></a>}</div>
     </>}
     {editing && <form className="workspace-editor step-arrive" onSubmit={e => { e.preventDefault(); void save() }}>
@@ -45,6 +55,7 @@ function SavedCard({ item, latest, currentProfile, busy, updateSaved }: {
 }
 
 const columns = ["interested", "preparing", "applied"] as const
+const moveLabels = { interested: "관심 있음으로", preparing: "준비 중으로", applied: "신청 완료로" } as const
 
 export default function SavedPolicyWorkspace({ savedPolicies, current, busy, updateSaved, setPage }: {
   savedPolicies: SavedPolicy[]; current: Snapshot; busy: boolean; updateSaved: UpdateSaved; setPage: (page: Page) => void

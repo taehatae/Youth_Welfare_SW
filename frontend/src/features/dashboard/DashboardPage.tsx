@@ -45,6 +45,18 @@ function Delta({ now, before }: { now: number; before?: number }) {
   return <span className="kpi-delta" data-dir={d > 0 ? "up" : "down"}>{d > 0 ? "↑" : "↓"} {Math.abs(d)} 지난 확인보다</span>
 }
 
+// 내 정보 카드 아이콘(선 그림)
+const ACCOUNT_ICONS = {
+  lock: ["M6 11h12v9H6z", "M8.5 11V8a3.5 3.5 0 0 1 7 0v3", "M12 15v2"],
+  edit: ["M4 20h4L19 9l-4-4L4 16z", "M13.5 6.5l4 4"],
+  result: ["M4 20V10", "M10 20V4", "M16 20v-7", "M3 20h18"],
+} as const
+function AccountIcon({ kind }: { kind: keyof typeof ACCOUNT_ICONS }) {
+  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    {ACCOUNT_ICONS[kind].map(d => <path key={d} d={d} />)}
+  </svg>
+}
+
 export default function DashboardPage({ session, setPage, refresh, busy, error, savedPolicies, updateSaved, onEdit, onViewProfile }: {
   session: AnalysisSession
   setPage: (page: Page) => void
@@ -133,10 +145,35 @@ export default function DashboardPage({ session, setPage, refresh, busy, error, 
       <SavedPolicyWorkspace savedPolicies={savedPolicies} current={current} busy={busy} updateSaved={updateSaved} setPage={setPage} />
 
       <section className="dash-panel workspace-account" id="profile" data-reveal aria-labelledby="workspace-account-title">
-        <div className="dash-panel-head"><h2 id="workspace-account-title">내 정보</h2></div>
-        <p className="dashboard-small">아이디와 비밀번호를 다시 확인한 뒤 저장된 입력 정보를 조회할 수 있어요.</p>
-        <div className="workspace-actions"><button disabled={busy} onClick={onViewProfile}>본인 확인 후 조회 →</button><button disabled={busy} onClick={() => onEdit()}>정보 수정 후 재진단 →</button><button onClick={() => setPage("result")}>진단 결과 보기 →</button></div>
-        {session.diagnosis && <p className="dashboard-small">마지막 진단 <time dateTime={session.diagnosis.checkedAt}>{formatTime(session.diagnosis.checkedAt)}</time> · 진단 당시의 결과는 그대로 보관돼요.</p>}
+        <div className="account-head">
+          <Mascot pose="thumbs" size={92} className="account-mascot" />
+          <div>
+            <h2 id="workspace-account-title">내 정보</h2>
+            <p>진단에 쓴 입력 정보를 확인하거나 고쳐서 다시 진단할 수 있어요.</p>
+            {session.diagnosis && <span className="account-chip">마지막 진단 · <time dateTime={session.diagnosis.checkedAt}>{formatTime(session.diagnosis.checkedAt)}</time></span>}
+          </div>
+        </div>
+        <div className="account-actions">
+          <button className="account-action" data-tone="blue" disabled={busy} onClick={onViewProfile}>
+            <i aria-hidden="true"><AccountIcon kind="lock" /></i>
+            <b>내 입력 정보 보기</b>
+            <small>아이디·비밀번호를 다시 확인한 뒤 보여줘요</small>
+            <em aria-hidden="true">→</em>
+          </button>
+          <button className="account-action" data-tone="mint" disabled={busy} onClick={() => onEdit()}>
+            <i aria-hidden="true"><AccountIcon kind="edit" /></i>
+            <b>정보 수정하고 다시 진단</b>
+            <small>바뀐 소득·주거 상황을 넣고 결과를 새로 받아요</small>
+            <em aria-hidden="true">→</em>
+          </button>
+          <button className="account-action" data-tone="lav" onClick={() => setPage("result")}>
+            <i aria-hidden="true"><AccountIcon kind="result" /></i>
+            <b>진단 결과 보기</b>
+            <small>신청 가능·확인 필요·불가 정책을 다시 봐요</small>
+            <em aria-hidden="true">→</em>
+          </button>
+        </div>
+        <p className="account-note">진단 당시의 결과는 그대로 보관돼요. 다시 진단하면 새 결과가 추가돼요.</p>
       </section>
       <footer className="dashboard-footer"><details><summary>조회 및 기록 안내</summary><p>프로필·진단 결과·관심 정책·관리 상태·메모는 로그인한 계정에 저장돼요. 작성 중인 메모는 저장 버튼을 눌러야 반영되며, 관리 상태는 사용자가 직접 기록한 내용이에요. 신청 일정은 공식 공고에서 확인해주세요.</p></details></footer>
     </div>

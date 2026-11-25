@@ -2,7 +2,7 @@
  "version": 2,
  "batch": "3·4 재검수",
  "status": "draft",
- "note": "황태하 3·4차(Codex 초안) 20개를 장지훈이 다시 검수한다. 내용은 dev 검수본 그대로다. 채점 후 merge_reviewed.py로 합치면 차수(3·4)는 유지된다.",
+ "note": "황태하 3·4차(Codex 초안) 20개를 장우혁이 다시 검수한다. 내용은 dev 검수본 그대로다. 채점 후 merge_reviewed.py로 합치면 차수(3·4)는 유지된다.",
  "policies": [
   {
    "serv_id": "WLF00000025",

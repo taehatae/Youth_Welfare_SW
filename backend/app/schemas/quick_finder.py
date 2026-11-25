@@ -129,3 +129,19 @@ class QuickEvaluateResponse(BaseModel):
     category_label: str
     evaluated_at: str
     matched: MatchedPoliciesResponse
+
+
+class QuickInterpretRequest(BaseModel):
+    """사용자가 쓴 문장. 분야를 고르는 데만 쓰고 저장하지 않는다."""
+    model_config = ConfigDict(extra="forbid")
+
+    text: str = Field(..., min_length=1, max_length=200)
+
+
+class QuickInterpretResponse(BaseModel):
+    # 알아듣지 못하면 null
+    category: str | None
+    category_label: str | None
+    # 정책 목록에서 검색할 짧은 단어
+    keywords: list[str]
+    source: Literal["llm", "dictionary", "none"]
