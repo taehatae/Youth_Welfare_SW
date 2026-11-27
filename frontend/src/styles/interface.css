@@ -1,0 +1,76 @@
+/* 하늘·민트 파스텔: 공통 화면 틀 (토큰은 theme.css) */
+.interface-workspace { min-height: calc(100vh - 108px); background: var(--bg); color: var(--ink); padding-block: 1px 36px; }
+.interface-heading { position: relative; overflow: hidden; padding: 34px 36px; border-radius: 28px; background: var(--hero); }
+.interface-heading::before, .interface-heading::after { content: ""; position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; }
+.interface-heading::before { width: 240px; height: 240px; right: 110px; top: -120px; background: var(--hero-2); }
+.interface-heading::after { width: 130px; height: 130px; right: -30px; bottom: -48px; background: var(--surface); opacity: .55; }
+.interface-heading > * { position: relative; z-index: 1; }
+.interface-heading-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.interface-eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px; background: var(--surface); color: var(--sub); font-size: 13px; font-weight: 600; margin-bottom: 13px; }
+.interface-eyebrow span { color: var(--accent-ink); }
+.interface-heading h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.045em; line-height: 1.2; color: var(--ink); }
+.interface-description { max-width: 680px; font-size: 15px; line-height: 1.7; color: var(--sub); margin-top: 10px; }
+.interface-heading-action { flex-shrink: 0; }
+.interface-heading-content { margin-top: 22px; }
+.interface-primary { display: inline-flex; align-items: center; justify-content: center; gap: 10px; border: 0; border-radius: 999px; background: var(--ink); color: #fff; padding: 13px 22px; font-size: 14px; font-weight: 700; box-shadow: none; transition: background-color .15s; }
+.interface-primary:hover { background: var(--ink-hover); }
+.interface-primary:disabled { opacity: .5; cursor: wait; }
+.interface-workspace button:not(:disabled), .interface-login-button, .interface-login-dialog button { cursor: pointer; }
+.interface-workspace :is(button, a, input, select, textarea, summary):focus-visible, .interface-login-button:focus-visible, .interface-login-dialog :is(button, a, input):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.interface-panel { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); box-shadow: none; }
+.interface-form { border: 1px solid var(--line); border-radius: 26px; box-shadow: none; }
+.interface-form h2 { padding-bottom: 18px; border-bottom: 1px solid var(--line); letter-spacing: -.03em; font-weight: 800; }
+.interface-form :is(select, input:not([type=checkbox]):not([type=radio])) { border: 1px solid var(--line-strong); border-radius: var(--radius-field); background-color: var(--surface); color: var(--ink); transition: border-color .15s, box-shadow .15s; }
+.interface-form :is(select, input:not([type=checkbox]):not([type=radio])):focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.interface-form :is(select, input):focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.interface-form select:disabled { background-color: var(--bg); }
+.interface-form .unit-input input { border: 0; border-radius: 0; box-shadow: none; }
+.interface-form .unit-input input:focus { box-shadow: none; }
+.interface-form fieldset label.flex { border-radius: var(--radius-field); border-color: var(--line); transition: background-color .15s, border-color .15s; }
+.interface-form fieldset label.flex:hover { background: var(--bg); border-color: var(--accent); }
+.interface-steps { padding: 6px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.step-pill { border-radius: 999px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: 600; background: transparent; color: var(--sub); transition: background-color .15s, color .15s; }
+.step-pill[data-state="current"] { background: var(--ink); color: #fff; }
+.step-pill[data-state="done"] { background: var(--accent-soft); color: var(--accent-ink); }
+.step-pill > button { border-radius: 999px; }
+.step-pill[data-state="done"]:hover { background: var(--accent-soft-hover); }
+.interface-profile { background: var(--surface); border-left: 0; }
+.interface-metrics > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); color: var(--ink); }
+.interface-metrics > div:first-child { background: var(--likely); border-color: transparent; color: var(--likely-ink); }
+.interface-metrics > div:nth-child(2) { background: var(--accent-soft); border-color: transparent; }
+.interface-metrics > div:nth-child(3) { background: var(--review); border-color: transparent; color: var(--review-ink); }
+.interface-metrics > div:nth-child(4) { background: var(--bg); }
+.interface-result-block { padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--surface); }
+.interface-result-block > div:first-child h2 { letter-spacing: -.03em; }
+.interface-policy-card { border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: none; }
+.interface-empty { max-width: 700px; padding: 40px 26px; margin: 28px auto 0; border: 0; border-radius: 28px; background: var(--hero); text-align: center; box-shadow: none; }
+.interface-empty-icon { display: grid; place-items: center; margin: 0 auto 20px; width: 58px; height: 58px; border-radius: 50%; background: var(--surface); color: var(--accent-ink); font-size: 26px; }
+.interface-empty h2 { font-size: 24px; font-weight: 800; letter-spacing: -.04em; }
+.interface-empty p { max-width: 470px; margin: 12px auto 22px; color: var(--sub); font-size: 14px; line-height: 1.8; }
+.interface-search { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 999px; box-shadow: none; }
+.interface-login-button { border: 1px solid var(--line); border-radius: 999px; padding: 9px 16px; color: var(--ink); background: var(--surface); font-weight: 700; font-size: 15px; white-space: nowrap; transition: background-color .15s; }
+.interface-login-button:hover { background: var(--hover-bg); }
+.interface-login-dialog { margin: auto; padding: 0; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; border: 0; border-radius: 28px; color: var(--ink); background: var(--surface); box-shadow: 0 8px 30px #1f2a371a; }
+.interface-login-dialog::backdrop { background: #1f2a3766; }
+.interface-login-content { position: relative; padding: 30px; }
+.interface-login-content > img { margin-bottom: 24px; }
+.interface-dialog-close { position: absolute; right: 14px; top: 12px; }
+.interface-dialog-close button { width: 36px; height: 36px; border-radius: 50%; color: var(--sub); font-size: 26px; }
+.interface-login-status { display: inline-block; padding: 6px 12px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-weight: 700; }
+.interface-login-dialog h2 { margin-top: 14px; font-size: 24px; line-height: 1.35; font-weight: 800; letter-spacing: -.045em; }
+.interface-login-dialog p { margin-top: 12px; font-size: 14px; line-height: 1.8; color: var(--sub); }
+.interface-login-note { margin-block: 20px; padding: 14px 16px; border-radius: var(--radius-card); background: var(--likely); color: var(--likely-ink); font-size: 13px; line-height: 1.7; }
+@media (max-width: 1023px) {
+  .interface-workspace { padding-bottom: 100px; }
+  .youth-home { padding-bottom: 80px; }
+}
+@media (max-width: 639px) {
+  .interface-nav-brand .brand-logo > img:first-child { width: 112px; height: 56px; }
+  .interface-login-button { padding-inline: 12px; }
+  .interface-heading { padding: 24px 20px; border-radius: 24px; }
+  .interface-heading-top { flex-direction: column; align-items: stretch; gap: 16px; }
+  .interface-heading-action button { width: 100%; }
+  .interface-result-block { padding: 18px; }
+  .interface-login-content { padding: 26px 22px; }
+  .interface-empty { padding: 30px 20px; }
+}

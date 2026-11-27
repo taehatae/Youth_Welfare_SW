@@ -1,0 +1,1334 @@
+{
+ "batch": 7,
+ "policies": {
+  "WLF00003271": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "생애최초|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "생애최초|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "2자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "2자녀|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "출산-맞벌이|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003272": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "의상자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "의사자유족|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "장제|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005024": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "시설|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "재가|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005031": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005445": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보호종료|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "조기종료|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005446": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "어업인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "어업인|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "어업근로자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "어업근로자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005856": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005858": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006196": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006207": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기관|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006215": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006217": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": false,
+     "note": "대한민국 국적 미보유자임 "
+    },
+    "_common|c1": {
+     "ok": false,
+     "note": "프리랜서 포함 아닌가 ?"
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "출소자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출소자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "위기청소년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "위기청소년|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006225": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "임대주택|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "시설|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006226": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "생계|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "의료|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "주거|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "교육|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모|c0": {
+     "ok": false,
+     "note": "차상위 계층에 해당되며 한부모 가족일 경우인거같음"
+    },
+    "한부모|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "중증장애|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보훈|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보훈|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "3자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "3자녀|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006227": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "생계|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "의료|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보훈|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "보훈|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006235": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "실무경력|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "학력|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "연구|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자격증|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006237": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "1인가구|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "1인가구|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "고립청년|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "조손가구|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006241": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "응급입원|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "초발·외래|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "진단5년|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "정신응급|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006245": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "요양|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "입원|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "임신|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "임신|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "출산|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "중증질환|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성교육|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "여성교육|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "격리|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006246": {
+   "done": true,
+   "missing": "근데 이거 기초생활수급자랑 차상위계층에게 지원하는데 공통조건을 공유하니까 지금 경로가 2개인거 맞지 ?",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006248": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006252": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "중증|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "필요도|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006254": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "전공탐색|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "전공확립|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "전공확립|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006255": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "현역|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "보충역|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대체복무|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006258": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006263": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": false,
+     "note": "이런 조건 안적혀있는거같은데 ??"
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k3": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006264": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "근로자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "근로자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "특고|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "특고|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "1인자영업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "1인자영업|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006265": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "수급|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "중위50|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "중위50|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "소년소녀가정|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006267": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006268": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006271": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006272": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "KCB|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "NICE|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006273": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006274": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "저소득|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "저신용-KCB|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "저신용-KCB|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "저신용-NICE|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "저신용-NICE|c1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006275": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": true,
+     "note": ""
+    },
+    "KCB|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "NICE|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006276": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "자영업자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "창업예정|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006277": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006278": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c3": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006282": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006283": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "재직자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "재직자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "퇴직자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006288": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006290": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006293": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006295": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006296": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006297": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비창업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "창업기업|c0": {
+     "ok": false,
+     "note": "기업이라 약간 애매한거같은데 사장관점에서 보는거라 자영업이 맞는건가 ? 재직중이 맞는거아닌가 ? 어려운듯"
+    },
+    "창업기업|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006305": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006307": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "보호종료|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "조기종료|k0": {
+     "ok": true,
+     "note": "5년간 지원임"
+    }
+   }
+  },
+  "WLF00006315": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기본|k0": {
+     "ok": false,
+     "note": "충족조건 아님 ? 왜 확인조건이노"
+    }
+   }
+  },
+  "WLF00006316": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "2학년이상|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "1학년|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006318": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006319": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "도산|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "도산|k1": {
+     "ok": false,
+     "note": "충족조건 아님 ? 미취업, 아르바이트 등으로 그냥 ㅏㄱ능하게 해도 될거가튼데"
+    },
+    "간이-퇴직|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "간이-퇴직|k1": {
+     "ok": false,
+     "note": "퇴직 근로자 또는 저소득 재직 근로자(최저임금 110% 미만)가 대상인데 미취업, 아리바이트 등으로 충족조건 해도 될거같은데 "
+    },
+    "간이-재직|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "간이-재직|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "간이-재직|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  }
+ },
+ "saved_at": "2026-11-18T02:50:10.163Z"
+}

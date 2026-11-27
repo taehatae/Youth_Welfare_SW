@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+# 정책·자격 경로 데이터가 들어 있는 공유 DB는 올린다(계정 테이블은 비운 상태로)
+!youth_welfare.db
+
+# Test
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/

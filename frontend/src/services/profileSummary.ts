@@ -1,0 +1,279 @@
+import {
+  ASSETS,
+  EMPLOYMENT,
+  GENDER,
+  HOUSING,
+  INCOME,
+  MARRIAGE,
+  NATIONALITY,
+  SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
+  YES_NO,
+  EMPTY_DRAFT,
+  EMPTY_ADDITIONAL_ELIGIBILITY,
+  type ProfileDraft,
+  type AdditionalEligibilityDraft,
+  type Option,
+} from "../data/profileOptions"
+import { REGIONS } from "../data/regions"
+import type { JsonValue, UserProfileInput } from "../types/welfareApi"
+
+const label = (options: Option[], value: unknown) =>
+  options.find(([code]) => code === value)?.[1] ?? "미확인"
+const count = (value: number | null, unit = "명") =>
+  value == null ? "미확인" : `${value}${unit}`
+const extraFields = [
+  ["basicBenefitStatus", "basic_benefit_status", "기초생활급여 수급", "status"],
+  ["basicBenefitTypes", "basic_benefit_types", "급여 종류", "benefits"],
+  ["nearPovertyStatus", "near_poverty_status", "차상위계층", "status"],
+  [
+    "singleParentSupportStatus",
+    "single_parent_support_status",
+    "한부모가족 지원 대상",
+    "status",
+  ],
+  [
+    "householdIncomeRecognitionKnown",
+    "household_income_recognition_known",
+    "소득인정액 확인 여부",
+    "status",
+  ],
+  [
+    "recognizedHouseholdIncomeWon",
+    "recognized_household_income_won",
+    "가구 소득인정액",
+    "money",
+  ],
+  [
+    "householdBasicBenefitStatus",
+    "household_basic_benefit_status",
+    "가구 내 급여 수급자",
+    "status",
+  ],
+  [
+    "childWelfareProtectionExperience",
+    "child_welfare_protection_experience",
+    "보호 경험",
+    "status",
+  ],
+  ["protectionEnded", "protection_ended", "보호 종료", "status"],
+  ["jobSeekRegistration", "job_seek_registration", "구직 등록", "status"],
+] as const
+function manwonLabel(won: JsonValue | undefined) {
+  if (typeof won !== "number") return "미입력"
+  const manwon = Math.round(won / 10000)
+  const eok = Math.floor(manwon / 10000)
+  const rest = manwon % 10000
+  if (!eok) return `${manwon.toLocaleString("ko-KR")}만원`
+  return rest
+    ? `${eok}억 ${rest.toLocaleString("ko-KR")}만원`
+    : `${eok}억원`
+}
+const benefits: Record<string, string> = {
+  LIVELIHOOD: "생계",
+  MEDICAL: "의료",
+  HOUSING: "주거",
+  EDUCATION: "교육",
+  NONE: "해당 없음",
+}
+function extraLabel(value: JsonValue | undefined, kind: string) {
+  if (value == null || value === "") return "미입력"
+  if (kind === "status") return label(YES_NO, value)
+  if (kind === "money")
+    return typeof value === "number"
+      ? `${value.toLocaleString("ko-KR")}원`
+      : "미확인"
+  if (kind === "months") return `${value}개월`
+  if (kind === "benefits")
+    return Array.isArray(value)
+      ? value.map((v) => benefits[String(v)] ?? "미확인").join(", ") || "미입력"
+      : "미확인"
+  return String(value)
+}
+export function profileSummary(profile: UserProfileInput | null) {
+  if (!profile) return []
+  const p = profile.eligibility_conditions ?? {}
+  const extra = p.additional_conditions ?? {}
+  return [
+    {
+      title: "기본 정보",
+      items: [
+        ["나이", `만 ${profile.age}세`],
+        ["성별", label(GENDER, p.gender)],
+        ["국적", label(NATIONALITY, extra.nationality ?? "KOREAN")],
+      ],
+    },
+    { title: "거주 지역", items: [["거주지", profile.region]] },
+    {
+      title: "소득",
+      items: [
+        ["본인 월소득", `${profile.income_level.toLocaleString("ko-KR")}원`],
+        ["소득 종류", label(INCOME, p.income_type)],
+      ],
+    },
+    {
+      title: "가구 · 주거",
+      items: [
+        ["가구원", count(p.household_size)],
+        ["주거 형태", label(HOUSING, p.housing_type)],
+        [
+          "주택 보유",
+          p.owns_home == null ? "미확인" : p.owns_home ? "보유" : "미보유",
+        ],
+        [
+          "가구 총재산",
+          typeof extra.asset_amount_won === "number"
+            ? manwonLabel(extra.asset_amount_won)
+            : p.asset_range
+              ? label(ASSETS, p.asset_range)
+              : "미입력",
+        ],
+        [
+          "본인 명의 재산",
+          typeof extra.personal_asset_amount_won === "number"
+            ? manwonLabel(extra.personal_asset_amount_won)
+            : "미입력",
+        ],
+        [
+          "세대 전원 무주택",
+          extra.household_homeless == null
+            ? "미확인"
+            : label(YES_NO, extra.household_homeless),
+        ],
+        ["가구 월소득", manwonLabel(extra.household_monthly_income_won)],
+        ["가구 부채", manwonLabel(extra.household_debt_won)],
+        ["본인 명의 부채", manwonLabel(extra.personal_debt_won)],
+        ["자동차가액", manwonLabel(extra.car_value_won)],
+      ],
+    },
+    {
+      title: "고용",
+      items: [
+        [
+          "고용 상태",
+          label(
+            EMPLOYMENT,
+            extra.employment_detail ?? profile.employment_status,
+          ),
+        ],
+      ],
+    },
+    {
+      title: "추가 조건",
+      items: [
+        [
+          "해당 대상",
+          Array.isArray(extra.special_targets) && extra.special_targets.length
+            ? extra.special_targets.map((v) => label(SPECIAL_TARGETS, v)).join(", ")
+            : "해당 없음",
+        ],
+        ["재학 여부", label(YES_NO, p.student_status)],
+        ["학교 구분", extra.school_level ? label(SCHOOL_LEVEL, extra.school_level) : "미입력"],
+        ["중증 장애", extra.severe_disability ? label(YES_NO, extra.severe_disability) : "미입력"],
+        ["막내 자녀 나이", typeof extra.youngest_child_age === "number" ? `만 ${extra.youngest_child_age}세` : "미입력"],
+        ["임신 중", extra.pregnancy ? label(YES_NO, extra.pregnancy) : "미입력"],
+        ["배우자 월소득", manwonLabel(extra.spouse_monthly_income_won)],
+        ["혼인 기간", typeof extra.marriage_years === "number" ? `${extra.marriage_years}년` : "미입력"],
+        ["신용점수", typeof extra.credit_score === "number" ? `${extra.credit_score}점 (${extra.credit_bureau ?? "평가사 미확인"})` : "미입력"],
+        ["장애 여부", label(YES_NO, p.disability_status)],
+        ["혼인", label(MARRIAGE, p.marital_status)],
+        ["자녀", count(p.children_count)],
+        ...extraFields.map(([, key, title, kind]) => [
+          title,
+          extraLabel(extra[key], kind),
+        ]),
+      ],
+    },
+  ]
+}
+
+// Open edits from the displayed snapshot, not an unrelated unfinished draft.
+export function profileToDraft(profile: UserProfileInput): ProfileDraft {
+  const p = profile.eligibility_conditions ?? {}
+  const extra = p.additional_conditions ?? {}
+  const region =
+    Object.keys(REGIONS).find(
+      (name) =>
+        profile.region === name || profile.region.startsWith(name + " "),
+    ) ?? ""
+  const additional: AdditionalEligibilityDraft = {
+    ...EMPTY_ADDITIONAL_ELIGIBILITY,
+    basicBenefitTypes: [],
+  }
+  for (const [draftKey, key] of extraFields) {
+    const value = extra[key]
+    if (draftKey === "basicBenefitTypes")
+      additional.basicBenefitTypes = Array.isArray(value)
+        ? value.filter((v): v is string => typeof v === "string")
+        : []
+    else additional[draftKey] = value == null ? "" : String(value)
+  }
+  additional.assetAmountManwon =
+    typeof extra.asset_amount_won === "number"
+      ? String(Math.round(extra.asset_amount_won / 10000))
+      : ""
+  additional.personalAssetManwon =
+    typeof extra.personal_asset_amount_won === "number"
+      ? String(Math.round(extra.personal_asset_amount_won / 10000))
+      : ""
+  const manwonOf = (won: JsonValue | undefined) =>
+    typeof won === "number" ? String(Math.round(won / 10000)) : ""
+  const textOf = (value: JsonValue | undefined) =>
+    typeof value === "string" || typeof value === "number" ? String(value) : ""
+  additional.schoolLevel = textOf(extra.school_level)
+  additional.severeDisability = textOf(extra.severe_disability)
+  additional.youngestChildAge = textOf(extra.youngest_child_age)
+  additional.pregnancy = textOf(extra.pregnancy)
+  additional.spouseMonthlyIncomeManwon = manwonOf(extra.spouse_monthly_income_won)
+  additional.marriageYears = textOf(extra.marriage_years)
+  additional.householdDebtManwon = manwonOf(extra.household_debt_won)
+  additional.personalDebtManwon = manwonOf(extra.personal_debt_won)
+  additional.carValueManwon = manwonOf(extra.car_value_won)
+  additional.creditBureau = textOf(extra.credit_bureau)
+  additional.creditScore = textOf(extra.credit_score)
+  additional.householdMonthlyIncomeManwon =
+    typeof extra.household_monthly_income_won === "number"
+      ? String(Math.round(extra.household_monthly_income_won / 10000))
+      : ""
+  additional.householdHomeless =
+    typeof extra.household_homeless === "string" ? extra.household_homeless : ""
+  return {
+    ...EMPTY_DRAFT,
+    age: String(profile.age),
+    region,
+    district:
+      region === "세종특별자치시"
+        ? region
+        : profile.region.slice(region.length).trim(),
+    incomeMajor: String(Math.floor(profile.income_level / 1_000_000)),
+    incomeMinor: String((profile.income_level % 1_000_000) / 10_000),
+    gender: p.gender ?? "UNKNOWN",
+    incomeType: p.income_type ?? "UNKNOWN",
+    housing: p.housing_type ?? "",
+    ownsHome: p.owns_home == null ? "UNKNOWN" : p.owns_home ? "YES" : "NO",
+    householdSize: p.household_size == null ? "" : String(p.household_size),
+    asset: p.asset_range ?? "",
+    employment:
+      typeof extra.employment_detail === "string"
+        ? extra.employment_detail
+        : profile.employment_status,
+    disability: p.disability_status ?? "UNKNOWN",
+    student: p.student_status ?? "UNKNOWN",
+    maritalStatus: p.marital_status ?? "UNKNOWN",
+    childrenCount: p.children_count == null ? "" : String(p.children_count),
+    nationality:
+      typeof extra.nationality === "string" ? extra.nationality : "KOREAN",
+    specialTargets: Array.isArray(extra.special_targets)
+      ? extra.special_targets.filter((v): v is string => typeof v === "string")
+      : [],
+    additionalEligibility: additional,
+  }
+}
+
+export function conditionStep(field: string): number {
+  if (field === "age") return 0
+  if (field === "region") return 1
+  if (["income_amount", "income_level"].includes(field)) return 2
+  if (["employment", "employment_status"].includes(field)) return 4
+  return 5
+}

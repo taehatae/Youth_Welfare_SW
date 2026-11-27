@@ -1,0 +1,295 @@
+{
+ "batch": "1-2 보완",
+ "policies": {
+  "WLF00001076": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "대학생|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "미취업|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "사회초년생|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "사회초년생|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "개인사업자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "개인사업자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003276": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "대학(원)|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "대학(원)|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "학점은행제|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "학점은행제|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000062": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "1순위-생계|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "1순위-의료|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "1순위-한부모|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반1-장애인|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반1-장애인|c1": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반1-장애인|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반2-소득|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반2-소득|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반2-장애인|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반2-장애인|c1": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반2-장애인|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반3|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "일반3|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "전세형|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "청년1-주거|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "청년1-차상위|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "청년2|k0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "청년2|k1": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "청년3|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "청년3|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-2-한부모|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "신혼Ⅱ-2-한부모|c0": {
+     "ok": true,
+     "note": "",
+     "prior": true
+    },
+    "신혼Ⅰ-1-신생아|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-1-신생아|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-2-유자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-2-유자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-2-한부모|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-3-무자녀·예비|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-4-혼인가구|c0": {
+     "ok": false,
+     "note": "1순위와 2순위에 해당 안돼야함"
+    },
+    "신혼Ⅰ-4-혼인가구|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅰ-4-혼인가구|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-1-신생아|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-1-신생아|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-2-임신·출산|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-2-한부모|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-3-무자녀·예비|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-4-혼인가구|c0": {
+     "ok": false,
+     "note": "1순위ㅘ 2순위에 해당 안해야함"
+    },
+    "신혼Ⅱ-4-혼인가구|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-4-혼인가구|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼Ⅱ-5-혼인가구|c0": {
+     "ok": false,
+     "note": "1,2,3,4순위가 아니여야하는데"
+    },
+    "고령자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "고령자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "다자녀|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  }
+ },
+ "saved_at": "2026-11-05T01:00:29.554Z"
+}

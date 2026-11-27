@@ -1,0 +1,583 @@
+{
+ "batch": 2,
+ "reviewer": "",
+ "policies": {
+  "WLF00000060": {
+   "done": true,
+   "missing": "추가조건으로 ※ 신청 월의 전월에 만 15세가 된 자 ~ 신청 월에 만 40세가 되는 자 적어야함",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003245": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": false,
+     "note": "구직자여야하는게 아니라 저소득 구직자 혹은 청년 혹은 경력단절 여성이잖아 "
+    },
+    "1유형-청년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "1유형-청년|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "1유형-청년|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "1유형-일반|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "1유형-일반|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "1유형-일반|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "2유형-청년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "2유형-일반|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "2유형-일반|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004649": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": false,
+     "note": "이거 그냥 밑에 나열된 기준으로 지급한다는 말임"
+    },
+    "_common|k1": {
+     "ok": false,
+     "note": "이건 뭐 어디적혀있는걸 말하는지 모르겠음"
+    },
+    "대학생-재학|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-재학|c1": {
+     "ok": false,
+     "note": "맞긴한데 입,복학 예정자도 포함이라 이거 어떻게 해야될지 너가 판단해야돼 "
+    },
+    "대학생-재학|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-재학|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-고교졸업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-고교졸업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-고교졸업|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생-고교졸업|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-나이|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-나이|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-나이|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-나이|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-취업초기|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-취업초기|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-취업초기|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "청년-취업초기|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼부부|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼부부|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼부부|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "신혼부부|c3": {
+     "ok": false,
+     "note": "자동차 기준 누락됐음 자동차 3708만원 이하"
+    },
+    "신혼부부|k0": {
+     "ok": true,
+     "note": "이건 한부모 가족 기준임"
+    },
+    "신혼부부|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "예비신혼부부|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비신혼부부|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "예비신혼부부|k1": {
+     "ok": false,
+     "note": "자동차 3708만원 이하 누락"
+    },
+    "한부모가족|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모가족|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모가족|c2": {
+     "ok": false,
+     "note": "맞벌이일수도 있지 이혼하고 남편도 일하고 아내도 일하면서 생활금을 지급하는 형식이면"
+    },
+    "한부모가족|c3": {
+     "ok": false,
+     "note": "자동차 3708만원 이하 누락"
+    },
+    "한부모가족|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모가족|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "주거급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "주거급여|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "주거급여|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "고령자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "고령자|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "고령자|c2": {
+     "ok": false,
+     "note": "이건 하단에 확인 내용이랑 겹침"
+    },
+    "고령자|c3": {
+     "ok": false,
+     "note": "자동차 3708만원 이하 누락"
+    },
+    "고령자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "산업단지|c0": {
+     "ok": false,
+     "note": "이것도 하단 확인내용이랑 겹치잖아"
+    },
+    "산업단지|c1": {
+     "ok": false,
+     "note": "자동차 3708만원 이하 누락"
+    },
+    "산업단지|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "산업단지|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "산업단지|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "창업·지역전략|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "창업·지역전략|c1": {
+     "ok": false,
+     "note": "이건 확인내용으로 위에 한것처럼 맞벌이 2인인지 1인인지 뭔지를 다 추가확인으로 해야지 "
+    },
+    "창업·지역전략|c2": {
+     "ok": false,
+     "note": "맞는데 자동차 또 누락"
+    },
+    "창업·지역전략|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "창업·지역전략|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "중소기업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "중소기업|c1": {
+     "ok": false,
+     "note": "추가확인으로 맞벌이 2인처럼 맞벌이별로 다 다름"
+    },
+    "중소기업|c2": {
+     "ok": false,
+     "note": "맞는데 자동차 3708만원 이하 누락"
+    },
+    "중소기업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "중소기업|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001079": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003277": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "학부|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "학부|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "학부-선취업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "학부-선취업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학원|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학원|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학원|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001076": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학생|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "미취업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "사회초년생|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "사회초년생|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "개인사업자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "개인사업자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001175": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004638": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기초생활수급|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "다자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "다자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "중증장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "중증장애인|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "독립유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "독립유공자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004639": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "기초생활수급|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대가족|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "다자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "다자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "장애인|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "독립유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "독립유공자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001060": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "기본|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|2": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|3": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  }
+ },
+ "saved_at": "2026-11-04T04:42:23.218Z"
+}

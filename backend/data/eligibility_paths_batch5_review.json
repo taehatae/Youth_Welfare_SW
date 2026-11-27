@@ -1,0 +1,950 @@
+{
+ "batch": 5,
+ "policies": {
+  "WLF00001071": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대통령과학|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "대통령과학|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대통령과학|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "대통령과학|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "이공계국가우수|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "이공계국가우수|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학원대통령과학|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "대학원대통령과학|k0": {
+     "ok": false,
+     "note": "재학이랑 입학예정으로 구분 가능할듯"
+    },
+    "대학원대통령과학|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "석사우수|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "석사우수|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "석사우수|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "박사우수|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "박사우수|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "박사우수|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004663": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": false,
+     "note": "안적혀있는 내용 같은데"
+    },
+    "일반-청년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-청년|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-청년|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-신혼|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-신혼|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-신혼|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-예비신혼|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-예비신혼|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-6세이하자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-6세이하자녀|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-고령자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-고령자|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-고령자|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-고령자|c3": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-일반|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반-일반|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-국가유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-국가유공자|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-북한이탈주민|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-북한이탈주민|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-중소기업근로자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-중소기업근로자|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-다자녀|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-다자녀|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-다자녀|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-한부모|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-한부모|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-장애인|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-생계급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-주거급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-의료급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-자립청년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-자립청년|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-자립청년|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-자립청년|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-기타|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우선-기타|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006249": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "월드잡|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "K-Move|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "K-Move|k0": {
+     "ok": false,
+     "note": "어차피 우리가 지원하는 범위가 청년 대상이니까 37세이하라고하고 이 내용만 추가조건으로 넣자"
+    },
+    "K-Move|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "K-Move|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "해외취업알선|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "정착금|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "정착금|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "정착금|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "정착금|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "정착금|k3": {
+     "ok": false,
+     "note": "연봉 1700만원 이상은 매칭 가능하잖아"
+    },
+    "WELL|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "WELL|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "WELL|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "WELL|k0": {
+     "ok": false,
+     "note": "공통조건이랑 겹치는거같은데"
+    },
+    "WELL|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "WELL|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "국내재취업|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "국내재취업|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "국내재취업|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001063": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": false,
+     "note": "이거는 임차 전용면적이라 써있는데 ? 공용 조건 아닌거 아니야 ?"
+    },
+    "우대-취업준비생|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우대-사회초년생|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우대-사회초년생|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "우대-주거급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "우대-장려금|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반형|c0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000095": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": false,
+     "note": "이거 뭔가 어떤식으로 조건매칭할 방법 없나 ? "
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "10인미만근로자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "10인미만근로자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "예술인·노무제공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "예술인·노무제공자|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005567": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기관의뢰|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "의료기관|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "건강검진|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자립준비청년|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "마음건강돌봄|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "재난피해|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004997": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c3": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00001132": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": false,
+     "note": "제외가 아니라 별도의 급여기준에 따라 지급"
+    }
+   }
+  },
+  "WLF00001138": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": null,
+     "note": ""
+    },
+    "조건부수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "조건부수급자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "자활급여특례|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "자활급여특례|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반수급자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "특례수급가구원|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "특례수급가구원|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-소득|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-소득|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-계층|c0": {
+     "ok": false,
+     "note": "위에서 차상위자 이미 했는데"
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    },
+    "자활급여특례|c1": {
+     "ok": false,
+     "note": "이상이 아니라 초과입니다."
+    },
+    "일반수급자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "일반수급자|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "일반수급자|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-소득|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-소득|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위-계층|c1": {
+     "ok": false,
+     "note": ""
+    },
+    "차상위-계층|k0": {
+     "ok": false,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003249": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00005442": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": false,
+     "note": "나이 13세 이상으로 충족, 괄호안에있는 내용만 추가조건으로. 왜냐하면 우린 청년대상 복지니까 13세 이하경우 고려 안해도 괜찮음."
+    },
+    "_common|k4": {
+     "ok": false,
+     "note": "소득 제한없음은 그냥 소득조건 모두충족으로 하면 되잖아."
+    },
+    "_common|k5": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003199": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00000052": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "1학년|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "3학년|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "3학년|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_pref|0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003240": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "기초수급|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "차상위|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "한부모|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "등록장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "등록장애인|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "디지털|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "디지털|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "특성화|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004651": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "개발원|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "공공민간|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004655": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": true,
+     "note": ""
+    },
+    "장애인|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "상이유공자|k0": {
+     "ok": false,
+     "note": "「국가유공자 등 예우 및 지원에 관한 법률 시행령 」 제14조 제3항(‘보훈보상대상자 지원에 관한 법률 시행령’ 제8조에 따라 준용되는 경우를 포함한다)에 따른 상이등급 기준에 해당하는 자"
+    }
+   }
+  },
+  "WLF00006301": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "가족돌봄|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "가족돌봄|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "가족돌봄|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "가족돌봄|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "고립은둔|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "고립은둔|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "고립은둔|k1": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00006236": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00003281": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "_common|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|c1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k1": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k2": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k3": {
+     "ok": true,
+     "note": ""
+    },
+    "_common|k4": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  },
+  "WLF00004637": {
+   "done": true,
+   "missing": "",
+   "items": {
+    "생계급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "의료급여|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "유공자|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "유공자|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "시청각장애|c0": {
+     "ok": true,
+     "note": ""
+    },
+    "시청각장애|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "저전력|k0": {
+     "ok": true,
+     "note": ""
+    },
+    "난시청|k0": {
+     "ok": true,
+     "note": ""
+    }
+   }
+  }
+ },
+ "saved_at": "2026-11-14T13:54:52.808Z"
+}

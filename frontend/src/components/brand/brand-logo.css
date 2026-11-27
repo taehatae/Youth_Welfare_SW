@@ -1,0 +1,8 @@
+.brand-logo { display: inline-flex; align-items: center; gap: 4px; }
+.brand-logo-mascot { display: block; flex-shrink: 0; object-fit: contain; }
+/* 좁은 화면: 메뉴 버튼이 밀려나지 않게 로고와 마스코트를 줄인다 */
+@media (max-width: 420px) {
+  .brand-logo { gap: 2px; }
+  .brand-logo > img:first-child { width: 100px; height: auto; }
+  .brand-logo-mascot { width: 30px; height: 30px; }
+}

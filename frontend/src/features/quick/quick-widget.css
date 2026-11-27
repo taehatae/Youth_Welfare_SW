@@ -1,0 +1,71 @@
+/* 떠 있는 간편 정책 찾기 채팅. 색은 theme.css 토큰만 쓴다. */
+.quick-widget-fab { position: fixed; right: 24px; bottom: 24px; z-index: 60; display: grid; place-items: center; width: 72px; height: 72px; box-sizing: border-box; padding: 0; border: 2px solid var(--line); border-radius: 50%; background: #fff; color: var(--ink); box-shadow: 0 10px 24px -8px rgba(31,42,55,.35); transition: transform .18s ease, background-color .18s ease; }
+.quick-widget-fab:hover { background: #fff; transform: translateY(-3px); }
+.quick-widget-fab:focus-visible, .quick-widget-text-btn:focus-visible, .quick-widget-close:focus-visible, .quick-widget-panel:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.quick-widget-label { position: fixed; right: 24px; bottom: 106px; z-index: 60; box-sizing: border-box; max-width: calc(100vw - 32px); padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fff; color: var(--ink); font-size: 13px; font-weight: 700; line-height: 1.4; box-shadow: var(--soft-shadow); cursor: pointer; animation: quick-widget-bob 2.4s ease-in-out infinite; }
+.quick-widget-label::after { content: ""; position: absolute; right: 22px; bottom: -6px; width: 10px; height: 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fff; transform: rotate(45deg); }
+.quick-widget-panel { position: fixed; right: 24px; bottom: 106px; z-index: 61; display: flex; flex-direction: column; width: 380px; max-width: calc(100vw - 32px); height: min(600px, calc(100vh - 120px)); overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--surface); box-shadow: 0 24px 60px -20px rgba(31,42,55,.35); transform-origin: bottom right; animation: quick-widget-in .2s ease both; }
+.quick-widget-panel[hidden] { display: none; }
+.quick-widget-head { display: flex; flex-shrink: 0; align-items: center; gap: 10px; padding: 14px 14px 14px 16px; border-bottom: 1px solid var(--line); background: #fff; }
+.quick-widget-titles { flex: 1; min-width: 0; }
+.quick-widget-titles h2 { margin: 0; color: var(--ink); font-size: 16px; font-weight: 800; line-height: 1.3; }
+.quick-widget-titles p { margin: 0; color: var(--sub); font-size: 14px; }
+.quick-widget-text-btn { flex-shrink: 0; padding: 6px 10px; border-radius: 999px; color: var(--accent-ink); font-size: 13px; font-weight: 700; }
+.quick-widget-text-btn:hover, .quick-widget-close:hover { background: var(--accent-soft); }
+.quick-widget-close { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; color: var(--ink); font-size: 22px; line-height: 1; }
+.quick-widget-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; background-color: #E8F1FB; background-image: radial-gradient(rgba(15,23,42,.06) 1px, transparent 1px); background-size: 18px 18px; }
+.quick-widget-backdrop { display: none; }
+
+.quick-widget-body { padding: 16px 14px 24px; }
+.quick-widget-body .quick-chat { max-width: none; margin-top: 0; gap: 12px; }
+.quick-widget-body .quick-options, .quick-widget-body .quick-card, .quick-widget-body .quick-ask { margin-left: 0; }
+.quick-widget-body .quick-options { grid-template-columns: 1fr 1fr; }
+.quick-widget-body .quick-card { padding: 16px; }
+.quick-widget-body .quick-avatar { width: 32px; height: 32px; border-radius: 10px; }
+@media (max-width: 360px) { .quick-widget-body .quick-options { grid-template-columns: 1fr; } }
+.quick-widget-body .quick-region { grid-template-columns: 1fr; }
+.quick-widget-body .quick-results { margin-top: 24px; scroll-margin-top: 8px; }
+.quick-widget-body .reverse-section-title h2 { font-size: 18px; }
+.quick-widget-body .analysis-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-widget-body .analysis-filters button { padding: 6px 10px; font-size: 14px; }
+.quick-widget-body .quick-next > * { flex: 1 1 100%; }
+.quick-mini-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.quick-mini { display: grid; gap: 6px; padding: 12px 14px; border: 1.5px solid #C5D5EA; border-radius: 14px; background: #fff; color: var(--ink); text-decoration: none; transition: border-color .15s, background-color .15s; }
+.quick-mini:hover { border-color: var(--accent); background: var(--accent-soft); }
+.quick-mini:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.quick-mini strong { font-size: 15px; font-weight: 700; line-height: 1.4; overflow-wrap: anywhere; }
+.quick-mini-brief { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--sub); font-size: 14px; }
+.quick-mini-pill { justify-self: start; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; }
+.quick-mini-pill[data-category="likely"] { background: var(--likely); color: var(--likely-ink); }
+.quick-mini-pill[data-category="review"] { background: var(--review); color: var(--review-ink); }
+.quick-mini-pill[data-category="gap"] { background: var(--gap); color: var(--gap-ink); }
+
+@keyframes quick-widget-in { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes quick-widget-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+@media (max-width: 1023px) {
+  .quick-widget-fab { bottom: 88px; right: 16px; }
+  .quick-widget-label { bottom: 172px; right: 16px; }
+  .quick-widget-panel { bottom: 168px; right: 16px; height: min(600px, calc(100vh - 192px)); }
+}
+@media (max-width: 760px) {
+  .quick-widget-backdrop { position: fixed; inset: 0; z-index: 70; display: block; background: rgba(31,42,55,.45); animation: quick-widget-fade .2s ease both; }
+  .quick-widget-panel { z-index: 71; right: 0; bottom: 0; left: 0; width: 100%; max-width: none; height: 88vh; border-radius: 24px 24px 0 0; transform-origin: bottom center; animation: quick-widget-sheet .24s ease both; }
+}
+@keyframes quick-widget-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes quick-widget-sheet { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .quick-widget-panel, .quick-widget-label, .quick-widget-backdrop, .quick-widget-fab { animation: none !important; transition: none !important; }
+  .quick-widget-fab:hover { transform: none; }
+}
+
+/* 대화창 안 프로필도 크게(헤더는 조금 작게) */
+.quick-widget-body .quick-avatar { width: 42px; height: 42px; border-radius: 50%; }
+.quick-widget-body .quick-options, .quick-widget-body .quick-card, .quick-widget-body .quick-ask { margin-left: 0; }
+.quick-widget-header .quick-avatar, [class*="quick-widget-head"] .quick-avatar { width: 40px; height: 40px; border-radius: 50%; }
+
+.quick-widget-fab img { position: absolute; left: 0; right: 0; bottom: 1px; margin: auto; width: 68px; height: auto; pointer-events: none; }
+
+/* 미입력 조건 표시(큰 화면 카드와 같은 의미) */
+.quick-mini-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-mini-pill[data-category="pending"] { background: var(--review, #FFF0CC); color: var(--review-ink, #8F6100); border: 1px solid #8f610040; }

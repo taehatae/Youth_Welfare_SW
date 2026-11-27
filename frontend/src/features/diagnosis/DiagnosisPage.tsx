@@ -1,0 +1,1063 @@
+import { profileSummary } from "../../services/profileSummary"
+
+import { useEffect, useRef, useState } from "react"
+
+import type { Page } from "../../types/page"
+
+import type { UserProfileInput } from "../../types/welfareApi"
+
+import { REGIONS } from "../../data/regions"
+
+import Mascot from "../../components/brand/Mascot"
+import "./diagnosis.css"
+
+import {
+  EMPTY_ADDITIONAL_ELIGIBILITY,
+  householdIncomeManwon,
+  EMPLOYMENT,
+  GENDER,
+  HOUSING,
+  INCOME,
+  MARRIAGE,
+  NATIONALITY,
+  SPECIAL_TARGETS,
+  SCHOOL_LEVEL,
+  CREDIT_BUREAU,
+  YES_NO,
+  incomeWon,
+  numberOptions,
+  stepError,
+  toProfile,
+  type Option,
+  type AdditionalEligibilityDraft,
+  type ProfileDraft,
+} from "../../data/profileOptions"
+
+const YES_NO_UNKNOWN_OPTIONS: Option[] = [
+  ["YES", "예"],
+
+  ["NO", "아니요"],
+
+  ["UNKNOWN", "모름·확인 필요"],
+]
+
+const BENEFIT_TYPE_OPTIONS: Option[] = [
+  ["LIVELIHOOD", "생계급여"],
+
+  ["MEDICAL", "의료급여"],
+
+  ["HOUSING", "주거급여"],
+
+  ["EDUCATION", "교육급여"],
+]
+
+const steps = [
+  "기본 정보",
+
+  "거주 지역",
+
+  "소득",
+
+  "가구 · 주거",
+
+  "고용",
+
+  "추가 조건",
+]
+
+function Select({
+  name,
+
+  label,
+
+  value,
+
+  options,
+
+  onChange,
+
+  hint,
+
+  required = false,
+
+  disabled = false,
+
+  showUnanswered = false,
+}: {
+  name: string
+
+  label: string
+
+  value: string
+
+  options: Option[]
+
+  onChange: (value: string) => void
+
+  hint?: string
+
+  required?: boolean
+
+  disabled?: boolean
+
+  showUnanswered?: boolean
+}) {
+  // 선택지가 적으면 드롭다운 대신 한 번에 고르는 버튼으로 보여준다.
+  // 필수·미입력 항목은 아무것도 고르지 않은 상태가 빈 값이다.
+  const choices: Option[] =
+    required || showUnanswered || options.some(([v]) => v === "UNKNOWN")
+      ? options
+      : [...options, ["", "미확인"]]
+  if (choices.length >= 2 && choices.length <= 5)
+    return (
+      <fieldset
+        className="dx-field"
+        disabled={disabled}
+        aria-describedby={hint ? name + "-hint" : undefined}
+      >
+        <legend className="dx-label">
+          {label}
+          {required && <span className="dx-req"> (필수)</span>}
+        </legend>
+        <div className="dx-rows">
+          {choices.map(([id, text]) => (
+            <label key={id || "empty"} className="dx-row" data-reveal>
+              <input
+                type="radio"
+                name={name}
+                value={id}
+                checked={value === id}
+                onChange={() => onChange(id)}
+              />
+              <i className="dx-mark" aria-hidden="true" />
+              <span>{text}</span>
+            </label>
+          ))}
+        </div>
+        {hint && (
+          <p
+            id={name + "-hint"}
+            className="dx-hint"
+          >
+            {hint}
+          </p>
+        )}
+      </fieldset>
+    )
+  return (
+    <div className="dx-field" data-reveal>
+      <label htmlFor={name} className="dx-label">
+        {label}
+        {required && <span className="dx-req"> (필수)</span>}
+      </label>
+      <select
+        id={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        required={required}
+        aria-describedby={hint ? name + "-hint" : undefined}
+        className="dx-input"
+      >
+        {(showUnanswered || !options.some(([v]) => v === "UNKNOWN")) && (
+          <option value="">
+            {required ? "선택해주세요" : showUnanswered ? "미입력" : "미확인"}
+          </option>
+        )}
+        {options.map(([id, text]) => (
+          <option key={id} value={id}>
+            {text}
+          </option>
+        ))}
+      </select>
+      {hint && (
+        <p
+          id={name + "-hint"}
+          className="dx-hint"
+        >
+          {hint}
+        </p>
+      )}
+    </div>
+  )
+}
+
+export default function DiagnosisPage({
+  draft,
+
+  setDraft,
+
+  step,
+
+  setStep,
+
+  onComplete,
+
+  busy,
+
+  setPage,
+}: {
+  draft: ProfileDraft
+
+  setDraft: (value: ProfileDraft) => void
+
+  step: number
+
+  setStep: (value: number) => void
+
+  onComplete: (profile: UserProfileInput) => Promise<void>
+
+  busy: boolean
+
+  setPage: (page: Page) => void
+}) {
+  const [reviewProfile, setReviewProfile] = useState<UserProfileInput | null>(
+    null,
+  )
+
+  const [returnToReview, setReturnToReview] = useState(false)
+
+  const [error, setError] = useState("")
+
+  const heading = useRef<HTMLHeadingElement>(null)
+
+  useEffect(() => {
+    heading.current?.focus()
+  }, [step, reviewProfile])
+
+  // 단계 이동 방향(앞으로/뒤로)에 따라 입력 영역이 들어오는 쪽을 정한다.
+  const lastStep = useRef(step)
+  const stepDirection = useRef<"fwd" | "back">("fwd")
+  if (lastStep.current !== step) {
+    stepDirection.current = step < lastStep.current ? "back" : "fwd"
+    lastStep.current = step
+  }
+
+  const update = (key: keyof ProfileDraft, value: string) => {
+    const next = { ...draft, [key]: value }
+
+    if (key === "region")
+      next.district = value === "세종특별자치시" ? value : ""
+
+    if (key === "incomeType" && value === "NONE") {
+      next.incomeMajor = "0"
+
+      next.incomeMinor = "0"
+    }
+
+    setDraft(next)
+
+    setError("")
+  }
+
+  const additional = {
+    ...EMPTY_ADDITIONAL_ELIGIBILITY,
+
+    ...draft.additionalEligibility,
+  }
+
+  const updateAdditional = (
+    key: keyof AdditionalEligibilityDraft,
+
+    value: string | string[],
+  ) => {
+    const next = { ...additional, [key]: value }
+
+    if (key === "basicBenefitStatus") {
+      next.basicBenefitTypes = value === "NO" ? ["NONE"] : []
+    }
+
+    if (key === "householdIncomeRecognitionKnown" && value !== "YES") {
+      next.recognizedHouseholdIncomeWon = ""
+    }
+
+    if (key === "childWelfareProtectionExperience" && value !== "YES") {
+      next.protectionEnded = ""
+    }
+
+    setDraft({ ...draft, additionalEligibility: next })
+
+    setError("")
+  }
+
+  const additionalSelect = (
+    key: Exclude<keyof AdditionalEligibilityDraft, "basicBenefitTypes">,
+
+    label: string,
+
+    hint?: string,
+  ) => (
+    <Select
+      name={`additional-${key}`}
+      label={label}
+      options={YES_NO_UNKNOWN_OPTIONS}
+      value={additional[key] ?? ""}
+      onChange={(value) => updateAdditional(key, value)}
+      hint={hint}
+      showUnanswered
+    />
+  )
+
+  const manwonInput = (
+    key:
+      | "assetAmountManwon"
+      | "personalAssetManwon"
+      | "householdMonthlyIncomeManwon"
+      | "householdDebtManwon"
+      | "personalDebtManwon"
+      | "carValueManwon"
+      | "spouseMonthlyIncomeManwon",
+    label: string,
+    hint: string,
+    value: string,
+  ) => (
+    <label className="dx-field">
+      <span className="dx-label">{label}</span>
+      <div className="dx-unit">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          placeholder="예: 5000"
+          value={value}
+          onChange={(event) => {
+            const next = { ...additional, [key]: event.target.value }
+            if (key === "householdMonthlyIncomeManwon")
+              next.householdMonthlyIncomeWon = ""
+            setDraft({ ...draft, additionalEligibility: next })
+            setError("")
+          }}
+          className="dx-input"
+        />
+        <span aria-hidden="true">만원</span>
+      </div>
+      <span className="dx-hint">{hint}</span>
+    </label>
+  )
+
+  const numberInput = (
+    key: "marriageYears" | "creditScore" | "youngestChildAge",
+    label: string,
+    hint: string,
+    unit: string,
+  ) => (
+    <label className="dx-field">
+      <span className="dx-label">{label}</span>
+      <div className="dx-unit">
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          step={1}
+          value={additional[key] ?? ""}
+          onChange={(event) => updateAdditional(key, event.target.value)}
+          className="dx-input"
+        />
+        <span aria-hidden="true">{unit}</span>
+      </div>
+      <span className="dx-hint">{hint}</span>
+    </label>
+  )
+
+  const field = (
+    key: Exclude<
+      keyof ProfileDraft,
+      "qualifications" | "additionalEligibility" | "specialTargets"
+    >,
+
+    label: string,
+
+    options: Option[],
+
+    hint?: string,
+
+    required = false,
+
+    disabled = false,
+  ) => (
+    <Select
+      name={key}
+      label={label}
+      options={options}
+      value={draft[key] ?? (key === "nationality" ? "KOREAN" : "")}
+      onChange={(value) => update(key, value)}
+      hint={hint}
+      required={required}
+      disabled={disabled}
+    />
+  )
+
+  const proceed = async () => {
+    setError("")
+
+    const issue = stepError(draft, step)
+
+    if (issue) {
+      setError(issue)
+
+      return
+    }
+
+    if (step < 5 && !returnToReview) {
+      setStep(step + 1)
+
+      return
+    }
+
+    try {
+      for (let index = 0; index < 6; index++) {
+        const issue = stepError(draft, index)
+
+        if (issue) {
+          setStep(index)
+          setReturnToReview(false)
+          setError(issue)
+          return
+        }
+      }
+
+      setReviewProfile(toProfile(draft))
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "진단을 완료하지 못했어요. 다시 시도해주세요.",
+      )
+    }
+  }
+
+  const submitReview = async () => {
+    if (!reviewProfile || busy) return
+
+    try {
+      await onComplete(reviewProfile)
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "진단을 완료하지 못했어요. 다시 시도해주세요.",
+      )
+    }
+  }
+
+  if (reviewProfile)
+    return (
+      <section className="dx-page">
+        <div className="dx-col">
+        <header className="dx-head dx-head-review">
+          <Mascot pose="jump" size={130} className="dx-m-jump" />
+          <p className="dx-eyebrow">진단 전 마지막 확인</p>
+          <h1>입력한 정보를 확인해주세요</h1>
+          <p className="dx-desc">
+            이 정보로 정책 조건을 비교합니다. 모르는 추가 정보는 미확인으로 남겨도 괜찮아요.
+          </p>
+        </header>
+        <div className="profile-review step-arrive" aria-busy={busy}>
+          <h2 ref={heading} tabIndex={-1}>
+            이번 진단에 사용할 정보
+          </h2>
+          {profileSummary(reviewProfile).map((group, index) => (
+            <section key={group.title} className="review-group">
+              <header>
+                <h3>{group.title}</h3>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setReviewProfile(null)
+                    setReturnToReview(true)
+                    setStep(index)
+                  }}
+                >
+                  {group.title} 수정 →
+                </button>
+              </header>
+              <dl>
+                {group.items
+                  .filter(([, value]) => value !== "미입력")
+                  .map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                    </div>
+                  ))}
+              </dl>
+            </section>
+          ))}
+          <p className="comparison-note">
+            가구 월소득과 소득인정액은 다른 정보예요. 확인하지 못한 소득인정액을
+            임의로 계산해 넣지 마세요.
+          </p>
+          {error && (
+            <p role="alert" className="reverse-alert">
+              {error} 입력 정보는 유지됩니다.
+            </p>
+          )}
+          <div className="review-actions">
+            <button
+              type="button"
+              className="secondary-action"
+              disabled={busy}
+              onClick={() => {
+                setReviewProfile(null)
+                setStep(5)
+              }}
+            >
+              입력으로 돌아가기
+            </button>
+            <button
+              type="button"
+              className="interface-primary"
+              disabled={busy}
+              onClick={() => void submitReview()}
+            >
+              {busy ? "정책 비교 중…" : "계정에 저장하고 진단하기"}
+            </button>
+          </div>
+        </div>
+        </div>
+      </section>
+    )
+
+  return (
+    <section className="dx-page">
+      <div className="dx-col">
+      <div className="dx-top">
+        <span>
+          {steps[step]} · {step + 1} / 6
+        </span>
+        <span>모르는 항목은 비워 두세요</span>
+      </div>
+      <div
+        className="dx-bar"
+        role="progressbar"
+        aria-label="진단 진행 단계"
+        aria-valuemin={1}
+        aria-valuemax={6}
+        aria-valuenow={step + 1}
+        aria-valuetext={`${steps[step]} ${step + 1} / 6`}
+      >
+        <i style={{ width: `${((step + 1) / 6) * 100}%` }} />
+      </div>
+      <details className="dx-steps">
+        <summary>단계 보기</summary>
+        <ol aria-label="진단 진행 단계 목록">
+          {steps.map((label, index) => (
+            <li
+              key={label}
+              aria-current={index === step ? "step" : undefined}
+              data-state={index === step ? "current" : index < step ? "done" : "todo"}
+            >
+              <button
+                type="button"
+                disabled={busy || index > step}
+                onClick={() => setStep(index)}
+                aria-label={label + (index < step ? " 수정" : "")}
+              >
+                {index + 1}. {label}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </details>
+      <form
+        key={step}
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+
+          void proceed()
+        }}
+        className="dx-form step-slide"
+        data-dir={stepDirection.current}
+      >
+        <h1 ref={heading} tabIndex={-1} className="dx-title">
+          {steps[step]}
+        </h1>
+        <p className="dx-desc">
+          진단을 완료하면 입력값과 결과가 내 계정에 저장됩니다. 작성 중에는 새로고침하지 마세요. 모르는 추가 조건은 미확인으로 두세요.
+        </p>
+        <fieldset disabled={busy} className="dx-fields">
+          <legend className="sr-only">{steps[step]} 입력</legend>
+          {step === 0 && (
+            <>
+              {field(
+                "age",
+
+                "만 나이",
+
+                numberOptions(19, 34, "세"),
+
+                "현재 진단은 만 19~34세를 대상으로 합니다.",
+
+                true,
+              )}
+              {field("gender", "성별", GENDER)}
+              <button
+                type="button"
+                onClick={() => setPage("explorer")}
+                className="dx-link"
+              >
+                대상 연령 밖이라면 정책 목록 살펴보기 →
+              </button>
+            </>
+          )}
+          {step === 1 && (
+            <>
+              {field(
+                "region",
+
+                "시도",
+
+                Object.keys(REGIONS).map((v) => [v, v]),
+
+                "주민등록상 거주지를 선택해주세요.",
+
+                true,
+              )}
+              {field(
+                "district",
+
+                "시군구",
+
+                (REGIONS[draft.region] ?? []).map((v) => [v, v]),
+
+                undefined,
+
+                true,
+
+                !draft.region,
+              )}
+            </>
+          )}
+          {step === 2 && (
+            <>
+              {field(
+                "incomeType",
+
+                "주된 소득 종류",
+
+                INCOME,
+
+                "여러 소득이 있다면 가장 큰 비중의 소득원을 선택해주세요.",
+              )}
+              <div className="dx-field">
+                <label htmlFor="income-manwon" className="dx-label">
+                  본인 월평균 세전 소득
+                  <span className="dx-req"> (필수)</span>
+                </label>
+                <div className="dx-unit">
+                  <input
+                    id="income-manwon"
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={9999}
+                    step={1}
+                    placeholder="예: 215"
+                    disabled={draft.incomeType === "NONE"}
+                    aria-describedby="income-manwon-hint"
+                    value={
+                      draft.incomeMajor === "" || draft.incomeMinor === ""
+                        ? ""
+                        : Number(draft.incomeMajor) * 100 +
+                          Number(draft.incomeMinor)
+                    }
+                    onChange={(e) => {
+                      const raw = e.target.value
+                      const manwon = Math.min(
+                        9999,
+                        Math.max(0, Math.floor(Number(raw))),
+                      )
+                      const empty = raw === "" || Number.isNaN(manwon)
+                      setDraft({
+                        ...draft,
+                        incomeMajor: empty ? "" : String(Math.floor(manwon / 100)),
+                        incomeMinor: empty ? "" : String(manwon % 100),
+                      })
+                      setError("")
+                    }}
+                  />
+                  <span aria-hidden="true">만원</span>
+                </div>
+                <p
+                  className="dx-info"
+                  aria-live="polite"
+                >
+                  {draft.incomeMajor !== "" && draft.incomeMinor !== ""
+                    ? "입력한 월 소득: " +
+                      incomeWon(draft).toLocaleString("ko-KR") +
+                      "원"
+                    : "월 215만원이라면 215를 입력하세요."}
+                </p>
+                <p id="income-manwon-hint" className="dx-hint">
+                  모든 소득을 합산해 만원 단위로 입력해주세요 (0~9,999만원).
+                  가구소득과 소득인정액은 정책별로 추가 확인이 필요합니다.
+                </p>
+              </div>
+            </>
+          )}
+          {step === 3 && (
+            <>
+              {field(
+                "householdSize",
+
+                "주민등록상 가구원 수",
+
+                numberOptions(1, 20, "명"),
+
+                "정책에서 사용하는 가구 범위는 다를 수 있어요.",
+              )}
+              {manwonInput(
+                "householdMonthlyIncomeManwon",
+                "가구 전체 월소득 (만원)",
+                "가구원 모두의 세전 월소득 합계예요. 공공임대(도시근로자 월평균소득 기준)와 비교할 때 써요.",
+                householdIncomeManwon(additional),
+              )}
+              {field("housing", "현재 주거 형태", HOUSING, undefined, true)}
+              {field(
+                "ownsHome",
+
+                "본인 명의 주택 보유 여부",
+
+                YES_NO,
+
+                "현재 거주 형태와 별개로 다른 곳에 보유한 주택도 포함합니다.",
+              )}
+              {additionalSelect(
+                "householdHomeless",
+                "세대원 전원 무주택 여부",
+                "주민등록상 세대원 모두 주택을 갖고 있지 않으면 '해당'이에요. 공공임대·주택 대출 정책에서 많이 봐요.",
+              )}
+              {manwonInput(
+                "assetAmountManwon",
+                "가구 총재산 (만원)",
+                "함께 사는 가구원의 부동산·예금·자동차·전월세 보증금 등을 합한 금액이에요. 모르면 비워두세요.",
+                additional.assetAmountManwon ?? "",
+              )}
+              {manwonInput(
+                "personalAssetManwon",
+                "본인 명의 재산 (만원)",
+                "부모 등과 함께 산다면 가구 재산과 별도로 본인 명의 재산만 적어주세요. 1인 가구면 비워둬도 돼요.",
+                additional.personalAssetManwon ?? "",
+              )}
+              {manwonInput(
+                "householdDebtManwon",
+                "가구 부채 (만원)",
+                "가구 총재산에서 뺄 대출·빚이에요. 대출 정책은 '재산 − 부채(순자산)'로 비교해요. 없으면 0, 모르면 비워두세요.",
+                additional.householdDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "personalDebtManwon",
+                "본인 명의 부채 (만원)",
+                "본인 명의 재산에서 뺄 본인 명의 대출이에요. 1인 가구면 비워둬도 돼요.",
+                additional.personalDebtManwon ?? "",
+              )}
+              {manwonInput(
+                "carValueManwon",
+                "가구 자동차가액 (만원)",
+                "가구가 가진 자동차의 현재 가액 합계예요. 공공임대는 자동차가액 기준이 있어요. 없으면 0.",
+                additional.carValueManwon ?? "",
+              )}
+            </>
+          )}
+          {step === 4 && (
+            <>
+              {field(
+                "employment",
+
+                "현재 고용 상태",
+
+                EMPLOYMENT,
+
+                "학생 여부는 다음 단계에서 별도로 선택합니다. 재학 중 아르바이트를 한다면 아르바이트를 선택해주세요.",
+
+                true,
+              )}
+            </>
+          )}
+          {step === 5 && (
+            <>
+              {field("nationality", "국적", NATIONALITY)}
+              <fieldset className="dx-field">
+                <legend className="dx-label">
+                  해당하는 대상 (해당하는 것만 선택)
+                </legend>
+                {SPECIAL_TARGETS.map(([value, label]) => (
+                  <label
+                    key={value}
+                    className="dx-row dx-check"
+                    data-reveal
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(draft.specialTargets ?? []).includes(value)}
+                      onChange={(e) =>
+                        setDraft({
+                          ...draft,
+                          specialTargets: e.target.checked
+                            ? [...(draft.specialTargets ?? []), value]
+                            : (draft.specialTargets ?? []).filter((v) => v !== value),
+                        })
+                      }
+                      />
+                    <i className="dx-mark" aria-hidden="true" />
+                    <span>{label}</span>
+                  </label>
+                ))}
+                <p className="dx-hint">
+                  해당 없으면 선택하지 않아도 돼요.
+                </p>
+              </fieldset>
+              {field(
+                "student",
+                "현재 재학 여부",
+                YES_NO,
+                "입학 예정이거나 다음 학기 복학 예정이어도 '해당'을 선택해주세요.",
+              )}
+              {draft.student === "YES" && (
+                <Select
+                  name="additional-schoolLevel"
+                  label="학교 구분"
+                  options={SCHOOL_LEVEL}
+                  value={additional.schoolLevel ?? ""}
+                  onChange={(value) => updateAdditional("schoolLevel", value)}
+                  hint="장학금·학자금은 대학(원)생 대상이 많아요."
+                />
+              )}
+              {field("disability", "등록 장애인 여부", YES_NO)}
+              {draft.disability === "YES" &&
+                additionalSelect(
+                  "severeDisability",
+                  "장애의 정도가 심한 장애인(중증) 여부",
+                  "장애인등록증에 '장애의 정도가 심한'으로 적혀 있으면 '해당'이에요.",
+                )}
+              {field("maritalStatus", "혼인 상태", MARRIAGE)}
+              {draft.maritalStatus === "MARRIED" && (
+                <>
+                  {manwonInput(
+                    "spouseMonthlyIncomeManwon",
+                    "배우자 월소득 (만원)",
+                    "세전 월소득이에요. 소득이 없으면 0. 부부합산 소득·맞벌이 기준(주택 대출·공공임대)과 비교해요.",
+                    additional.spouseMonthlyIncomeManwon ?? "",
+                  )}
+                  {numberInput(
+                    "marriageYears",
+                    "혼인 기간 (년)",
+                    "혼인신고 후 지난 햇수예요. 신혼부부 기준(7년 이내 등)과 비교해요.",
+                    "년",
+                  )}
+                </>
+              )}
+              {(draft.maritalStatus === "MARRIED" || draft.gender === "FEMALE") &&
+                additionalSelect(
+                  "pregnancy",
+                  "임신 중 여부 (본인 또는 배우자)",
+                  "임신 중이면 대상이 되는 주거·바우처 정책이 있어요.",
+                )}
+              {field("childrenCount", "자녀 수", numberOptions(0, 20, "명"))}
+              {Number(draft.childrenCount || 0) > 0 &&
+                numberInput(
+                  "youngestChildAge",
+                  "막내 자녀 나이 (만)",
+                  "자녀가 여럿이면 가장 어린 자녀의 만 나이예요. 1세 미만이면 0.",
+                  "세",
+                )}
+
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
+                      복지 수급·자격 정보
+                    </legend>
+                    <p className="dx-hint">
+                      많은 정책이 이 조건으로 대상을 나눠요. 모르면 ‘모름·확인
+                      필요’를 선택하세요.
+                    </p>
+                    {additionalSelect(
+                      "basicBenefitStatus",
+                      "기초생활보장급여 수급 여부",
+                    )}
+                    {additional.basicBenefitStatus === "YES" && (
+                      <fieldset className="dx-field">
+                        <legend className="dx-label">
+                          수급 중인 급여 종류 (복수 선택)
+                        </legend>
+                        <p className="dx-hint">
+                          현재 해당하는 급여를 모두 선택해주세요.
+                        </p>
+                        {BENEFIT_TYPE_OPTIONS.map(([value, label]) => (
+                          <label
+                            key={value}
+                            className="dx-row dx-check"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={additional.basicBenefitTypes.includes(
+                                value,
+                              )}
+                              onChange={(event) =>
+                                updateAdditional(
+                                  "basicBenefitTypes",
+
+                                  event.target.checked
+                                    ? [...additional.basicBenefitTypes, value]
+                                    : additional.basicBenefitTypes.filter(
+                                        (item) => item !== value,
+                                      ),
+                                )
+                              }
+                              />
+                            <i className="dx-mark" aria-hidden="true" />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </fieldset>
+                    )}
+                    {additional.basicBenefitStatus === "NO" && (
+                      <p className="dx-hint">
+                        수급 급여 종류: 해당 없음
+                      </p>
+                    )}
+                    {additionalSelect(
+                      "nearPovertyStatus",
+                      "차상위계층 해당 여부",
+                    )}
+                    {additionalSelect(
+                      "singleParentSupportStatus",
+
+                      "한부모가족 지원 대상 여부",
+                    )}
+                  </fieldset>
+
+              <details className="motion-details optional-details">
+                <summary>
+                  가구 소득·보호 경험 등 추가 정보 입력 <small>(선택)</small>
+                </summary>
+                <p className="dx-hint">
+                  모르면 ‘모름·확인 필요’를 선택하고, 입력하지 않으면 미입력으로
+                  저장됩니다. 입력 내용은 본인 응답이며 공식 자격 증명으로
+                  간주되지 않습니다.
+                </p>
+                <div className="details-body dx-body">
+
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
+                      가구 소득 정보
+                    </legend>
+                    {additionalSelect(
+                      "householdIncomeRecognitionKnown",
+
+                      "가구 소득인정액을 알고 있나요?",
+                    )}
+                    {additional.householdIncomeRecognitionKnown === "YES" && (
+                      <label className="dx-field">
+                        <span className="dx-label">가구 소득인정액 (원, 선택)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={additional.recognizedHouseholdIncomeWon}
+                          onChange={(event) =>
+                            updateAdditional(
+                              "recognizedHouseholdIncomeWon",
+                              event.target.value,
+                            )
+                          }
+                          className="dx-input"
+                        />
+                      </label>
+                    )}
+                    {additionalSelect(
+                      "householdBasicBenefitStatus",
+
+                      "가구 내 기초생활보장급여 수급자 여부",
+                    )}
+                    <p className="dx-hint">
+                      본인 월소득과 가구 월소득·소득인정액은 별도로 저장하며,
+                      모르는 금액은 계산하지 않습니다.
+                    </p>
+                  </fieldset>
+
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
+                      신용 정보
+                    </legend>
+                    <p className="dx-hint">
+                      서민금융 대출은 '신용점수 하위 20%' 같은 기준이 있어요. 평가사마다 점수가 달라 함께 골라주세요.
+                    </p>
+                    <Select
+                      name="additional-creditBureau"
+                      label="신용평가사"
+                      options={CREDIT_BUREAU}
+                      value={additional.creditBureau ?? ""}
+                      onChange={(value) => updateAdditional("creditBureau", value)}
+                    />
+                    {numberInput(
+                      "creditScore",
+                      "개인신용점수",
+                      "카드사·은행 앱이나 평가사 사이트에서 확인할 수 있어요(1000점 만점).",
+                      "점",
+                    )}
+                  </fieldset>
+
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
+                      보호 경험·종료 정보
+                    </legend>
+                    {additionalSelect(
+                      "childWelfareProtectionExperience",
+
+                      "아동복지시설 또는 가정위탁 보호 경험 여부",
+                    )}
+                    {additional.childWelfareProtectionExperience === "YES" && (
+                      <>
+                        {additionalSelect("protectionEnded", "보호 종료 여부")}
+                      </>
+                    )}
+                  </fieldset>
+
+                  <fieldset className="dx-group">
+                    <legend className="dx-group-title">
+                      구직 정보
+                    </legend>
+                    {additionalSelect("jobSeekRegistration", "구직 등록 여부")}
+                  </fieldset>
+                </div>
+              </details>
+            </>
+          )}
+        </fieldset>
+        {error && (
+          <p role="alert" className="dx-alert">
+            {error}
+          </p>
+        )}
+        <div className="dx-nav">
+          {step > 0 && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setStep(step - 1)}
+              className="dx-back"
+            >
+              <span aria-hidden="true">←</span>
+              <span className="sr-only">이전</span>
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={busy}
+            className="dx-next"
+          >
+            {busy
+              ? "진단 중…"
+              : step === 5 || returnToReview
+                ? "입력 내용 확인"
+                : "다음"}
+          </button>
+        </div>
+      </form>
+      </div>
+    </section>
+  )
+}
